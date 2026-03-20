@@ -1,0 +1,14 @@
+service: smart-wallet-shared-layer
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, "dev"}
+
+layers:
+  shared:
+    path: src
+    name: shared-layer
+    description: Shared utilities across all stacks
+    compatibleRuntimes:
+      - nodejs20.x

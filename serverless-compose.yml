@@ -1,0 +1,13 @@
+services:
+  sharedLayer:
+    path: layers/shared
+
+  apiGateway:
+    path: infra/apiGateway
+    dependsOn: sharedLayer
+
+  expenses:
+    path: stacks/expenses
+    dependsOn:
+      - sharedLayer
+      - apiGateway

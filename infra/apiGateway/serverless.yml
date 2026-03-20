@@ -1,0 +1,38 @@
+service: smart-wallet-api-gateway
+
+provider:
+  name: aws
+  stage: ${opt:stage, "dev"}
+
+resources:
+  Resources:
+    SharedHttpApi:
+      Type: AWS::ApiGatewayV2::Api
+      Properties:
+        Name: smart-wallet-${self:provider.stage}
+        ProtocolType: HTTP
+        CorsConfiguration:
+          AllowOrigins:
+            - "*"
+          AllowMethods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+          AllowHeaders:
+            - Content-Type
+            - Authorization
+
+    SharedHttpApiStage:
+      Type: AWS::ApiGatewayV2::Stage
+      Properties:
+        ApiId: !Ref SharedHttpApi
+        StageName: $default
+        AutoDeploy: true
+
+  Outputs:
+    HttpApiId:
+      Value: !Ref SharedHttpApi
+    HttpApiUrl:
+      Value: !Sub "https://${SharedHttpApi}.execute-api.${AWS::Region}.amazonaws.com"

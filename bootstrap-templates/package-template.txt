@@ -1,0 +1,7 @@
+{
+  "name": "@lambda-project/{{STACK_NAME}}",
+  "version": "1.0.0",
+  "dependencies": {
+    "@lambda-project/shared": "*"
+  }
+}

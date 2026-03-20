@@ -1,0 +1,6 @@
+import { APIGatewayProxyEvent } from "aws-lambda";
+import { ok } from "@lambda-project/shared";
+
+export const hello{{STACK_NAME_UPPERCASE}} = async (event: APIGatewayProxyEvent) => {
+  return ok({ message: "Hello from {{STACK_NAME}}" });
+};

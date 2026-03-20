@@ -1,0 +1,37 @@
+service: smart-wallet-expenses
+
+custom:
+  env:
+    dev:
+      LOG_LEVEL: debug
+    prod:
+      LOG_LEVEL: info
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, "dev"}
+  httpApi:
+    id: ${cf:smart-wallet-api-gateway-${self:provider.stage}.HttpApiId}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    LOG_LEVEL: ${self:custom.env.${self:provider.stage}.LOG_LEVEL}
+
+build:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    alias:
+      "@lambda-project/shared": "./layers/shared/src"
+
+functions:
+  helloExpenses:
+    handler: ./src/helloExpenses.helloExpenses
+    events:
+      - httpApi:
+          path: /expenses
+          method: get
+
+plugins:
+  - serverless-offline

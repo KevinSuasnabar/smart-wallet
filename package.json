@@ -1,0 +1,25 @@
+{
+  "name": "smart-wallet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "create-stack": "bash scripts/create-stack.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-lambda": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.161",
+    "@types/node": "^25.5.0",
+    "serverless-offline": "^14.5.0"
+  },
+  "workspaces": [
+    "layers/*",
+    "stacks/*"
+  ]
+}
