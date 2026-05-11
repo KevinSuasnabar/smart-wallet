@@ -1,0 +1,15 @@
+{
+  "name": "@smart-wallet/infra-cdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist .turbo cdk.out *.tsbuildinfo",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "synth": "echo 'cdk synth not configured yet' && exit 0",
+    "deploy": "echo 'cdk deploy not configured yet' && exit 0",
+    "test": "echo 'no tests yet' && exit 0"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@smart-wallet/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo 'vite build not configured yet' && exit 0",
+    "dev": "echo 'vite dev not configured yet' && exit 0",
+    "clean": "rm -rf dist .turbo *.tsbuildinfo",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests yet' && exit 0"
+  },
+  "dependencies": {
+    "@smart-wallet/shared-types": "workspace:*"
+  }
+}

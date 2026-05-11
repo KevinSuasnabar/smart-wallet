@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+.turbo
+.next
+.serverless
+cdk.out
+coverage
+*.lock
+*.log
+pnpm-lock.yaml

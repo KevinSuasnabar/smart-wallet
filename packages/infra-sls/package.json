@@ -1,0 +1,14 @@
+{
+  "name": "@smart-wallet/infra-sls",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo 'serverless package not configured yet' && exit 0",
+    "clean": "rm -rf .serverless .turbo",
+    "deploy": "echo 'serverless deploy not configured yet' && exit 0",
+    "lint": "echo 'no lint targets yet' && exit 0",
+    "typecheck": "echo 'no ts files yet' && exit 0",
+    "test": "echo 'no tests yet' && exit 0"
+  }
+}
