@@ -8,8 +8,10 @@
     "clean": "rm -rf dist .turbo cdk.out *.tsbuildinfo",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "synth": "echo 'cdk synth not configured yet' && exit 0",
-    "deploy": "echo 'cdk deploy not configured yet' && exit 0",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy SmartWalletProdStack --require-approval never",
+    "diff": "cdk diff",
+    "destroy": "cdk destroy SmartWalletProdStack",
     "test": "echo 'no tests yet' && exit 0"
   },
   "dependencies": {
@@ -17,6 +19,7 @@
     "constructs": "^10.4.2"
   },
   "devDependencies": {
-    "aws-cdk": "^2.189.0"
+    "aws-cdk": "^2.189.0",
+    "tsx": "^4.21.0"
   }
 }

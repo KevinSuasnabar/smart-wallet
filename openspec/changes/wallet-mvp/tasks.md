@@ -441,14 +441,14 @@
 
 ## Slice 11 — CDK stack
 
-- [ ] **T-11-01** — Create `packages/infra-cdk/src/constructs/SingleTable.ts` L3 construct wrapping `dynamodb.TableV2` (or `dynamodb.Table`): PK/SK string keys, GSI1 with `GSI1PK`/`GSI1SK`, `PAY_PER_REQUEST` billing, TTL attribute `ttl`, deletion protection enabled, PITR disabled (cost constraint, add code comment); create `packages/infra-cdk/src/constructs/UserPool.ts` L3 construct: Cognito UserPool (email sign-in, password policy, auto-verify email), UserPoolClient (`generateSecret: false`, `USER_PASSWORD_AUTH` + `USER_SRP_AUTH`), UserPoolDomain prefix `smart-wallet-prod`
+- [x] **T-11-01** — Create `packages/infra-cdk/src/constructs/SingleTable.ts` L3 construct wrapping `dynamodb.TableV2` (or `dynamodb.Table`): PK/SK string keys, GSI1 with `GSI1PK`/`GSI1SK`, `PAY_PER_REQUEST` billing, TTL attribute `ttl`, deletion protection enabled, PITR disabled (cost constraint, add code comment); create `packages/infra-cdk/src/constructs/UserPool.ts` L3 construct: Cognito UserPool (email sign-in, password policy, auto-verify email), UserPoolClient (`generateSecret: false`, `USER_PASSWORD_AUTH` + `USER_SRP_AUTH`), UserPoolDomain prefix `smart-wallet-prod`
   - Slice: 11
   - Files: `packages/infra-cdk/src/constructs/SingleTable.ts`, `packages/infra-cdk/src/constructs/UserPool.ts`
   - Deps: T-00-02
   - Acceptance: NFR-COST-01; `pnpm --filter @smart-wallet/infra-cdk synth` clean; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-11-02** — Create `packages/infra-cdk/src/constructs/SsmParameters.ts` L3 construct: publishes all 8 SSM parameters listed in design §5 (`table-name`, `table-arn`, `gsi1-name`, `user-pool-id`, `user-pool-arn`, `user-pool-client-id`, `issuer-url`, `region`); create `packages/infra-cdk/src/stacks/SmartWalletStack.ts` assembling all three constructs; create `packages/infra-cdk/src/bin/smart-wallet.ts` CDK app entrypoint; run `cdk synth` and verify CloudFormation template is produced without errors
+- [x] **T-11-02** — Create `packages/infra-cdk/src/constructs/SsmParameters.ts` L3 construct: publishes all 8 SSM parameters listed in design §5 (`table-name`, `table-arn`, `gsi1-name`, `user-pool-id`, `user-pool-arn`, `user-pool-client-id`, `issuer-url`, `region`); create `packages/infra-cdk/src/stacks/SmartWalletStack.ts` assembling all three constructs; create `packages/infra-cdk/src/bin/smart-wallet.ts` CDK app entrypoint; run `cdk synth` and verify CloudFormation template is produced without errors
   - Slice: 11
   - Files: `packages/infra-cdk/src/constructs/SsmParameters.ts`, `packages/infra-cdk/src/stacks/SmartWalletStack.ts`, `packages/infra-cdk/src/bin/smart-wallet.ts`
   - Deps: T-11-01
