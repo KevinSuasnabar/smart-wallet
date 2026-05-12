@@ -39,7 +39,7 @@
 
 ## Slice 0 — Install runtime and dev dependencies
 
-- [ ] **T-00-01** Install all runtime + dev deps into `packages/web`
+- [x] **T-00-01** Install all runtime + dev deps into `packages/web`
   - **Slice**: 0
   - **Files**: `packages/web/package.json`, `pnpm-lock.yaml`
   - **Deps**: none
@@ -51,28 +51,28 @@
 
 ## Slice 1 — Vite + Tailwind + shadcn init + SHADCN COMPATIBILITY SPIKE
 
-- [ ] **T-01-01** Create Vite config, TypeScript config, PostCSS config, and `index.html`
+- [x] **T-01-01** Create Vite config, TypeScript config, PostCSS config, and `index.html`
   - **Slice**: 1
   - **Files**: `packages/web/vite.config.ts`, `packages/web/tsconfig.json`, `packages/web/postcss.config.cjs`, `packages/web/index.html`, `packages/web/src/main.tsx`, `packages/web/src/vite-env.d.ts`
   - **Deps**: T-00-01
   - **Acceptance**: REQ-CODE-01, REQ-CODE-03. `pnpm --filter @smart-wallet/web typecheck` green (even with stub `main.tsx`). Vite config has `@/` alias, `target: es2022`, hashed asset output.
   - **Est**: M
 
-- [ ] **T-01-02** Init Tailwind + globals CSS with CSS vars and safe-area utilities
+- [x] **T-01-02** Init Tailwind + globals CSS with CSS vars and safe-area utilities
   - **Slice**: 1
   - **Files**: `packages/web/tailwind.config.ts`, `packages/web/src/styles/globals.css`
   - **Deps**: T-01-01
   - **Acceptance**: scaffolding. `globals.css` contains `@tailwind base/components/utilities`, CSS variable block for shadcn colors/radius, and `.pb-safe` / `.pt-safe` utilities. Build compiles without Tailwind errors.
   - **Est**: S
 
-- [ ] **T-01-03** SPIKE: shadcn init + install ONE component (button) — verify build green
+- [x] **T-01-03** SPIKE: shadcn init + install ONE component (button) — verify build green
   - **Slice**: 1
   - **Files**: `packages/web/components.json`, `packages/web/src/components/ui/button.tsx`, `packages/web/src/lib/utils.ts`
   - **Deps**: T-01-02
   - **Acceptance**: REQ-CODE-01, REQ-CODE-03. **GATE**: run `pnpm --filter @smart-wallet/web typecheck` and `pnpm --filter @smart-wallet/web build` — both must pass with zero errors before proceeding. If `verbatimModuleSyntax` issues appear, document the workaround (e.g., explicit `import type` corrections in the generated file) before continuing to T-01-04. shadcn preset: New York, neutral base color, `cssVariables: true`.
   - **Est**: M
 
-- [ ] **T-01-04** Install remaining 15 shadcn components
+- [x] **T-01-04** Install remaining 15 shadcn components
   - **Slice**: 1
   - **Files**: `packages/web/src/components/ui/{input,label,form,card,select,separator,sonner,skeleton,dialog,sheet,badge,tabs,avatar,calendar,popover,table}.tsx`
   - **Deps**: T-01-03 (GATE must be green)
