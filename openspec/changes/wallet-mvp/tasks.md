@@ -33,21 +33,21 @@
 
 ## Slice 0 — Install runtime deps
 
-- [ ] **T-00-01** — Install shared-types runtime deps (zod) and api runtime deps (@aws-sdk/client-dynamodb, @aws-sdk/lib-dynamodb, aws-jwt-verify)
+- [x] **T-00-01** — Install shared-types runtime deps (zod) and api runtime deps (@aws-sdk/client-dynamodb, @aws-sdk/lib-dynamodb, aws-jwt-verify)
   - Slice: 0
   - Files: `packages/shared-types/package.json`, `packages/api/package.json`, `pnpm-lock.yaml`
   - Deps: —
   - Acceptance: Scaffolding only. `pnpm install` exits 0, no resolution errors.
   - Est: S
 
-- [ ] **T-00-02** — Install api devDependencies (@types/aws-lambda) and infra-cdk runtime deps (aws-cdk-lib, constructs) + devDependencies (aws-cdk)
+- [x] **T-00-02** — Install api devDependencies (@types/aws-lambda) and infra-cdk runtime deps (aws-cdk-lib, constructs) + devDependencies (aws-cdk)
   - Slice: 0
   - Files: `packages/api/package.json`, `packages/infra-cdk/package.json`, `pnpm-lock.yaml`
   - Deps: T-00-01
   - Acceptance: Scaffolding only. `pnpm install` exits 0. `pnpm typecheck` exits 0 (placeholder packages compile).
   - Est: S
 
-- [ ] **T-00-03** — Install infra-sls devDependencies (serverless, serverless-esbuild, serverless-offline) and add root-level `pnpm dev` / `pnpm ddb:up` / `pnpm ddb:down` scripts if not already present
+- [x] **T-00-03** — Install infra-sls devDependencies (serverless, serverless-esbuild, serverless-offline) and add root-level `pnpm dev` / `pnpm ddb:up` / `pnpm ddb:down` scripts if not already present
   - Slice: 0
   - Files: `packages/infra-sls/package.json`, `package.json` (root), `pnpm-lock.yaml`
   - Deps: T-00-01
@@ -58,42 +58,42 @@
 
 ## Slice 1 — Shared-types foundation
 
-- [ ] **T-01-01** — Create `packages/shared-types/src/currencies.ts` with `CURRENCIES`, `Currency` type, `currencyDecimals` record, and `zCurrency` Zod enum (USD | PEN only)
+- [x] **T-01-01** — Create `packages/shared-types/src/currencies.ts` with `CURRENCIES`, `Currency` type, `currencyDecimals` record, and `zCurrency` Zod enum (USD | PEN only)
   - Slice: 1
   - Files: `packages/shared-types/src/currencies.ts`
   - Deps: T-00-01
   - Acceptance: REQ-MNY-01; `tsc --noEmit` green in shared-types; eslint clean.
   - Est: S
 
-- [ ] **T-01-02** — Create `packages/shared-types/src/categories.ts` with `PREDEFINED_INCOME_IDS`, `PREDEFINED_EXPENSE_IDS`, `PREDEFINED_CATEGORY_IDS`, `PredefinedCategoryId` union, `PREDEFINED_CATEGORIES` const (all 14 entries with name and type), and `isPredefinedCategoryId` helper
+- [x] **T-01-02** — Create `packages/shared-types/src/categories.ts` with `PREDEFINED_INCOME_IDS`, `PREDEFINED_EXPENSE_IDS`, `PREDEFINED_CATEGORY_IDS`, `PredefinedCategoryId` union, `PREDEFINED_CATEGORIES` const (all 14 entries with name and type), and `isPredefinedCategoryId` helper
   - Slice: 1
   - Files: `packages/shared-types/src/categories.ts`
   - Deps: T-00-01
   - Acceptance: REQ-CAT-06, REQ-CAT-07; tsc green; eslint clean. Verify exactly 5 income + 9 expense entries.
   - Est: S
 
-- [ ] **T-01-03** — Create `packages/shared-types/src/schemas/common.ts` with `zUuid`, `zUserId`, `zWalletId`, `zTransactionId`, `zCategoryId` (UUID v4 regex) Zod helpers
+- [x] **T-01-03** — Create `packages/shared-types/src/schemas/common.ts` with `zUuid`, `zUserId`, `zWalletId`, `zTransactionId`, `zCategoryId` (UUID v4 regex) Zod helpers
   - Slice: 1
   - Files: `packages/shared-types/src/schemas/common.ts`
   - Deps: T-01-01
   - Acceptance: REQ-VAL-02; tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-01-04** — Create `packages/shared-types/src/pagination.ts` with `zCursor`, `zLimit` (integer 1–100, default 50), and `zPaginatedResponse` generic factory; create `packages/shared-types/src/date.ts` with `zIso8601` (ISO8601 string validation, no range — range is applied in transaction schema)
+- [x] **T-01-04** — Create `packages/shared-types/src/pagination.ts` with `zCursor`, `zLimit` (integer 1–100, default 50), and `zPaginatedResponse` generic factory; create `packages/shared-types/src/date.ts` with `zIso8601` (ISO8601 string validation, no range — range is applied in transaction schema)
   - Slice: 1
   - Files: `packages/shared-types/src/pagination.ts`, `packages/shared-types/src/date.ts`
   - Deps: T-01-01
   - Acceptance: REQ-WAL-08; tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-01-05** — Create `packages/shared-types/src/schemas/wallet.ts` with `CreateWalletRequestSchema` (name 1–64 trimmed, currency from zCurrency), `WalletResponseSchema`, `ListWalletsResponseSchema`; create `packages/shared-types/src/schemas/category.ts` with `CreateCustomCategoryRequestSchema`, `CategoryResponseSchema`, `ListCategoriesResponseSchema`; create `packages/shared-types/src/schemas/transaction.ts` with `AddTransactionRequestSchema` (amount as plain decimal string — no cents transform here), `TransactionResponseSchema`, `ListTransactionsResponseSchema`, `ListTransactionsByWalletQuerySchema` (from/to/type/categoryId/limit/cursor), `ListTransactionsByCategoryQuerySchema` (categoryId required, from/to/limit/cursor)
+- [x] **T-01-05** — Create `packages/shared-types/src/schemas/wallet.ts` with `CreateWalletRequestSchema` (name 1–64 trimmed, currency from zCurrency), `WalletResponseSchema`, `ListWalletsResponseSchema`; create `packages/shared-types/src/schemas/category.ts` with `CreateCustomCategoryRequestSchema`, `CategoryResponseSchema`, `ListCategoriesResponseSchema`; create `packages/shared-types/src/schemas/transaction.ts` with `AddTransactionRequestSchema` (amount as plain decimal string — no cents transform here), `TransactionResponseSchema`, `ListTransactionsResponseSchema`, `ListTransactionsByWalletQuerySchema` (from/to/type/categoryId/limit/cursor), `ListTransactionsByCategoryQuerySchema` (categoryId required, from/to/limit/cursor)
   - Slice: 1
   - Files: `packages/shared-types/src/schemas/wallet.ts`, `packages/shared-types/src/schemas/category.ts`, `packages/shared-types/src/schemas/transaction.ts`
   - Deps: T-01-01, T-01-02, T-01-03, T-01-04
   - Acceptance: REQ-WAL-01, REQ-WAL-06, REQ-WAL-08, REQ-CAT-01, REQ-CAT-02, REQ-TXN-01, REQ-VAL-06, REQ-VAL-07; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-01-06** — Create `packages/shared-types/src/index.ts` barrel exporting all schemas, inferred DTO types, currencies, categories, pagination helpers, and date helpers; verify the package builds cleanly
+- [x] **T-01-06** — Create `packages/shared-types/src/index.ts` barrel exporting all schemas, inferred DTO types, currencies, categories, pagination helpers, and date helpers; verify the package builds cleanly
   - Slice: 1
   - Files: `packages/shared-types/src/index.ts`
   - Deps: T-01-01, T-01-02, T-01-03, T-01-04, T-01-05

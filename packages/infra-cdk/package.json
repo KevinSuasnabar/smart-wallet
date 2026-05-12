@@ -11,5 +11,12 @@
     "synth": "echo 'cdk synth not configured yet' && exit 0",
     "deploy": "echo 'cdk deploy not configured yet' && exit 0",
     "test": "echo 'no tests yet' && exit 0"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.189.0",
+    "constructs": "^10.4.2"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.189.0"
   }
 }

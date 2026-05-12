@@ -10,5 +10,11 @@
     "lint": "echo 'no lint targets yet' && exit 0",
     "typecheck": "echo 'no ts files yet' && exit 0",
     "test": "echo 'no tests yet' && exit 0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.4",
+    "serverless": "^3.40.0",
+    "serverless-esbuild": "^1.53.0",
+    "serverless-offline": "^13.9.0"
   }
 }
