@@ -34,7 +34,8 @@ provider:
   environment:
     NODE_OPTIONS: --enable-source-maps
     IS_OFFLINE: ${env:IS_OFFLINE, 'false'}
-    AWS_REGION: ${aws:region}
+    # AWS_REGION is RESERVED by Lambda runtime — it is auto-injected. Setting it manually fails deploy.
+    # Lambda code reads process.env.AWS_REGION via the runtime injection.
     # Production deploy: TABLE_NAME and GSI1_NAME resolved from CDK SSM outputs (set as env vars
     # before sls deploy --stage prod, see Slice 14). Local: defaults to smart-wallet-local.
     TABLE_NAME: ${env:TABLE_NAME, 'smart-wallet-local'}
@@ -88,7 +89,7 @@ package:
 
 functions:
   createWallet:
-    handler: ../api/src/handlers/wallet/createWallet.main
+    handler: src/handlers/wallet/createWallet.main
     events:
       - httpApi:
           path: /wallets
@@ -97,7 +98,7 @@ functions:
             name: cognitoJwt
 
   listWallets:
-    handler: ../api/src/handlers/wallet/listWallets.main
+    handler: src/handlers/wallet/listWallets.main
     events:
       - httpApi:
           path: /wallets
@@ -106,7 +107,7 @@ functions:
             name: cognitoJwt
 
   getWallet:
-    handler: ../api/src/handlers/wallet/getWallet.main
+    handler: src/handlers/wallet/getWallet.main
     events:
       - httpApi:
           path: /wallets/{walletId}
@@ -115,7 +116,7 @@ functions:
             name: cognitoJwt
 
   addTransaction:
-    handler: ../api/src/handlers/transaction/addTransaction.main
+    handler: src/handlers/transaction/addTransaction.main
     events:
       - httpApi:
           path: /wallets/{walletId}/transactions
@@ -124,7 +125,7 @@ functions:
             name: cognitoJwt
 
   listTransactionsByWallet:
-    handler: ../api/src/handlers/transaction/listTransactionsByWallet.main
+    handler: src/handlers/transaction/listTransactionsByWallet.main
     events:
       - httpApi:
           path: /wallets/{walletId}/transactions
@@ -133,7 +134,7 @@ functions:
             name: cognitoJwt
 
   listTransactionsByCategory:
-    handler: ../api/src/handlers/transaction/listTransactionsByCategory.main
+    handler: src/handlers/transaction/listTransactionsByCategory.main
     events:
       - httpApi:
           path: /transactions
@@ -142,7 +143,7 @@ functions:
             name: cognitoJwt
 
   listCategories:
-    handler: ../api/src/handlers/category/listCategories.main
+    handler: src/handlers/category/listCategories.main
     events:
       - httpApi:
           path: /categories
@@ -151,7 +152,7 @@ functions:
             name: cognitoJwt
 
   createCustomCategory:
-    handler: ../api/src/handlers/category/createCustomCategory.main
+    handler: src/handlers/category/createCustomCategory.main
     events:
       - httpApi:
           path: /categories
@@ -160,7 +161,7 @@ functions:
             name: cognitoJwt
 
   deleteCustomCategory:
-    handler: ../api/src/handlers/category/deleteCustomCategory.main
+    handler: src/handlers/category/deleteCustomCategory.main
     events:
       - httpApi:
           path: /categories/{categoryId}

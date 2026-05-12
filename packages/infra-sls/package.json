@@ -9,10 +9,13 @@
     "deploy": "serverless deploy",
     "dev": "IS_OFFLINE=true DYNAMODB_ENDPOINT=http://localhost:8000 serverless offline start",
     "package": "serverless package",
-    "lint": "echo 'no lint targets yet' && exit 0",
-    "typecheck": "echo 'no ts files yet' && exit 0",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
     "test": "echo 'no tests yet' && exit 0",
     "init:local": "tsx scripts/init-local-table.ts"
+  },
+  "dependencies": {
+    "@smart-wallet/api": "workspace:*"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.1045.0",
