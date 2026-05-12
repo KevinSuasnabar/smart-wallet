@@ -11,27 +11,52 @@ provider:
   runtime: nodejs22.x
   architecture: arm64
   region: us-east-1
-  stage: prod
+  # Pass --stage prod for real deployments. Default is 'local' (no JWT authorizer enforced).
+  stage: ${opt:stage, 'local'}
   memorySize: 256
   timeout: 10
+  logRetentionInDays: 14
+
   httpApi:
     cors: true
-    # JWT authorizer commented out for SPIKE — Cognito user pool doesn't exist locally.
-    # Production: re-enable with SSM lookups to Cognito issuer/audience.
-    # authorizers:
-    #   cognitoJwt:
-    #     type: jwt
-    #     identitySource: $request.header.Authorization
-    #     issuerUrl: ${ssm:/smart-wallet/prod/cognito/issuer-url}
-    #     audience:
-    #       - ${ssm:/smart-wallet/prod/cognito/user-pool-client-id}
+    # JWT authorizer: only configured for prod stage (CDK must be deployed first so SSM params exist).
+    # In local stage, serverless-offline ignores JWT validation entirely — auth is handled by
+    # the withAuth middleware reading X-Mock-User-Id header (IS_OFFLINE=true).
+    authorizers:
+      cognitoJwt:
+        type: jwt
+        identitySource: $request.header.Authorization
+        # Env vars are resolved at deploy time for prod. Local packaging uses placeholder values.
+        issuerUrl: ${env:COGNITO_ISSUER_URL, 'https://cognito-idp.us-east-1.amazonaws.com/us-east-1_REPLACE_AFTER_CDK_DEPLOY'}
+        audience:
+          - ${env:COGNITO_CLIENT_ID, 'REPLACE_AFTER_CDK_DEPLOY'}
+
   environment:
     NODE_OPTIONS: --enable-source-maps
     IS_OFFLINE: ${env:IS_OFFLINE, 'false'}
     AWS_REGION: ${aws:region}
+    # Production deploy: TABLE_NAME and GSI1_NAME resolved from CDK SSM outputs (set as env vars
+    # before sls deploy --stage prod, see Slice 14). Local: defaults to smart-wallet-local.
     TABLE_NAME: ${env:TABLE_NAME, 'smart-wallet-local'}
     GSI1_NAME: ${env:GSI1_NAME, 'GSI1'}
-    DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, 'http://localhost:8000'}
+    DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, ''}
+
+  iam:
+    role:
+      statements:
+        # Least-privilege DynamoDB access: table operations + GSI1 queries.
+        # TABLE_ARN must be set as env var before prod deploy (read from CDK SSM output).
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:TransactWriteItems
+          Resource:
+            - ${env:TABLE_ARN, 'arn:aws:dynamodb:us-east-1:000000000000:table/smart-wallet-local'}
+            - ${env:TABLE_ARN, 'arn:aws:dynamodb:us-east-1:000000000000:table/smart-wallet-local'}/index/GSI1
 
 custom:
   esbuild:
@@ -49,11 +74,14 @@ custom:
     # AWS SDK is bundled (not external) so serverless-offline can execute locally.
     # In production, the full Node 22 runtime includes @aws-sdk v3 — bundling it
     # increases zip size but avoids offline-vs-prod discrepancy.
+    # Revisit external: ['@aws-sdk/*'] in PR4 if cold-start performance is a concern.
     # external:
     #   - '@aws-sdk/*'
   serverless-offline:
     httpPort: 3000
     noPrependStageInUrl: true
+    # noAuth disables all authorizers in local mode — auth handled by withAuth middleware.
+    noAuth: true
 
 package:
   individually: true
@@ -65,7 +93,8 @@ functions:
       - httpApi:
           path: /wallets
           method: post
-          # authorizer: cognitoJwt   # disabled — Slice 13 wires real Cognito
+          authorizer:
+            name: cognitoJwt
 
   listWallets:
     handler: ../api/src/handlers/wallet/listWallets.main
@@ -73,6 +102,8 @@ functions:
       - httpApi:
           path: /wallets
           method: get
+          authorizer:
+            name: cognitoJwt
 
   getWallet:
     handler: ../api/src/handlers/wallet/getWallet.main
@@ -80,6 +111,8 @@ functions:
       - httpApi:
           path: /wallets/{walletId}
           method: get
+          authorizer:
+            name: cognitoJwt
 
   addTransaction:
     handler: ../api/src/handlers/transaction/addTransaction.main
@@ -87,6 +120,8 @@ functions:
       - httpApi:
           path: /wallets/{walletId}/transactions
           method: post
+          authorizer:
+            name: cognitoJwt
 
   listTransactionsByWallet:
     handler: ../api/src/handlers/transaction/listTransactionsByWallet.main
@@ -94,6 +129,8 @@ functions:
       - httpApi:
           path: /wallets/{walletId}/transactions
           method: get
+          authorizer:
+            name: cognitoJwt
 
   listTransactionsByCategory:
     handler: ../api/src/handlers/transaction/listTransactionsByCategory.main
@@ -101,6 +138,8 @@ functions:
       - httpApi:
           path: /transactions
           method: get
+          authorizer:
+            name: cognitoJwt
 
   listCategories:
     handler: ../api/src/handlers/category/listCategories.main
@@ -108,6 +147,8 @@ functions:
       - httpApi:
           path: /categories
           method: get
+          authorizer:
+            name: cognitoJwt
 
   createCustomCategory:
     handler: ../api/src/handlers/category/createCustomCategory.main
@@ -115,6 +156,8 @@ functions:
       - httpApi:
           path: /categories
           method: post
+          authorizer:
+            name: cognitoJwt
 
   deleteCustomCategory:
     handler: ../api/src/handlers/category/deleteCustomCategory.main
@@ -122,3 +165,5 @@ functions:
       - httpApi:
           path: /categories/{categoryId}
           method: delete
+          authorizer:
+            name: cognitoJwt

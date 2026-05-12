@@ -26,7 +26,8 @@
     "ddb:up": "docker compose up -d dynamodb dynamodb-admin",
     "ddb:down": "docker compose down",
     "ddb:logs": "docker compose logs -f dynamodb",
-    "ddb:init": "npx tsx packages/infra-sls/scripts/init-local-table.ts",
+    "ddb:init": "pnpm --filter @smart-wallet/infra-sls init:local",
+    "smoke": "bash packages/infra-sls/smoke-tests/smoke.sh",
     "prepare": "husky"
   },
   "devDependencies": {

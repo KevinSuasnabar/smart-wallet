@@ -459,21 +459,21 @@
 
 ## Slice 12 — Serverless config
 
-- [ ] **T-12-01** — Complete `packages/infra-sls/serverless.yml`: provider block (nodejs22.x, arm64, us-east-1 from SSM, memorySize 256, timeout 10, logRetentionInDays 14, NODE_OPTIONS, TABLE_NAME, GSI1_NAME env vars from SSM); httpApi block with CORS and `cognitoJwt` JWT authorizer (issuerUrl + audience from SSM); plugins `serverless-esbuild` + `serverless-offline`; custom esbuild block (`bundle: true`, `minify: true`, `sourcemap: true`, `target: node22`, `platform: node`, `format: esm`, `banner` with createRequire shim, `external: ['@aws-sdk/*']`); serverless-offline block (httpPort 3000, noPrependStageInUrl, useChildProcesses); `package.individually: true`
+- [x] **T-12-01** — Complete `packages/infra-sls/serverless.yml`: provider block (nodejs22.x, arm64, us-east-1 from SSM, memorySize 256, timeout 10, logRetentionInDays 14, NODE_OPTIONS, TABLE_NAME, GSI1_NAME env vars from SSM); httpApi block with CORS and `cognitoJwt` JWT authorizer (issuerUrl + audience from SSM); plugins `serverless-esbuild` + `serverless-offline`; custom esbuild block (`bundle: true`, `minify: true`, `sourcemap: true`, `target: node22`, `platform: node`, `format: esm`, `banner` with createRequire shim, `external: ['@aws-sdk/*']`); serverless-offline block (httpPort 3000, noPrependStageInUrl, useChildProcesses); `package.individually: true`
   - Slice: 12
   - Files: `packages/infra-sls/serverless.yml`
   - Deps: T-09-01
   - Acceptance: Scaffolding only. `sls package --noDeploy` exits 0 locally. tsc green.
   - Est: M
 
-- [ ] **T-12-02** — Add all 9 function entries to `packages/infra-sls/serverless.yml`: `createWallet`, `listWallets`, `getWallet`, `addTransaction`, `listTransactionsByWallet`, `listTransactionsByCategory`, `listCategories`, `createCustomCategory`, `deleteCustomCategory`; each with handler path, httpApi event (path + method + authorizer), `iamRoleStatements` (least privilege: `PutItem` for creates, `Query` for lists, `GetItem` for gets, `UpdateItem` for deletes/soft-deletes, `TransactWriteItems` + `GetItem` for addTransaction, `Query` on `TABLE_ARN/index/GSI1` for listByCategory)
+- [x] **T-12-02** — Add all 9 function entries to `packages/infra-sls/serverless.yml`: `createWallet`, `listWallets`, `getWallet`, `addTransaction`, `listTransactionsByWallet`, `listTransactionsByCategory`, `listCategories`, `createCustomCategory`, `deleteCustomCategory`; each with handler path, httpApi event (path + method + authorizer), `iamRoleStatements` (least privilege: `PutItem` for creates, `Query` for lists, `GetItem` for gets, `UpdateItem` for deletes/soft-deletes, `TransactWriteItems` + `GetItem` for addTransaction, `Query` on `TABLE_ARN/index/GSI1` for listByCategory)
   - Slice: 12
   - Files: `packages/infra-sls/serverless.yml`
   - Deps: T-12-01, T-09-04
   - Acceptance: REQ-AUTH-01, NFR-ESM-01; `sls package --noDeploy` exits 0; all 9 function entries present; IAM resources reference SSM ARNs; tsc green.
   - Est: M
 
-- [ ] **T-12-03** — Create `packages/infra-sls/scripts/init-local-table.ts`: uses `@aws-sdk/client-dynamodb` to `CreateTable` with the same schema (PK/SK, GSI1, TTL on `ttl`) in DDB Local at `http://localhost:8000`; idempotent (catches `ResourceInUseException`); create `packages/infra-sls/.env.local.example` with `IS_OFFLINE=true`, `TABLE_NAME=smart-wallet-local`, `GSI1_NAME=GSI1`, `AWS_REGION=us-east-1`; add `init:local` script to `packages/infra-sls/package.json`
+- [x] **T-12-03** — Create `packages/infra-sls/scripts/init-local-table.ts`: uses `@aws-sdk/client-dynamodb` to `CreateTable` with the same schema (PK/SK, GSI1, TTL on `ttl`) in DDB Local at `http://localhost:8000`; idempotent (catches `ResourceInUseException`); create `packages/infra-sls/.env.local.example` with `IS_OFFLINE=true`, `TABLE_NAME=smart-wallet-local`, `GSI1_NAME=GSI1`, `AWS_REGION=us-east-1`; add `init:local` script to `packages/infra-sls/package.json`
   - Slice: 12
   - Files: `packages/infra-sls/scripts/init-local-table.ts`, `packages/infra-sls/.env.local.example`, `packages/infra-sls/package.json`
   - Deps: T-12-01
@@ -484,14 +484,14 @@
 
 ## Slice 13 — Local dev verification
 
-- [ ] **T-13-01** — Run full local dev stack: `pnpm ddb:up` → `pnpm init:local` → `sls offline start` (or `pnpm dev`). Exercise all 9 endpoints via Bruno collection or curl. Document smoke-test results. Fix any wiring bugs discovered (adapter method signatures, middleware composition order, `exactOptionalPropertyTypes` edge cases in mappers, ESM `.js` import extension issues).
+- [x] **T-13-01** — Run full local dev stack: `pnpm ddb:up` → `pnpm init:local` → `sls offline start` (or `pnpm dev`). Exercise all 9 endpoints via Bruno collection or curl. Document smoke-test results. Fix any wiring bugs discovered (adapter method signatures, middleware composition order, `exactOptionalPropertyTypes` edge cases in mappers, ESM `.js` import extension issues).
   - Slice: 13
   - Files: Any files requiring bug fixes from smoke-testing (expected: mappers, container.ts, serverless.yml)
   - Deps: T-12-03, T-10-03, T-09-04
   - Acceptance: REQ-AUTH-05, NFR-DEV-01, NFR-CODE-01; all 9 endpoints return expected status codes as per spec §3 scenarios; `pnpm typecheck && pnpm lint` exits 0 across all packages.
   - Est: L
 
-- [ ] **T-13-02** — Create `packages/infra-sls/bruno/` Bruno collection with 9 request files (one per endpoint) pre-filled with example request bodies using USD and PEN currencies, predefined category IDs (`income:salary`, `expense:food`), and `X-Mock-User-Id` header; create `packages/infra-sls/LOCAL_DEV.md` documenting local dev startup sequence, mock user header, example curl commands for each endpoint
+- [x] **T-13-02** — Create `packages/infra-sls/bruno/` Bruno collection with 9 request files (one per endpoint) pre-filled with example request bodies using USD and PEN currencies, predefined category IDs (`income:salary`, `expense:food`), and `X-Mock-User-Id` header; create `packages/infra-sls/LOCAL_DEV.md` documenting local dev startup sequence, mock user header, example curl commands for each endpoint
   - Slice: 13
   - Files: `packages/infra-sls/bruno/*.bru` (9 files), `packages/infra-sls/LOCAL_DEV.md`
   - Deps: T-13-01
