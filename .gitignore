@@ -15,10 +15,11 @@ cdk.out/
 .aws-sam/
 .cdk.staging/
 
-# Environment
+# Environment — ignore ALL .env files except the template.
+# Even "public" build-time values (VITE_*) should NOT be committed as a matter of
+# policy: one consistent rule across the codebase, no "is this one safe?" debates.
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
 # IDE
