@@ -207,14 +207,14 @@
 
 ## Slice 5 — Wallets API + queries
 
-- [ ] **T-05-01** Create `walletsApi.ts` typed API module
+- [x] **T-05-01** Create `walletsApi.ts` typed API module
   - **Slice**: 5
   - **Files**: `packages/web/src/features/wallets/walletsApi.ts`
   - **Deps**: T-02-02
   - **Acceptance**: REQ-CODE-04, REQ-VAL-01. `walletsApi.list`, `walletsApi.get`, `walletsApi.create` use `apiClient` and DTOs from `@smart-wallet/shared-types` only. No duplicate type definitions. Typecheck green.
   - **Est**: S
 
-- [ ] **T-05-02** Create `queries.ts` with `walletKeys` factory + hooks
+- [x] **T-05-02** Create `queries.ts` with `walletKeys` factory + hooks
   - **Slice**: 5
   - **Files**: `packages/web/src/features/wallets/queries.ts`
   - **Deps**: T-05-01
