@@ -2,10 +2,14 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
+// Vite config runs as ESM (package.json has "type": "module"), so __dirname is
+// undefined. Use import.meta.dirname (Node 20.11+) for the project root.
+const projectRoot = import.meta.dirname;
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src') },
+    alias: { '@': path.resolve(projectRoot, './src') },
   },
   // amazon-cognito-identity-js depends on the Node 'buffer' package which references the
   // Node-only `global`. In the browser this is undefined — alias it to globalThis to fix
