@@ -16,6 +16,9 @@ import type { TransactionRepository } from '../TransactionRepository.js';
 import type { TransactionType } from '../TransactionType.js';
 import { CurrencyMismatch } from '../TransactionError.js';
 import type { TransactionError } from '../TransactionError.js';
+import { CategoryId } from '../../category/CategoryId.js';
+import type { CategoryRepository } from '../../category/CategoryRepository.js';
+import type { CategoryError } from '../../category/CategoryError.js';
 
 export interface AddTransactionInput {
   /** Raw userId string from JWT — validated here before use. */
@@ -27,7 +30,7 @@ export interface AddTransactionInput {
   amountCents: number;
   /** Currency from the request — cross-checked against wallet.currency. */
   currency: Currency;
-  /** categoryId string — structural check done in Transaction.create(); semantic check deferred to T-05-05. */
+  /** categoryId string — validated via CategoryId.create() + categoryRepo.validateCategoryForTransaction(). */
   categoryId: string;
   description: string | null;
   occurredAt: Date;
@@ -36,16 +39,16 @@ export interface AddTransactionInput {
 export interface AddTransactionDeps {
   walletRepo: WalletRepository;
   transactionRepo: TransactionRepository;
-  /**
-   * TODO (T-05-05): CategoryRepository is NOT wired in PR1.
-   * Category semantic validation (exists + type-match) is added in Slice 5.
-   * For now, Transaction.create() performs structural shape check only (predefined prefix or UUID).
-   */
+  /** Wired in T-05-05: validates category existence, ownership, and type-match. */
+  categoryRepo: CategoryRepository;
   idGen: IdGenerator;
   clock: Clock;
 }
 
-export type AddTransactionOutput = Result<Transaction, TransactionError | WalletError | UserError>;
+export type AddTransactionOutput = Result<
+  Transaction,
+  TransactionError | WalletError | UserError | CategoryError
+>;
 
 export const makeAddTransaction =
   (deps: AddTransactionDeps) =>
@@ -72,16 +75,30 @@ export const makeAddTransaction =
       return err(new CurrencyMismatch());
     }
 
-    // 4. Construct Money VO (amount must be strictly positive integer cents)
+    // 4a. Parse + validate categoryId VO
+    const categoryIdResult = CategoryId.create(input.categoryId);
+    if (!categoryIdResult.ok) return err(categoryIdResult.error);
+
+    // 4b. Validate category: existence, ownership, not-deleted, and type-match
+    //     Predefined IDs are validated structurally (no DB lookup).
+    //     Custom IDs are looked up in the repository.
+    const categoryValidation = await deps.categoryRepo.validateCategoryForTransaction({
+      userId,
+      categoryId: categoryIdResult.value,
+      transactionType: input.type,
+    });
+    if (!categoryValidation.ok) return err(categoryValidation.error);
+
+    // 5. Construct Money VO (amount must be strictly positive integer cents)
     const moneyResult = Money.create(input.amountCents, wallet.currency);
     if (!moneyResult.ok) return err(moneyResult.error);
 
     const money = moneyResult.value;
 
-    // 5. Generate a new TransactionId
+    // 6. Generate a new TransactionId
     const transactionId = TransactionId.generate(deps.idGen);
 
-    // 6. Construct Transaction aggregate — enforces occurredAt range, description length, and categoryId shape
+    // 7. Construct Transaction aggregate — enforces occurredAt range, description length, and categoryId shape
     const transactionResult = Transaction.create({
       id: transactionId,
       walletId,
@@ -98,11 +115,11 @@ export const makeAddTransaction =
 
     const transaction = transactionResult.value;
 
-    // 7. Signed balance delta: income increases (+), expense decreases (−)
+    // 8. Signed balance delta: income increases (+), expense decreases (−)
     const walletBalanceDelta =
       input.type === 'income' ? money.amount : money.negate().amount;
 
-    // 8. Persist — TransactWriteItems (2-op path; idempotency 3-op path is Slice 10 / PR3)
+    // 9. Persist — TransactWriteItems (2-op path; idempotency 3-op path is Slice 10 / PR3)
     await deps.transactionRepo.add({ transaction, walletBalanceDelta: walletBalanceDelta });
 
     return ok(transaction);

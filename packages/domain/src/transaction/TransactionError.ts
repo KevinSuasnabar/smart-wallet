@@ -70,16 +70,6 @@ export class UnknownCategory extends DomainError {
   }
 }
 
-/** Category exists but its type does not match the transaction type. */
-export class CategoryTypeMismatch extends DomainError {
-  readonly tag = 'domain.transaction.category_type_mismatch' as const;
-  readonly httpStatus = 409 as const;
-
-  constructor(message = 'Category type does not match transaction type') {
-    super(message);
-  }
-}
-
 export type TransactionError =
   | InvalidTransactionId
   | InvalidMoneyAmount
@@ -87,5 +77,4 @@ export type TransactionError =
   | InvalidCategoryReference
   | InvalidOccurredAt
   | InvalidDescription
-  | UnknownCategory
-  | CategoryTypeMismatch;
+  | UnknownCategory;

@@ -228,35 +228,35 @@
 
 ## Slice 5 — Category aggregate
 
-- [ ] **T-05-01** — Create `packages/domain/src/category/CategoryType.ts` (`type CategoryType = 'income' | 'expense'`); create `packages/domain/src/category/CategoryId.ts` with helpers `isPredefinedCategoryId(id: string): boolean` (delegates via `import type` to shared-types) and `isUuidCategoryId(id: string): boolean`; create `packages/domain/src/category/CategoryError.ts` with: `InvalidName` (tag `category.invalid_name`, 400), `NotFound` (tag `category.not_found`, 404), `PredefinedCannotBeDeleted` (tag `category.predefined_immutable`, 400)
+- [x] **T-05-01** — Create `packages/domain/src/category/CategoryType.ts` (`type CategoryType = 'income' | 'expense'`); create `packages/domain/src/category/CategoryId.ts` with helpers `isPredefinedCategoryId(id: string): boolean` (delegates via `import type` to shared-types) and `isUuidCategoryId(id: string): boolean`; create `packages/domain/src/category/CategoryError.ts` with: `InvalidName` (tag `category.invalid_name`, 400), `NotFound` (tag `category.not_found`, 404), `PredefinedCannotBeDeleted` (tag `category.predefined_immutable`, 400)
   - Slice: 5
   - Files: `packages/domain/src/category/CategoryType.ts`, `packages/domain/src/category/CategoryId.ts`, `packages/domain/src/category/CategoryError.ts`
   - Deps: T-02-02, T-01-02
   - Acceptance: REQ-CAT-04, REQ-VAL-02; tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-05-02** — Create `packages/domain/src/category/Category.ts` entity: props (`categoryId: string` UUID, `userId: string`, `name: string`, `type: CategoryType`, `createdAt: string`, `updatedAt?: string`, `deletedAt?: string`); static `Category.create()` validating non-empty trimmed name ≤32 chars, returning `Result<Category, CategoryError.InvalidName>`; `isDeleted(): boolean`
+- [x] **T-05-02** — Create `packages/domain/src/category/Category.ts` entity: props (`categoryId: string` UUID, `userId: string`, `name: string`, `type: CategoryType`, `createdAt: string`, `updatedAt?: string`, `deletedAt?: string`); static `Category.create()` validating non-empty trimmed name ≤32 chars, returning `Result<Category, CategoryError.InvalidName>`; `isDeleted(): boolean`
   - Slice: 5
   - Files: `packages/domain/src/category/Category.ts`
   - Deps: T-02-01, T-05-01
   - Acceptance: REQ-CAT-02, REQ-VAL-07; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-05-03** — Create `packages/domain/src/category/CategoryRepository.ts` port interface: `create(category: Category): Promise<void>`, `findById(userId: UserId, categoryId: string): Promise<Category | null>`, `listCustomByUser(userId: UserId): Promise<Category[]>`, `softDelete(userId: UserId, categoryId: string, at: Date): Promise<void>`
+- [x] **T-05-03** — Create `packages/domain/src/category/CategoryRepository.ts` port interface: `create(category: Category): Promise<void>`, `findById(userId: UserId, categoryId: string): Promise<Category | null>`, `listCustomByUser(userId: UserId): Promise<Category[]>`, `softDelete(userId: UserId, categoryId: string, at: Date): Promise<void>`
   - Slice: 5
   - Files: `packages/domain/src/category/CategoryRepository.ts`
   - Deps: T-05-02
   - Acceptance: REQ-CAT-03, REQ-CAT-05, REQ-DEL-01; tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-05-04** — Create `packages/domain/src/category/usecases/ListCategories.ts`: merges `PREDEFINED_CATEGORIES` (from shared-types, type-only import) with `repo.listCustomByUser()` result; returns `{ predefined: PredefinedCategory[]; custom: Category[] }`; create `packages/domain/src/category/usecases/CreateCustomCategory.ts`: validates name, creates Category, calls `repo.create()`; create `packages/domain/src/category/usecases/DeleteCustomCategory.ts`: loads by id (404 if not found), calls `repo.softDelete()`, returns `Result<void, CategoryError.NotFound>`
+- [x] **T-05-04** — Create `packages/domain/src/category/usecases/ListCategories.ts`: merges `PREDEFINED_CATEGORIES` (from shared-types, type-only import) with `repo.listCustomByUser()` result; returns `{ predefined: PredefinedCategory[]; custom: Category[] }`; create `packages/domain/src/category/usecases/CreateCustomCategory.ts`: validates name, creates Category, calls `repo.create()`; create `packages/domain/src/category/usecases/DeleteCustomCategory.ts`: loads by id (404 if not found), calls `repo.softDelete()`, returns `Result<void, CategoryError.NotFound>`
   - Slice: 5
   - Files: `packages/domain/src/category/usecases/ListCategories.ts`, `packages/domain/src/category/usecases/CreateCustomCategory.ts`, `packages/domain/src/category/usecases/DeleteCustomCategory.ts`
   - Deps: T-05-02, T-05-03
   - Acceptance: REQ-CAT-01, REQ-CAT-02, REQ-CAT-03, REQ-CAT-05, REQ-DEL-01, REQ-DEL-02, REQ-DEL-04; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-05-05** — Wire category validation into `AddTransaction.ts`: replace TODO stub with real category check — load category via `CategoryRepository.findById`; if null or deleted → `UnknownCategory`; if type doesn't match transaction type → `CategoryTypeMismatch`; handle predefined category IDs (no DB lookup needed, just validate against `PREDEFINED_CATEGORY_IDS`); update `packages/domain/src/index.ts` to re-export category aggregate, errors, repository port, use cases
+- [x] **T-05-05** — Wire category validation into `AddTransaction.ts`: replace TODO stub with real category check — load category via `CategoryRepository.findById`; if null or deleted → `UnknownCategory`; if type doesn't match transaction type → `CategoryTypeMismatch`; handle predefined category IDs (no DB lookup needed, just validate against `PREDEFINED_CATEGORY_IDS`); update `packages/domain/src/index.ts` to re-export category aggregate, errors, repository port, use cases
   - Slice: 5
   - Files: `packages/domain/src/transaction/usecases/AddTransaction.ts`, `packages/domain/src/index.ts`
   - Deps: T-04-05, T-05-03
