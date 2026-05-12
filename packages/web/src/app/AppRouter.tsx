@@ -8,15 +8,12 @@ import { ConfirmSignupPage } from '../features/auth/pages/ConfirmSignupPage.js';
 import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage.js';
 import { ConfirmForgotPasswordPage } from '../features/auth/pages/ConfirmForgotPasswordPage.js';
 import { NotFoundPage } from '../components/common/NotFoundPage.js';
+import { WalletsListPage } from '../features/wallets/pages/WalletsListPage.js';
+import { WalletDetailPage } from '../features/wallets/pages/WalletDetailPage.js';
+import { CreateWalletPage } from '../features/wallets/pages/CreateWalletPage.js';
 import { routes } from './routes.js';
 
-// Stubs for PR2 (wallets) and PR3 (transactions/categories/settings)
-const WalletsListPage = () => (
-  <div className="p-6">
-    <h1 className="text-xl font-semibold">Billeteras (próximamente)</h1>
-  </div>
-);
-
+// Stubs for PR3 (transactions/categories/settings)
 const SettingsPage = () => (
   <div className="p-6">
     <h1 className="text-xl font-semibold">Configuración (próximamente)</h1>
@@ -51,6 +48,8 @@ export const AppRouter = () => (
           element={<Navigate to={routes.wallets} replace />}
         />
         <Route path={routes.wallets} element={<WalletsListPage />} />
+        <Route path={routes.walletsNew} element={<CreateWalletPage />} />
+        <Route path="/wallets/:walletId" element={<WalletDetailPage />} />
         <Route path={routes.categories} element={<CategoriesPage />} />
         <Route path={routes.settings} element={<SettingsPage />} />
       </Route>

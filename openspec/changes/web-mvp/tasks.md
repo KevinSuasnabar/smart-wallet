@@ -207,14 +207,14 @@
 
 ## Slice 5 — Wallets API + queries
 
-- [ ] **T-05-01** Create `walletsApi.ts` typed API module
+- [x] **T-05-01** Create `walletsApi.ts` typed API module
   - **Slice**: 5
   - **Files**: `packages/web/src/features/wallets/walletsApi.ts`
   - **Deps**: T-02-02
   - **Acceptance**: REQ-CODE-04, REQ-VAL-01. `walletsApi.list`, `walletsApi.get`, `walletsApi.create` use `apiClient` and DTOs from `@smart-wallet/shared-types` only. No duplicate type definitions. Typecheck green.
   - **Est**: S
 
-- [ ] **T-05-02** Create `queries.ts` with `walletKeys` factory + hooks
+- [x] **T-05-02** Create `queries.ts` with `walletKeys` factory + hooks
   - **Slice**: 5
   - **Files**: `packages/web/src/features/wallets/queries.ts`
   - **Deps**: T-05-01
@@ -232,21 +232,21 @@
   - **Acceptance**: REQ-TXN-02, REQ-TXN-03, REQ-TXN-04, REQ-TXN-05, REQ-WAL-06, REQ-UI-01, REQ-A11Y-02. `CurrencySelect` shows only USD/PEN. `DatePickerField` defaults to now, enforces max 1 day future, allows 5 years past. `MoneyInput` accepts decimal ≥ 0, at most 2 decimal places. Every field has an associated `<Label>` (accessible). Spanish (voseo) labels from `t.*`. Typecheck green.
   - **Est**: L
 
-- [ ] **T-06-02** Create `WalletCard`, `WalletBalanceHeader`, `WalletsListSkeleton`, `EmptyWalletsState`
+- [x] **T-06-02** Create `WalletCard`, `WalletBalanceHeader`, `WalletsListSkeleton`, `EmptyWalletsState`
   - **Slice**: 6
   - **Files**: `packages/web/src/features/wallets/components/WalletCard.tsx`, `packages/web/src/features/wallets/components/WalletBalanceHeader.tsx`, `packages/web/src/features/wallets/components/WalletsListSkeleton.tsx`, `packages/web/src/features/wallets/components/EmptyWalletsState.tsx`
   - **Deps**: T-02-01, T-01-04
   - **Acceptance**: REQ-WAL-01, REQ-WAL-05, REQ-WAL-07, REQ-UI-03, REQ-MNY-01. `WalletCard` shows name, currency (read-only), balance via `formatCurrency`. `WalletsListSkeleton` shows card-shaped skeletons (no spinner). `EmptyWalletsState` has CTA link to `/wallets/new`. Spanish strings from `t.wallets.*`. Typecheck green.
   - **Est**: M
 
-- [ ] **T-06-03** Create `WalletForm` component
+- [x] **T-06-03** Create `WalletForm` component
   - **Slice**: 6
   - **Files**: `packages/web/src/features/wallets/components/WalletForm.tsx`
   - **Deps**: T-06-01
   - **Acceptance**: REQ-WAL-06, REQ-VAL-01, REQ-VAL-02, REQ-VAL-03, REQ-ERR-02. RHF + Zod resolver using `CreateWalletRequestSchema` from `@smart-wallet/shared-types`. Name field (1–64 chars). CurrencySelect (USD/PEN). Submit disabled when invalid or pending. Inline field errors in Spanish via shadcn `<FormMessage>`. Typecheck green.
   - **Est**: M
 
-- [ ] **T-06-04** Create `WalletsListPage` + `WalletDetailPage` + `CreateWalletPage`
+- [x] **T-06-04** Create `WalletsListPage` + `WalletDetailPage` + `CreateWalletPage`
   - **Slice**: 6
   - **Files**: `packages/web/src/features/wallets/pages/WalletsListPage.tsx`, `packages/web/src/features/wallets/pages/WalletDetailPage.tsx`, `packages/web/src/features/wallets/pages/CreateWalletPage.tsx`
   - **Deps**: T-06-02, T-06-03, T-05-02
@@ -257,14 +257,14 @@
 
 ## Slice 7 — Responsive nav wired
 
-- [ ] **T-07-01** Wire BottomTabBar + Sidebar + Fab with real nav links and active state
+- [x] **T-07-01** Wire BottomTabBar + Sidebar + Fab with real nav links and active state
   - **Slice**: 7
   - **Files**: `packages/web/src/components/layout/BottomTabBar.tsx` (update), `packages/web/src/components/layout/Sidebar.tsx` (update), `packages/web/src/components/layout/Fab.tsx` (update)
   - **Deps**: T-06-04, T-04-02
   - **Acceptance**: REQ-NAV-03, REQ-NAV-04, REQ-UI-01, REQ-UI-02, REQ-A11Y-01. BottomTabBar: 4 items (Wallets → `/wallets`, FAB → `/transactions/new`, Categories → `/categories`, Settings → `/settings`). Active item highlighted via `useLocation`. FAB icon has `aria-label`. Safe-area inset applied. Smoke-test on Chrome DevTools mobile emulation: bottom nav visible at < 768 px, sidebar visible at ≥ 768 px. Spanish nav labels from `t.*`. Typecheck + lint green.
   - **Est**: M
 
-- [ ] **T-07-02** PR2 end-to-end smoke test (manual)
+- [x] **T-07-02** PR2 end-to-end smoke test (manual)
   - **Slice**: 7
   - **Files**: none (verification task)
   - **Deps**: T-07-01
