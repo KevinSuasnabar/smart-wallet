@@ -104,28 +104,28 @@
 
 ## Slice 2 — Domain shared base
 
-- [ ] **T-02-01** — Create `packages/domain/src/shared/Result.ts` with `Result<T, E>` discriminated union (`{ ok: true; value: T } | { ok: false; error: E }`), `ok()`, `err()`, `isOk()`, `isErr()`, `mapResult()`, `chainResult()` helper functions
+- [x] **T-02-01** — Create `packages/domain/src/shared/Result.ts` with `Result<T, E>` discriminated union (`{ ok: true; value: T } | { ok: false; error: E }`), `ok()`, `err()`, `isOk()`, `isErr()`, `mapResult()`, `chainResult()` helper functions
   - Slice: 2
   - Files: `packages/domain/src/shared/Result.ts`
   - Deps: T-00-02
   - Acceptance: REQ-VAL-04 (domain has no Zod dep); tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-02-02** — Create `packages/domain/src/shared/DomainError.ts` abstract base class with `tag: string` and `httpStatus: 400 | 404 | 409` abstract properties; create `packages/domain/src/shared/DomainEvent.ts` interface; create `packages/domain/src/shared/Clock.ts` interface (`now(): Date`); create `packages/domain/src/shared/IdGenerator.ts` interface (`uuid(): string`)
+- [x] **T-02-02** — Create `packages/domain/src/shared/DomainError.ts` abstract base class with `tag: string` and `httpStatus: 400 | 404 | 409` abstract properties; create `packages/domain/src/shared/DomainEvent.ts` interface; create `packages/domain/src/shared/Clock.ts` interface (`now(): Date`); create `packages/domain/src/shared/IdGenerator.ts` interface (`uuid(): string`)
   - Slice: 2
   - Files: `packages/domain/src/shared/DomainError.ts`, `packages/domain/src/shared/DomainEvent.ts`, `packages/domain/src/shared/Clock.ts`, `packages/domain/src/shared/IdGenerator.ts`
   - Deps: T-02-01
   - Acceptance: NFR-ARCH-01 (zero runtime deps in domain); tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-02-03** — Create `packages/domain/src/shared/Entity.ts` generic `Entity<TId>` with `readonly id: TId` and `equals(other: Entity<TId>): boolean`; create `packages/domain/src/shared/AggregateRoot.ts` extending `Entity<TId>` with `private events: DomainEvent[]`, `pullEvents(): DomainEvent[]` (returns and clears); create `packages/domain/src/shared/ValueObject.ts` generic with frozen `readonly props: TProps` and `equals(other)` via JSON comparison
+- [x] **T-02-03** — Create `packages/domain/src/shared/Entity.ts` generic `Entity<TId>` with `readonly id: TId` and `equals(other: Entity<TId>): boolean`; create `packages/domain/src/shared/AggregateRoot.ts` extending `Entity<TId>` with `private events: DomainEvent[]`, `pullEvents(): DomainEvent[]` (returns and clears); create `packages/domain/src/shared/ValueObject.ts` generic with frozen `readonly props: TProps` and `equals(other)` via JSON comparison
   - Slice: 2
   - Files: `packages/domain/src/shared/Entity.ts`, `packages/domain/src/shared/AggregateRoot.ts`, `packages/domain/src/shared/ValueObject.ts`
   - Deps: T-02-02
   - Acceptance: NFR-ARCH-01; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-02-04** — Create `packages/domain/src/index.ts` barrel (initially re-exports shared/ only); verify domain package has zero runtime dependencies (check package.json has no `dependencies` other than workspace cross-references)
+- [x] **T-02-04** — Create `packages/domain/src/index.ts` barrel (initially re-exports shared/ only); verify domain package has zero runtime dependencies (check package.json has no `dependencies` other than workspace cross-references)
   - Slice: 2
   - Files: `packages/domain/src/index.ts`
   - Deps: T-02-01, T-02-02, T-02-03
