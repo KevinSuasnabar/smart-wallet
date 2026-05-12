@@ -345,35 +345,35 @@
 
 ## Slice 8 — API middleware + composition root
 
-- [ ] **T-08-01** — Create `packages/api/src/middleware/compose.ts`: `compose(...middlewares)(handler)` applies middleware outside-in; define the `HandlerContext` generic type that middlewares augment (`userId`, `body`, `query`, `path`); create `packages/api/src/shared/response.ts` with `ok()`, `created()`, `noContent()`, `formatJson()` helpers returning `APIGatewayProxyResultV2`
+- [x] **T-08-01** — Create `packages/api/src/middleware/compose.ts`: `compose(...middlewares)(handler)` applies middleware outside-in; define the `HandlerContext` generic type that middlewares augment (`userId`, `body`, `query`, `path`); create `packages/api/src/shared/response.ts` with `ok()`, `created()`, `noContent()`, `formatJson()` helpers returning `APIGatewayProxyResultV2`
   - Slice: 8
   - Files: `packages/api/src/middleware/compose.ts`, `packages/api/src/shared/response.ts`
   - Deps: T-00-02
   - Acceptance: Scaffolding only; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-08-02** — Create `packages/api/src/middleware/withAuth.ts`: when `IS_OFFLINE=true`, reads `X-Mock-User-Id` header (falls back to `LOCAL_USER_ID` env); otherwise reads `event.requestContext.authorizer.jwt.claims.sub`; constructs `UserId` VO; adds `ctx.userId`; creates a synthetic claims shape in offline mode so downstream code sees uniform structure; create `packages/api/src/adapters/cognito/extractUserId.ts` helper (used by withAuth)
+- [x] **T-08-02** — Create `packages/api/src/middleware/withAuth.ts`: when `IS_OFFLINE=true`, reads `X-Mock-User-Id` header (falls back to `LOCAL_USER_ID` env); otherwise reads `event.requestContext.authorizer.jwt.claims.sub`; constructs `UserId` VO; adds `ctx.userId`; creates a synthetic claims shape in offline mode so downstream code sees uniform structure; create `packages/api/src/adapters/cognito/extractUserId.ts` helper (used by withAuth)
   - Slice: 8
   - Files: `packages/api/src/middleware/withAuth.ts`, `packages/api/src/adapters/cognito/extractUserId.ts`
   - Deps: T-08-01, T-03-01
   - Acceptance: REQ-AUTH-01, REQ-AUTH-02, REQ-AUTH-05; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-08-03** — Create `packages/api/src/middleware/withValidation.ts`: takes `{ body?, query?, path? }` Zod schema config; `JSON.parse` with try/catch for malformed body (returns 400 `invalid_json`); runs Zod parse, on failure returns 400 with `{ error: "validation_failed", details: ZodError.flatten() }`; on success augments `ctx.body`, `ctx.query`, `ctx.path`; create `packages/api/src/middleware/withErrorHandler.ts`: wraps entire handler in try/catch; `DomainError` instances → `error.httpStatus` + `{ error: error.tag, message: error.message }`; unknown → 500 + `{ error: "internal_error", message: "An unexpected error occurred." }` + full error logged via logger
+- [x] **T-08-03** — Create `packages/api/src/middleware/withValidation.ts`: takes `{ body?, query?, path? }` Zod schema config; `JSON.parse` with try/catch for malformed body (returns 400 `invalid_json`); runs Zod parse, on failure returns 400 with `{ error: "validation_failed", details: ZodError.flatten() }`; on success augments `ctx.body`, `ctx.query`, `ctx.path`; create `packages/api/src/middleware/withErrorHandler.ts`: wraps entire handler in try/catch; `DomainError` instances → `error.httpStatus` + `{ error: error.tag, message: error.message }`; unknown → 500 + `{ error: "internal_error", message: "An unexpected error occurred." }` + full error logged via logger
   - Slice: 8
   - Files: `packages/api/src/middleware/withValidation.ts`, `packages/api/src/middleware/withErrorHandler.ts`
   - Deps: T-08-01
   - Acceptance: REQ-VAL-01, REQ-VAL-02, REQ-VAL-03; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-08-04** — Create `packages/api/src/shared/errors.ts`: `mapDomainError(error: DomainError): APIGatewayProxyResultV2` mapping `error.httpStatus` → HTTP status + JSON body `{ error: error.tag, message: error.message }`; create `packages/api/src/shared/idempotency.ts`: `computeIdempotencyHash(userId: string, walletId: string, key: string): string` — SHA-256 via `node:crypto`, first 32 hex chars; create `packages/api/src/shared/logger.ts`: `log.info(msg, fields)` / `log.error(msg, err, fields)` using `console.log(JSON.stringify(...))` with `{ level, msg, ts, ...fields }`
+- [x] **T-08-04** — Create `packages/api/src/shared/errors.ts`: `mapDomainError(error: DomainError): APIGatewayProxyResultV2` mapping `error.httpStatus` → HTTP status + JSON body `{ error: error.tag, message: error.message }`; create `packages/api/src/shared/idempotency.ts`: `computeIdempotencyHash(userId: string, walletId: string, key: string): string` — SHA-256 via `node:crypto`, first 32 hex chars; create `packages/api/src/shared/logger.ts`: `log.info(msg, fields)` / `log.error(msg, err, fields)` using `console.log(JSON.stringify(...))` with `{ level, msg, ts, ...fields }`
   - Slice: 8
   - Files: `packages/api/src/shared/errors.ts`, `packages/api/src/shared/idempotency.ts`, `packages/api/src/shared/logger.ts`
   - Deps: T-02-02
   - Acceptance: REQ-IDEM-06; tsc green; eslint clean. Manual check: `computeIdempotencyHash("U1", "W1", "key-abc")` returns a 32-char hex string.
   - Est: M
 
-- [ ] **T-08-05** — Create `packages/api/src/composition/container.ts` with module-scope DDB singletons and one factory function per use case (9 factories: `makeCreateWallet`, `makeListWallets`, `makeGetWallet`, `makeAddTransaction`, `makeListTransactionsByWallet`, `makeListTransactionsByCategory`, `makeListCategories`, `makeCreateCustomCategory`, `makeDeleteCustomCategory`); create `packages/api/src/index.ts` as a minimal barrel (optional, for future tooling)
+- [x] **T-08-05** — Create `packages/api/src/composition/container.ts` with module-scope DDB singletons and one factory function per use case (9 factories: `makeCreateWallet`, `makeListWallets`, `makeGetWallet`, `makeAddTransaction`, `makeListTransactionsByWallet`, `makeListTransactionsByCategory`, `makeListCategories`, `makeCreateCustomCategory`, `makeDeleteCustomCategory`); create `packages/api/src/index.ts` as a minimal barrel (optional, for future tooling)
   - Slice: 8
   - Files: `packages/api/src/composition/container.ts`, `packages/api/src/index.ts`
   - Deps: T-07-05, T-07-06, T-07-07, T-07-08, T-03-05, T-03-06, T-04-05, T-04-06, T-05-04

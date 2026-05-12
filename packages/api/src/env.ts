@@ -9,4 +9,6 @@ export const env = {
   tableName: process.env.TABLE_NAME ?? 'smart-wallet-local',
   gsi1Name: process.env.GSI1_NAME ?? 'GSI1',
   dynamoEndpoint: process.env.DYNAMODB_ENDPOINT ?? 'http://localhost:8000',
+  /** Fallback userId when running offline and no `X-Mock-User-Id` header is provided. */
+  localUserId: process.env.LOCAL_USER_ID,
 } as const;

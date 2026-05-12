@@ -29,5 +29,12 @@ export type { CategoryItem } from './mappers/CategoryMapper.js';
 
 // ── Repositories ──────────────────────────────────────────────────────────
 export { DynamoDBWalletRepository } from './repositories/DynamoDBWalletRepository.js';
-export { DynamoDBTransactionRepository } from './repositories/DynamoDBTransactionRepository.js';
+export {
+  DynamoDBTransactionRepository,
+  isTransactionCanceledException,
+} from './repositories/DynamoDBTransactionRepository.js';
+export type {
+  TransactionCanceledError,
+  CancellationReason,
+} from './repositories/DynamoDBTransactionRepository.js';
 export { DynamoDBCategoryRepository } from './repositories/DynamoDBCategoryRepository.js';

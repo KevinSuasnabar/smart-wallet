@@ -66,6 +66,17 @@ export function conflict(error: string): APIGatewayProxyResultV2 {
 }
 
 /**
+ * Build an HTTP 401 Unauthorized response.
+ */
+export function unauthorized(): APIGatewayProxyResultV2 {
+  return {
+    statusCode: 401,
+    headers: JSON_CONTENT_TYPE,
+    body: JSON.stringify({ error: 'unauthorized' }),
+  };
+}
+
+/**
  * Build an HTTP 500 Internal Server Error response.
  * Does NOT expose internal error details — always returns a generic message.
  */
