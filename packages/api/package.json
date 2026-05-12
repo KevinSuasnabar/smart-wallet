@@ -14,7 +14,13 @@
     "test": "echo 'no tests yet' && exit 0"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.785.0",
+    "@aws-sdk/lib-dynamodb": "^3.785.0",
     "@smart-wallet/domain": "workspace:*",
-    "@smart-wallet/shared-types": "workspace:*"
+    "@smart-wallet/shared-types": "workspace:*",
+    "aws-jwt-verify": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147"
   }
 }
