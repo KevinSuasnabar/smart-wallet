@@ -5,6 +5,7 @@ import type {
 } from 'aws-lambda';
 import { env } from '../env.js';
 import { unauthorized } from '../shared/response.js';
+import { decodeJwtPayloadUnsafe } from '../shared/jwt.js';
 
 export interface AuthenticatedEvent {
   userId: string;
@@ -16,16 +17,18 @@ export type AuthenticatedHandler = (
 ) => Promise<APIGatewayProxyResultV2>;
 
 /**
- * Extracts `userId` from JWT claims.
+ * Extracts `userId` from the request.
  *
- * In production, API Gateway HTTP API JWT Authorizer has already validated
- * the token — we just read `requestContext.authorizer.jwt.claims.sub`.
+ * Production: API Gateway HTTP API JWT Authorizer has already validated the
+ * Cognito token — we just read `requestContext.authorizer.jwt.claims.sub`.
  *
- * In offline mode (`env.isOffline === true`) we read the `X-Mock-User-Id`
- * header so local development works without a real Cognito pool.
- *
- * Falls back to `LOCAL_USER_ID` env var when the header is absent in offline
- * mode.
+ * Offline (`env.isOffline === true`): we accept three sources, in priority
+ * order, so any client can hit `localhost:3000` without a real Cognito pool:
+ *   1. `X-Mock-User-Id` header — fast path for curl/smoke.sh tests
+ *   2. `Authorization: Bearer <JWT>` — payload decoded WITHOUT signature
+ *      verification (the web frontend and Postman use this against prod
+ *      Cognito, and we want the same client to also work against local)
+ *   3. `LOCAL_USER_ID` env var — final fallback for headless dev scenarios
  */
 export const withAuth =
   (handler: AuthenticatedHandler) =>
@@ -33,13 +36,8 @@ export const withAuth =
     let userId: string | undefined;
 
     if (env.isOffline) {
-      // Offline mode: accept mock header (case-insensitive via API GW normalisation)
-      userId =
-        event.headers?.['x-mock-user-id'] ??
-        event.headers?.['X-Mock-User-Id'] ??
-        env.localUserId;
+      userId = resolveOfflineUserId(event);
     } else {
-      // Production: API Gateway has already validated the JWT
       const evt = event as APIGatewayProxyEventV2WithJWTAuthorizer;
       const sub = evt.requestContext.authorizer?.jwt?.claims?.sub;
       userId = typeof sub === 'string' ? sub : undefined;
@@ -49,3 +47,22 @@ export const withAuth =
 
     return handler({ userId, raw: event });
   };
+
+const resolveOfflineUserId = (event: APIGatewayProxyEventV2): string | undefined => {
+  const headers = event.headers ?? {};
+
+  const mockHeader = headers['x-mock-user-id'] ?? headers['X-Mock-User-Id'];
+  if (typeof mockHeader === 'string' && mockHeader.length > 0) {
+    return mockHeader;
+  }
+
+  const authHeader = headers['authorization'] ?? headers['Authorization'];
+  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+    const payload = decodeJwtPayloadUnsafe(authHeader.slice('Bearer '.length));
+    if (payload && typeof payload.sub === 'string' && payload.sub.length > 0) {
+      return payload.sub;
+    }
+  }
+
+  return env.localUserId;
+};

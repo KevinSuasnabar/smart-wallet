@@ -14,12 +14,18 @@
 | Forma de probar | ¿Crear usuario en AWS? |
 |---|---|
 | Smoke test **local** (`pnpm smoke`) | ❌ NO — header `X-Mock-User-Id` con cualquier UUID v4 |
-| Curl/Postman **local** | ❌ NO — header `X-Mock-User-Id` con cualquier UUID v4 |
+| Curl/Postman **local** con `X-Mock-User-Id` | ❌ NO — cualquier UUID v4 |
+| Curl/Postman **local** con `Authorization: Bearer <JWT>` | ✅ SÍ pero usás tu mismo usuario de Cognito de prod |
+| Frontend **local** apuntando a backend local | ✅ SÍ pero usás tu mismo usuario de Cognito de prod |
 | Smoke test **contra prod** (`pnpm smoke:prod`) | ❌ NO — el script crea uno efímero y lo borra al final |
 | Curl/Postman **contra prod** | ✅ SÍ — necesitás un usuario real en Cognito |
-| Frontend (`pnpm dev` en web) | ✅ SÍ — el SDK Cognito exige credenciales reales |
+| Frontend (`pnpm dev` en web) apuntando a prod | ✅ SÍ — el SDK Cognito exige credenciales reales |
 
-**Para local:** el authorizer de Cognito está **deshabilitado** (`stage: local`). La API identifica al usuario por el header `X-Mock-User-Id`. Usás cualquier UUID v4 — el backend lo trata como si fuera el `sub` claim de un JWT real.
+**Para local:** el authorizer de Cognito está **deshabilitado** (`stage: local`). La API local acepta **tres formas** de identificar al usuario, en este orden de prioridad:
+
+1. Header `X-Mock-User-Id: <UUID>` — el más rápido, ideal para curl/smoke
+2. Header `Authorization: Bearer <JWT>` — el JWT se decodifica **sin verificar la firma** y se usa el `sub` claim como `userId`. Útil para usar el frontend o Postman con tu usuario real de Cognito de prod
+3. Variable `LOCAL_USER_ID` — fallback si no hay ningún header (headless tests)
 
 **UUID por defecto del smoke test:**
 ```
@@ -136,13 +142,23 @@ curl -s http://localhost:3000/wallets \
   | python3 -m json.tool
 ```
 
-#### Opción C — Postman
+#### Opción C — Postman contra local
 
-Importá `packages/infra-sls/postman/smart-wallet-mvp.postman_collection.json`. Configurá las variables de colección:
+Importá `packages/infra-sls/postman/smart-wallet-mvp.postman_collection.json`. Tenés dos modos de auth:
+
+**Modo A — Header mock (sin Cognito)**
 - `baseUrl` → `http://localhost:3000`
-- `userId` → `11111111-1111-4111-8111-111111111111`
+- Header `X-Mock-User-Id` → `11111111-1111-4111-8111-111111111111`
+- Headers de auth (Authorization) → vacíos o desactivados
 
-(Las variables de Cognito quedan vacías en local — la colección está pensada también para correr contra prod.)
+**Modo B — JWT real (mismo usuario que en prod)**
+- `baseUrl` → `http://localhost:3000`
+- Header `Authorization` → `Bearer <JWT>` (el JWT lo obtenés con el pre-request script de la collection, igual que contra prod)
+- Header `X-Mock-User-Id` → vacío o desactivado
+
+Ambos modos funcionan porque el backend local (`withAuth` en offline mode) acepta los dos. **El mock header tiene prioridad** si los dos están presentes.
+
+> 💡 Usá el Modo B cuando querés que tus datos locales coincidan con un usuario específico de Cognito (ej: para reproducir un bug de prod). Usá el Modo A para testing rápido sin tocar Cognito.
 
 ---
 
@@ -159,16 +175,18 @@ pnpm ddb:down
 
 ## Auth en modo local — cómo funciona por dentro
 
-`serverless-offline` **NO** ejecuta el authorizer JWT de Cognito configurado en `serverless.yml`. Todas las requests pasan derecho.
+`serverless-offline` **NO** ejecuta el authorizer JWT de Cognito configurado en `serverless.yml`. Todas las requests pasan derecho hasta tu Lambda.
 
-El middleware `withAuth` detecta `IS_OFFLINE=true` y:
-1. Lee el header `X-Mock-User-Id`
-2. Si no viene → responde `401 Unauthorized`
-3. Si viene → trata ese UUID como el `sub` del usuario
+El middleware `withAuth` detecta `IS_OFFLINE=true` y resuelve el `userId` en este orden:
 
-En **producción**, el mismo middleware lee `event.requestContext.authorizer.jwt.claims.sub` (provisto por el authorizer real).
+1. **`X-Mock-User-Id` header** → si está presente, lo usa como `userId` directo. Fast-path para curl/smoke tests sin Cognito.
+2. **`Authorization: Bearer <JWT>` header** → si el header anterior no estaba, decodifica el JWT payload (sin verificar firma) y usa el claim `sub`. Esto permite que el frontend o Postman usen el mismo flujo de auth (Cognito real) tanto contra local como contra prod.
+3. **`LOCAL_USER_ID` env var** → fallback final.
+4. Si nada de lo anterior → **401 Unauthorized**.
 
-Por eso podés desarrollar el backend sin tocar Cognito jamás.
+> ⚠️ **Por qué no verificamos la firma del JWT en local:** la verificación real la hace API Gateway en prod **antes** que la Lambda corra. En local API Gateway no existe (serverless-offline no implementa el authorizer JWT). Implementar verificación nosotros agregaría dependencia de `jwk-rsa` + fetch a `https://cognito-idp.<region>.amazonaws.com/<pool-id>/.well-known/jwks.json` solo para dev — no agrega seguridad real porque el atacante en local ya tiene control total del proceso. Confiamos en el `sub` del payload como dato de identificación, no como prueba de identidad.
+
+En **producción**, el mismo middleware lee `event.requestContext.authorizer.jwt.claims.sub` directamente — la firma ya fue validada por el JWT authorizer del HTTP API.
 
 ---
 
@@ -327,33 +345,59 @@ curl -s -X DELETE http://localhost:3000/categories/<categoryId> \
 
 ## Frontend local
 
-> ⚠️ El frontend `packages/web` actualmente está configurado para autenticarse contra el **User Pool de Cognito en producción**. Esto es así porque no tenemos un Cognito mock — el SDK `amazon-cognito-identity-js` exige un User Pool real.
+> ✅ **El frontend en `pnpm dev` apunta automáticamente al backend local (`http://localhost:3000`).** El SDK Cognito sigue hablando con el User Pool de prod para autenticación (porque no hay Cognito mock), pero las llamadas a la API van a tu Lambda local.
 
-**Implicancia:** para probar el frontend en local **necesitás un usuario real de Cognito**.
+### Cómo funciona la magia
 
-Dos opciones:
+Vite carga los env files en orden de prioridad (mayor abajo):
 
-### Frontend → Backend en prod (más simple)
-1. `cd packages/web && pnpm dev` → abre `http://localhost:5173`
-2. Login con un usuario real de Cognito
-3. El SPA pega contra la API en AWS (configurada via `VITE_API_BASE_URL` en `packages/web/.env.local`)
-
-### Frontend → Backend local (más raro, no recomendado todavía)
-Requiere parchear el `ApiClient` para que mande `X-Mock-User-Id` en lugar de `Authorization: Bearer ...`, o desactivar el `withAuth` local para que también acepte JWT real. **No está soportado out-of-the-box** — abrir un issue si lo necesitás.
-
-### Crear un usuario de prueba en Cognito (cuando lo necesites)
-
-Requiere credenciales AWS válidas de tu cuenta:
-```bash
-aws cognito-idp admin-create-user \
-  --user-pool-id us-east-1_XXXX \
-  --username test@example.com \
-  --user-attributes Name=email,Value=test@example.com Name=email_verified,Value=true \
-  --temporary-password 'TempPass123!' \
-  --region us-east-1
+```
+.env
+.env.local                   ← contiene Cognito IDs (gitignored)
+.env.development             ← contiene VITE_API_BASE_URL=http://localhost:3000 (committeado)
+.env.development.local       ← override personal (gitignored)
 ```
 
-> 🔐 El comando `admin-create-user` requiere permisos IAM válidos sobre tu User Pool. Sin credenciales AWS de tu cuenta, no podés crear usuarios. **No es público.**
+En `pnpm dev`:
+- `VITE_API_BASE_URL` → viene de `.env.development` → `http://localhost:3000` ✅
+- `VITE_COGNITO_USER_POOL_ID` / `VITE_COGNITO_CLIENT_ID` → vienen de `.env.local` → User Pool de prod ✅
+
+En `pnpm build` (producción):
+- Vite ignora `.env.development` → `VITE_API_BASE_URL` viene de `.env.production` → API de prod ✅
+- Cognito IDs siguen viniendo de donde corresponda
+
+### Flujo completo
+
+```bash
+# Terminal 1 — backend local
+pnpm ddb:up
+pnpm ddb:init
+cd packages/infra-sls && pnpm dev   # serverless-offline :3000
+
+# Terminal 2 — frontend local
+cd packages/web && pnpm dev          # vite :5173
+```
+
+1. Abrís `http://localhost:5173`
+2. Login con tu usuario real de Cognito (el que creaste en el User Pool de prod)
+3. Cognito devuelve un JWT firmado
+4. El frontend hace `POST http://localhost:3000/wallets` con `Authorization: Bearer <JWT>`
+5. El backend local decodifica el JWT sin verificar firma, extrae `sub`, lo usa como `userId`
+6. Tu wallet queda guardada en DDB Local bajo TU `sub` real → cuando deployes a prod, **tus datos locales NO se transfieren** (DDB Local es in-memory, DDB de prod es separado)
+
+### Crear un usuario de Cognito (si todavía no tenés)
+
+Si no tenés un usuario, mirá la sección [Probar contra producción → Crear un usuario](#paso-1--crear-un-usuario-una-sola-vez) — mismo proceso. Una vez creado, lo usás para login tanto contra local como contra prod.
+
+### Overrides personales
+
+Si querés temporalmente que el frontend apunte a prod desde local (ej: para reproducir un bug que solo pasa en prod), creá `packages/web/.env.development.local` con:
+
+```env
+VITE_API_BASE_URL=https://f4vv2f72ua.execute-api.us-east-1.amazonaws.com
+```
+
+`.env.development.local` está gitignored y sobrescribe `.env.development`. Es el override más local en la cadena de prioridad de Vite.
 
 ---
 
