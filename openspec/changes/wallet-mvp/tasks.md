@@ -267,14 +267,14 @@
 
 ## Slice 6 — Zod transforms + boundary validation
 
-- [ ] **T-06-01** — Create `packages/shared-types/src/money.ts` with `decimalStringToCents(value: string, currency: Currency): number` (throws on >2 decimal places, negative, zero); `centsToDecimalString(cents: number, currency: Currency): string` (always 2 decimal places, signed); `zDecimalString` Zod schema (regex validates decimal format, strictly positive, ≤2 decimal places)
+- [x] **T-06-01** — Create `packages/shared-types/src/money.ts` with `decimalStringToCents(value: string, currency: Currency): number` (throws on >2 decimal places, negative, zero); `centsToDecimalString(cents: number, currency: Currency): string` (always 2 decimal places, signed); `zDecimalString` Zod schema (regex validates decimal format, strictly positive, ≤2 decimal places)
   - Slice: 6
   - Files: `packages/shared-types/src/money.ts`
   - Deps: T-01-01
   - Acceptance: REQ-MNY-01, REQ-MNY-02, REQ-MNY-03, REQ-MNY-04, REQ-MNY-05; tsc green; eslint clean. Manual check: `decimalStringToCents("12.34", "USD") === 1234`, `centsToDecimalString(1234, "USD") === "12.34"`, `centsToDecimalString(-200, "USD") === "-2.00"`, `centsToDecimalString(500, "PEN") === "5.00"`.
   - Est: M
 
-- [ ] **T-06-02** — Update `packages/shared-types/src/schemas/transaction.ts`: replace plain `amount: z.string()` with `zDecimalString` (positive, ≤2 decimal places) in `AddTransactionRequestSchema`; add `zOccurredAt` (ISO8601 string only — range validation done in domain); update `packages/shared-types/src/schemas/common.ts`: add `zCategoryId` that accepts either a predefined category ID string OR a UUID v4 (use `.refine()` or a union); update `packages/shared-types/src/index.ts` barrel to export money helpers
+- [x] **T-06-02** — Update `packages/shared-types/src/schemas/transaction.ts`: replace plain `amount: z.string()` with `zDecimalString` (positive, ≤2 decimal places) in `AddTransactionRequestSchema`; add `zOccurredAt` (ISO8601 string only — range validation done in domain); update `packages/shared-types/src/schemas/common.ts`: add `zCategoryId` that accepts either a predefined category ID string OR a UUID v4 (use `.refine()` or a union); update `packages/shared-types/src/index.ts` barrel to export money helpers
   - Slice: 6
   - Files: `packages/shared-types/src/schemas/transaction.ts`, `packages/shared-types/src/schemas/common.ts`, `packages/shared-types/src/index.ts`
   - Deps: T-06-01, T-01-05, T-01-06
@@ -285,56 +285,56 @@
 
 ## Slice 7 — DynamoDB adapters + key builders
 
-- [ ] **T-07-01** — Create `packages/api/src/shared/env.ts`: typed reader for `TABLE_NAME`, `GSI1_NAME`, `AWS_REGION`, `IS_OFFLINE` (boolean from string), `LOCAL_USER_ID?`; throws at module load if required vars are absent; create `packages/api/src/adapters/dynamodb/DynamoDBClient.ts`: module-scope `DynamoDBClient` + `DynamoDBDocumentClient` singletons with `marshallOptions: { removeUndefinedValues: true, convertEmptyValues: false, convertClassInstanceToMap: false }` and offline endpoint branch
+- [x] **T-07-01** — Create `packages/api/src/shared/env.ts`: typed reader for `TABLE_NAME`, `GSI1_NAME`, `AWS_REGION`, `IS_OFFLINE` (boolean from string), `LOCAL_USER_ID?`; throws at module load if required vars are absent; create `packages/api/src/adapters/dynamodb/DynamoDBClient.ts`: module-scope `DynamoDBClient` + `DynamoDBDocumentClient` singletons with `marshallOptions: { removeUndefinedValues: true, convertEmptyValues: false, convertClassInstanceToMap: false }` and offline endpoint branch
   - Slice: 7
   - Files: `packages/api/src/shared/env.ts`, `packages/api/src/adapters/dynamodb/DynamoDBClient.ts`
   - Deps: T-00-01, T-00-02
   - Acceptance: Scaffolding only; tsc green; eslint clean. Verify `removeUndefinedValues: true` is present (critical for `attribute_not_exists` filters).
   - Est: S
 
-- [ ] **T-07-02** — Create `packages/api/src/adapters/dynamodb/keyBuilders.ts` with `keyForWallet`, `keyForTransaction`, `keyForTransactionGsi1`, `keyForCategory`, `keyForIdempotency` pure functions matching the DDB schema in proposal §4.2; create `packages/api/src/adapters/dynamodb/cursorCodec.ts` with `encodeCursor(lastKey: Record<string, unknown>): string` (base64 JSON) and `decodeCursor(cursor: string): Record<string, unknown>` (base64 JSON; returns undefined on invalid input)
+- [x] **T-07-02** — Create `packages/api/src/adapters/dynamodb/keyBuilders.ts` with `keyForWallet`, `keyForTransaction`, `keyForTransactionGsi1`, `keyForCategory`, `keyForIdempotency` pure functions matching the DDB schema in proposal §4.2; create `packages/api/src/adapters/dynamodb/cursorCodec.ts` with `encodeCursor(lastKey: Record<string, unknown>): string` (base64 JSON) and `decodeCursor(cursor: string): Record<string, unknown>` (base64 JSON; returns undefined on invalid input)
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/keyBuilders.ts`, `packages/api/src/adapters/dynamodb/cursorCodec.ts`
   - Deps: T-07-01
   - Acceptance: Scaffolding only; tsc green; eslint clean. Keys must match exactly: `USER#{userId}`, `WALLET#{walletId}`, `TXN#{walletId}#{occurredAtISO}#{transactionId}`, `CATEGORY#{categoryId}`, `IDEMPOTENCY#{hash32}`, `CAT#{categoryId}#{occurredAtISO}#{transactionId}` (GSI1SK).
   - Est: S
 
-- [ ] **T-07-03** — Create `packages/api/src/adapters/dynamodb/mappers/WalletMapper.ts` with `toItem(wallet: Wallet): Record<string, unknown>` (adds `entityType: "Wallet"`, omits `deletedAt` when not set via conditional spread) and `fromItem(item: Record<string, unknown>): Result<Wallet, DomainError>` (narrows `entityType`, reconstructs entity); create `packages/api/src/adapters/dynamodb/mappers/CategoryMapper.ts` similarly for `Category`
+- [x] **T-07-03** — Create `packages/api/src/adapters/dynamodb/mappers/WalletMapper.ts` with `toItem(wallet: Wallet): Record<string, unknown>` (adds `entityType: "Wallet"`, omits `deletedAt` when not set via conditional spread) and `fromItem(item: Record<string, unknown>): Result<Wallet, DomainError>` (narrows `entityType`, reconstructs entity); create `packages/api/src/adapters/dynamodb/mappers/CategoryMapper.ts` similarly for `Category`
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/mappers/WalletMapper.ts`, `packages/api/src/adapters/dynamodb/mappers/CategoryMapper.ts`
   - Deps: T-07-02, T-03-03, T-05-02
   - Acceptance: REQ-DEL-01; tsc green; eslint clean. Confirm `exactOptionalPropertyTypes` pattern: conditional spread for `deletedAt`, `updatedAt`, `description`.
   - Est: M
 
-- [ ] **T-07-04** — Create `packages/api/src/adapters/dynamodb/mappers/TransactionMapper.ts` with `toItem(txn: Transaction)` (sets `GSI1PK`, `GSI1SK` attributes) and `fromItem(item)` — handles `entityType: "Transaction"`, reconstructs from DDB attributes including GSI keys
+- [x] **T-07-04** — Create `packages/api/src/adapters/dynamodb/mappers/TransactionMapper.ts` with `toItem(txn: Transaction)` (sets `GSI1PK`, `GSI1SK` attributes) and `fromItem(item)` — handles `entityType: "Transaction"`, reconstructs from DDB attributes including GSI keys
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/mappers/TransactionMapper.ts`
   - Deps: T-07-02, T-04-03
   - Acceptance: REQ-TXN-02, REQ-TXN-10; tsc green; eslint clean. Verify `GSI1PK` and `GSI1SK` are set correctly so `listByCategory` query works.
   - Est: M
 
-- [ ] **T-07-05** — Create `packages/api/src/adapters/dynamodb/DynamoDBWalletRepository.ts` implementing `WalletRepository` port: `create()` uses `PutItemCommand`; `findById()` uses `GetItemCommand`, checks `deletedAt` attribute; `listByUser()` uses `QueryCommand` with `begins_with(SK, "WALLET#")` and `FilterExpression: "attribute_not_exists(deletedAt)"`, pagination via `ExclusiveStartKey`/`LastEvaluatedKey` encoded with `cursorCodec`
+- [x] **T-07-05** — Create `packages/api/src/adapters/dynamodb/DynamoDBWalletRepository.ts` implementing `WalletRepository` port: `create()` uses `PutItemCommand`; `findById()` uses `GetItemCommand`, checks `deletedAt` attribute; `listByUser()` uses `QueryCommand` with `begins_with(SK, "WALLET#")` and `FilterExpression: "attribute_not_exists(deletedAt)"`, pagination via `ExclusiveStartKey`/`LastEvaluatedKey` encoded with `cursorCodec`
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/DynamoDBWalletRepository.ts`
   - Deps: T-07-03, T-07-01
   - Acceptance: REQ-WAL-04, REQ-WAL-05, REQ-DEL-02, REQ-DEL-03, REQ-AUTH-03; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-07-06** — Create `packages/api/src/adapters/dynamodb/DynamoDBCategoryRepository.ts` implementing `CategoryRepository` port: `create()` uses `PutItemCommand`; `findById()` uses `GetItemCommand`; `listCustomByUser()` uses `QueryCommand` with `begins_with(SK, "CATEGORY#")` and excludes `deletedAt`; `softDelete()` uses `UpdateItemCommand` setting `deletedAt`
+- [x] **T-07-06** — Create `packages/api/src/adapters/dynamodb/DynamoDBCategoryRepository.ts` implementing `CategoryRepository` port: `create()` uses `PutItemCommand`; `findById()` uses `GetItemCommand`; `listCustomByUser()` uses `QueryCommand` with `begins_with(SK, "CATEGORY#")` and excludes `deletedAt`; `softDelete()` uses `UpdateItemCommand` setting `deletedAt`
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/DynamoDBCategoryRepository.ts`
   - Deps: T-07-03, T-07-01
   - Acceptance: REQ-CAT-01, REQ-CAT-03, REQ-DEL-01, REQ-DEL-02; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-07-07** — Create `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts` implementing `TransactionRepository` port: `add()` with 2-op `TransactWriteItems` (Transaction `Put` + Wallet balance `Update` with `ADD balance :delta`); `listByWallet()` with `QueryCommand`, `begins_with(SK, "TXN#{walletId}#")`, optional `from`/`to` range on SK via `BETWEEN`, excludes `deletedAt`; `listByCategory()` with `QueryCommand` on GSI1, `begins_with(GSI1SK, "CAT#{categoryId}#")`; `findIdempotentTransactionId()` placeholder returning `null` (extended in Slice 10); `findById()` placeholder
+- [x] **T-07-07** — Create `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts` implementing `TransactionRepository` port: `add()` with 2-op `TransactWriteItems` (Transaction `Put` + Wallet balance `Update` with `ADD balance :delta`); `listByWallet()` with `QueryCommand`, `begins_with(SK, "TXN#{walletId}#")`, optional `from`/`to` range on SK via `BETWEEN`, excludes `deletedAt`; `listByCategory()` with `QueryCommand` on GSI1, `begins_with(GSI1SK, "CAT#{categoryId}#")`; `findIdempotentTransactionId()` placeholder returning `null` (extended in Slice 10); `findById()` placeholder
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts`
   - Deps: T-07-04, T-07-01
   - Acceptance: REQ-TXN-03, REQ-TXN-06, REQ-TXN-07, REQ-TXN-10, REQ-DEL-02; tsc green; eslint clean.
   - Est: L
 
-- [ ] **T-07-08** — Create `packages/api/src/adapters/system/SystemClock.ts` implementing `Clock` (`now(): Date { return new Date(); }`); create `packages/api/src/adapters/system/UuidIdGenerator.ts` implementing `IdGenerator` using `crypto.randomUUID()` from Node 22 built-in (no uuid package dependency — confirm during Slice 9 spike that this works with ESM bundler)
+- [x] **T-07-08** — Create `packages/api/src/adapters/system/SystemClock.ts` implementing `Clock` (`now(): Date { return new Date(); }`); create `packages/api/src/adapters/system/UuidIdGenerator.ts` implementing `IdGenerator` using `crypto.randomUUID()` from Node 22 built-in (no uuid package dependency — confirm during Slice 9 spike that this works with ESM bundler)
   - Slice: 7
   - Files: `packages/api/src/adapters/system/SystemClock.ts`, `packages/api/src/adapters/system/UuidIdGenerator.ts`
   - Deps: T-02-02
@@ -345,35 +345,35 @@
 
 ## Slice 8 — API middleware + composition root
 
-- [ ] **T-08-01** — Create `packages/api/src/middleware/compose.ts`: `compose(...middlewares)(handler)` applies middleware outside-in; define the `HandlerContext` generic type that middlewares augment (`userId`, `body`, `query`, `path`); create `packages/api/src/shared/response.ts` with `ok()`, `created()`, `noContent()`, `formatJson()` helpers returning `APIGatewayProxyResultV2`
+- [x] **T-08-01** — Create `packages/api/src/middleware/compose.ts`: `compose(...middlewares)(handler)` applies middleware outside-in; define the `HandlerContext` generic type that middlewares augment (`userId`, `body`, `query`, `path`); create `packages/api/src/shared/response.ts` with `ok()`, `created()`, `noContent()`, `formatJson()` helpers returning `APIGatewayProxyResultV2`
   - Slice: 8
   - Files: `packages/api/src/middleware/compose.ts`, `packages/api/src/shared/response.ts`
   - Deps: T-00-02
   - Acceptance: Scaffolding only; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-08-02** — Create `packages/api/src/middleware/withAuth.ts`: when `IS_OFFLINE=true`, reads `X-Mock-User-Id` header (falls back to `LOCAL_USER_ID` env); otherwise reads `event.requestContext.authorizer.jwt.claims.sub`; constructs `UserId` VO; adds `ctx.userId`; creates a synthetic claims shape in offline mode so downstream code sees uniform structure; create `packages/api/src/adapters/cognito/extractUserId.ts` helper (used by withAuth)
+- [x] **T-08-02** — Create `packages/api/src/middleware/withAuth.ts`: when `IS_OFFLINE=true`, reads `X-Mock-User-Id` header (falls back to `LOCAL_USER_ID` env); otherwise reads `event.requestContext.authorizer.jwt.claims.sub`; constructs `UserId` VO; adds `ctx.userId`; creates a synthetic claims shape in offline mode so downstream code sees uniform structure; create `packages/api/src/adapters/cognito/extractUserId.ts` helper (used by withAuth)
   - Slice: 8
   - Files: `packages/api/src/middleware/withAuth.ts`, `packages/api/src/adapters/cognito/extractUserId.ts`
   - Deps: T-08-01, T-03-01
   - Acceptance: REQ-AUTH-01, REQ-AUTH-02, REQ-AUTH-05; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-08-03** — Create `packages/api/src/middleware/withValidation.ts`: takes `{ body?, query?, path? }` Zod schema config; `JSON.parse` with try/catch for malformed body (returns 400 `invalid_json`); runs Zod parse, on failure returns 400 with `{ error: "validation_failed", details: ZodError.flatten() }`; on success augments `ctx.body`, `ctx.query`, `ctx.path`; create `packages/api/src/middleware/withErrorHandler.ts`: wraps entire handler in try/catch; `DomainError` instances → `error.httpStatus` + `{ error: error.tag, message: error.message }`; unknown → 500 + `{ error: "internal_error", message: "An unexpected error occurred." }` + full error logged via logger
+- [x] **T-08-03** — Create `packages/api/src/middleware/withValidation.ts`: takes `{ body?, query?, path? }` Zod schema config; `JSON.parse` with try/catch for malformed body (returns 400 `invalid_json`); runs Zod parse, on failure returns 400 with `{ error: "validation_failed", details: ZodError.flatten() }`; on success augments `ctx.body`, `ctx.query`, `ctx.path`; create `packages/api/src/middleware/withErrorHandler.ts`: wraps entire handler in try/catch; `DomainError` instances → `error.httpStatus` + `{ error: error.tag, message: error.message }`; unknown → 500 + `{ error: "internal_error", message: "An unexpected error occurred." }` + full error logged via logger
   - Slice: 8
   - Files: `packages/api/src/middleware/withValidation.ts`, `packages/api/src/middleware/withErrorHandler.ts`
   - Deps: T-08-01
   - Acceptance: REQ-VAL-01, REQ-VAL-02, REQ-VAL-03; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-08-04** — Create `packages/api/src/shared/errors.ts`: `mapDomainError(error: DomainError): APIGatewayProxyResultV2` mapping `error.httpStatus` → HTTP status + JSON body `{ error: error.tag, message: error.message }`; create `packages/api/src/shared/idempotency.ts`: `computeIdempotencyHash(userId: string, walletId: string, key: string): string` — SHA-256 via `node:crypto`, first 32 hex chars; create `packages/api/src/shared/logger.ts`: `log.info(msg, fields)` / `log.error(msg, err, fields)` using `console.log(JSON.stringify(...))` with `{ level, msg, ts, ...fields }`
+- [x] **T-08-04** — Create `packages/api/src/shared/errors.ts`: `mapDomainError(error: DomainError): APIGatewayProxyResultV2` mapping `error.httpStatus` → HTTP status + JSON body `{ error: error.tag, message: error.message }`; create `packages/api/src/shared/idempotency.ts`: `computeIdempotencyHash(userId: string, walletId: string, key: string): string` — SHA-256 via `node:crypto`, first 32 hex chars; create `packages/api/src/shared/logger.ts`: `log.info(msg, fields)` / `log.error(msg, err, fields)` using `console.log(JSON.stringify(...))` with `{ level, msg, ts, ...fields }`
   - Slice: 8
   - Files: `packages/api/src/shared/errors.ts`, `packages/api/src/shared/idempotency.ts`, `packages/api/src/shared/logger.ts`
   - Deps: T-02-02
   - Acceptance: REQ-IDEM-06; tsc green; eslint clean. Manual check: `computeIdempotencyHash("U1", "W1", "key-abc")` returns a 32-char hex string.
   - Est: M
 
-- [ ] **T-08-05** — Create `packages/api/src/composition/container.ts` with module-scope DDB singletons and one factory function per use case (9 factories: `makeCreateWallet`, `makeListWallets`, `makeGetWallet`, `makeAddTransaction`, `makeListTransactionsByWallet`, `makeListTransactionsByCategory`, `makeListCategories`, `makeCreateCustomCategory`, `makeDeleteCustomCategory`); create `packages/api/src/index.ts` as a minimal barrel (optional, for future tooling)
+- [x] **T-08-05** — Create `packages/api/src/composition/container.ts` with module-scope DDB singletons and one factory function per use case (9 factories: `makeCreateWallet`, `makeListWallets`, `makeGetWallet`, `makeAddTransaction`, `makeListTransactionsByWallet`, `makeListTransactionsByCategory`, `makeListCategories`, `makeCreateCustomCategory`, `makeDeleteCustomCategory`); create `packages/api/src/index.ts` as a minimal barrel (optional, for future tooling)
   - Slice: 8
   - Files: `packages/api/src/composition/container.ts`, `packages/api/src/index.ts`
   - Deps: T-07-05, T-07-06, T-07-07, T-07-08, T-03-05, T-03-06, T-04-05, T-04-06, T-05-04
@@ -384,7 +384,7 @@
 
 ## Slice 9 — Lambda handlers (SPIKE gate included)
 
-- [ ] **T-09-01** — **[SPIKE GATE]** Create `packages/api/src/handlers/wallet/createWallet.ts`: wire `withErrorHandler → withAuth → withValidation({ body: CreateWalletRequestSchema }) → handler`; extract `userId` + `body`; call `makeCreateWallet().execute()`; serialize response using `centsToDecimalString` for balance; return `created(toWalletResponse(wallet))`; add the `createWallet` function entry to `packages/infra-sls/serverless.yml` (basic skeleton — full Serverless config is Slice 12, but ONE function must exist for the spike); start `pnpm ddb:up` + `sls offline start`; smoke-test with `curl -X POST http://localhost:3000/wallets -H "X-Mock-User-Id: 11111111-1111-1111-1111-111111111111" -H "Content-Type: application/json" -d '{"name":"Cash","currency":"USD"}'`; expected: 201 + JSON body with `walletId`, `balance: "0.00"`. **ON GREEN: proceed to T-09-02. ON FAIL: investigate esbuild ESM issue — if needed, add `format: cjs` as fallback for all functions and document as a follow-up task.**
+- [x] **T-09-01** — **[SPIKE GATE]** Create `packages/api/src/handlers/wallet/createWallet.ts`: wire `withErrorHandler → withAuth → withValidation({ body: CreateWalletRequestSchema }) → handler`; extract `userId` + `body`; call `makeCreateWallet().execute()`; serialize response using `centsToDecimalString` for balance; return `created(toWalletResponse(wallet))`; add the `createWallet` function entry to `packages/infra-sls/serverless.yml` (basic skeleton — full Serverless config is Slice 12, but ONE function must exist for the spike); start `pnpm ddb:up` + `sls offline start`; smoke-test with `curl -X POST http://localhost:3000/wallets -H "X-Mock-User-Id: 11111111-1111-1111-1111-111111111111" -H "Content-Type: application/json" -d '{"name":"Cash","currency":"USD"}'`; expected: 201 + JSON body with `walletId`, `balance: "0.00"`. **ON GREEN: proceed to T-09-02. ON FAIL: investigate esbuild ESM issue — if needed, add `format: cjs` as fallback for all functions and document as a follow-up task.**
   - Slice: 9
   - Files: `packages/api/src/handlers/wallet/createWallet.ts`, `packages/infra-sls/serverless.yml` (partial skeleton)
   - Deps: T-08-05, T-08-01, T-08-02, T-08-03, T-08-04

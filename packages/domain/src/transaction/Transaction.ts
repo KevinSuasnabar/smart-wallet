@@ -23,7 +23,7 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 const MAX_DESCRIPTION_LENGTH = 256;
 
-interface TransactionProps {
+export interface TransactionProps {
   walletId: WalletId;
   userId: UserId;
   type: TransactionType;
@@ -162,6 +162,19 @@ export class Transaction extends AggregateRoot<TransactionId> {
     transaction.addDomainEvent(event);
 
     return ok(transaction);
+  }
+
+  // ── Rehydration ──────────────────────────────────────────────────────────
+
+  /**
+   * Reconstruct a Transaction from persisted storage without running create() validations.
+   * ONLY for use in adapters (DynamoDB repositories). Trusts the stored data is valid.
+   */
+  static rehydrate(
+    id: TransactionId,
+    props: TransactionProps,
+  ): Transaction {
+    return new Transaction(id, props);
   }
 
   // ── Methods ───────────────────────────────────────────────────────────────

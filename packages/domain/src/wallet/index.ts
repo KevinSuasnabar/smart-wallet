@@ -1,6 +1,6 @@
 export { WalletId } from './WalletId.js';
 export { Wallet } from './Wallet.js';
-export type { CreateWalletProps } from './Wallet.js';
+export type { CreateWalletProps, WalletProps } from './Wallet.js';
 export {
   InvalidWalletId,
   InvalidWalletName,

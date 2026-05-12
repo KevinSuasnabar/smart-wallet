@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "echo 'serverless package not configured yet' && exit 0",
+    "build": "serverless package",
     "clean": "rm -rf .serverless .turbo",
-    "deploy": "echo 'serverless deploy not configured yet' && exit 0",
+    "deploy": "serverless deploy",
+    "dev": "IS_OFFLINE=true DYNAMODB_ENDPOINT=http://localhost:8000 serverless offline start",
+    "package": "serverless package",
     "lint": "echo 'no lint targets yet' && exit 0",
     "typecheck": "echo 'no ts files yet' && exit 0",
     "test": "echo 'no tests yet' && exit 0"

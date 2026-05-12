@@ -1,0 +1,68 @@
+service: smart-wallet-api
+
+frameworkVersion: '3'
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  architecture: arm64
+  region: us-east-1
+  stage: prod
+  memorySize: 256
+  timeout: 10
+  httpApi:
+    cors: true
+    # JWT authorizer commented out for SPIKE — Cognito user pool doesn't exist locally.
+    # Production: re-enable with SSM lookups to Cognito issuer/audience.
+    # authorizers:
+    #   cognitoJwt:
+    #     type: jwt
+    #     identitySource: $request.header.Authorization
+    #     issuerUrl: ${ssm:/smart-wallet/prod/cognito/issuer-url}
+    #     audience:
+    #       - ${ssm:/smart-wallet/prod/cognito/user-pool-client-id}
+  environment:
+    NODE_OPTIONS: --enable-source-maps
+    IS_OFFLINE: ${env:IS_OFFLINE, 'false'}
+    AWS_REGION: ${aws:region}
+    TABLE_NAME: ${env:TABLE_NAME, 'smart-wallet-local'}
+    GSI1_NAME: ${env:GSI1_NAME, 'GSI1'}
+    DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, 'http://localhost:8000'}
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node22
+    platform: node
+    format: esm
+    outputFileExtension: .mjs
+    banner:
+      js: |
+        import { createRequire } from 'module';
+        const require = createRequire(import.meta.url);
+    # AWS SDK is bundled (not external) so serverless-offline can execute locally.
+    # In production, the full Node 22 runtime includes @aws-sdk v3 — bundling it
+    # increases zip size but avoids offline-vs-prod discrepancy.
+    # external:
+    #   - '@aws-sdk/*'
+  serverless-offline:
+    httpPort: 3000
+    noPrependStageInUrl: true
+
+package:
+  individually: true
+
+functions:
+  createWallet:
+    handler: ../api/src/handlers/wallet/createWallet.main
+    events:
+      - httpApi:
+          path: /wallets
+          method: post
+          # authorizer: cognitoJwt   # disabled for SPIKE
