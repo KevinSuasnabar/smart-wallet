@@ -4,15 +4,18 @@ import { Toaster } from 'sonner';
 import type { PropsWithChildren } from 'react';
 import { queryClient } from '../lib/queryClient.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
+import { AuthProvider } from '../features/auth/AuthProvider.js';
 
-// NOTE: AuthProvider is intentionally NOT here yet — that is Slice 3.
-// ApiClientBridge (wires apiClient.configure when idToken changes) is also Slice 3.
+// AuthProvider must be INSIDE BrowserRouter (signOut calls useNavigate)
+// and INSIDE QueryClientProvider (signOut calls useQueryClient().clear())
 export const Providers = ({ children }: PropsWithChildren) => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        {children}
-        <Toaster position="top-center" richColors />
+        <AuthProvider>
+          {children}
+          <Toaster position="top-center" richColors />
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </ErrorBoundary>
