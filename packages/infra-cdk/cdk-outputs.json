@@ -1,8 +1,0 @@
-{
-  "SmartWalletProdStack": {
-    "TableName": "smart-wallet-prod",
-    "UserPoolClientId": "40e2iqcdhaqgq22rg32bm02lsv",
-    "UserPoolId": "us-east-1_MDknurVIE",
-    "IssuerUrl": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_MDknurVIE"
-  }
-}

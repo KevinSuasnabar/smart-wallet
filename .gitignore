@@ -14,6 +14,10 @@ cdk.out/
 .serverless/
 .aws-sam/
 .cdk.staging/
+# cdk-outputs files contain account-specific resource IDs (UserPoolId, TableName, etc.).
+# Technically public for our public-client setup, but consistent with our "no values
+# in git" policy. Pass values via env vars or read from SSM at deploy time.
+**/cdk-outputs*.json
 
 # Environment — ignore ALL .env files except the template.
 # Even "public" build-time values (VITE_*) should NOT be committed as a matter of

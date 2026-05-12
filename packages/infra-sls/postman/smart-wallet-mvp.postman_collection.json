@@ -582,15 +582,15 @@
     },
     {
       "key": "username",
-      "value": "kevin-test@smart-wallet.local",
+      "value": "<YOUR_COGNITO_USER_EMAIL>",
       "type": "string",
-      "description": "Cognito test user email. Change this to your real user."
+      "description": "Cognito user email. Set this in your local Postman collection variables — DO NOT commit a real value."
     },
     {
       "key": "password",
-      "value": "SmartWallet2026!",
+      "value": "<YOUR_COGNITO_PASSWORD>",
       "type": "string",
-      "description": "Test user password. CHANGE THIS — don't commit real passwords."
+      "description": "Cognito user password. Set this in your local Postman collection variables — DO NOT commit a real value. Postman lets you edit Variables → Current value without changing the committed default."
     },
     {
       "key": "idToken",
