@@ -182,42 +182,42 @@
 
 ## Slice 4 — Money + Transaction aggregate
 
-- [ ] **T-04-01** — Create `packages/domain/src/transaction/Money.ts` VO: props `{ amount: number; currency: Currency }` (amount is strictly positive integer cents); `Money.create()` returning `Result<Money, TransactionError.AmountNotPositive>` if amount ≤ 0; `add(other: Money): Money`, `subtract(other: Money): Money`, `negate(): Money`; note: `import type { Currency }` from `@smart-wallet/shared-types`
+- [x] **T-04-01** — Create `packages/domain/src/transaction/Money.ts` VO: props `{ amount: number; currency: Currency }` (amount is strictly positive integer cents); `Money.create()` returning `Result<Money, TransactionError.AmountNotPositive>` if amount ≤ 0; `add(other: Money): Money`, `subtract(other: Money): Money`, `negate(): Money`; note: `import type { Currency }` from `@smart-wallet/shared-types`
   - Slice: 4
   - Files: `packages/domain/src/transaction/Money.ts`
   - Deps: T-02-03
   - Acceptance: REQ-MNY-01, REQ-MNY-02, REQ-MNY-05, REQ-TXN-02; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-04-02** — Create `packages/domain/src/transaction/TransactionId.ts` (VO wrapping UUID string); create `packages/domain/src/transaction/TransactionError.ts` with: `CurrencyMismatch` (tag `transaction.currency_mismatch`, 409), `AmountNotPositive` (tag `transaction.amount_not_positive`, 400), `InvalidOccurredAt` (tag `transaction.invalid_occurred_at`, 400), `UnknownCategory` (tag `transaction.unknown_category`, 409), `CategoryTypeMismatch` (tag `transaction.category_type_mismatch`, 409), `WalletNotFound` extending `WalletError.NotFound` or referencing it via tag; create `packages/domain/src/transaction/events/TransactionAdded.ts` domain event
+- [x] **T-04-02** — Create `packages/domain/src/transaction/TransactionId.ts` (VO wrapping UUID string); create `packages/domain/src/transaction/TransactionError.ts` with: `CurrencyMismatch` (tag `transaction.currency_mismatch`, 409), `AmountNotPositive` (tag `transaction.amount_not_positive`, 400), `InvalidOccurredAt` (tag `transaction.invalid_occurred_at`, 400), `UnknownCategory` (tag `transaction.unknown_category`, 409), `CategoryTypeMismatch` (tag `transaction.category_type_mismatch`, 409), `WalletNotFound` extending `WalletError.NotFound` or referencing it via tag; create `packages/domain/src/transaction/events/TransactionAdded.ts` domain event
   - Slice: 4
   - Files: `packages/domain/src/transaction/TransactionId.ts`, `packages/domain/src/transaction/TransactionError.ts`, `packages/domain/src/transaction/events/TransactionAdded.ts`
   - Deps: T-02-02, T-04-01
   - Acceptance: Scaffolding only; tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-04-03** — Create `packages/domain/src/transaction/Transaction.ts` AggregateRoot: props interface (`transactionId`, `walletId`, `userId`, `type: 'income' | 'expense'`, `amount: number` (positive cents), `currency`, `categoryId: string`, `description?: string`, `occurredAt: string`, `createdAt`, `updatedAt`, `deletedAt?`, `gsi1pk?: string`, `gsi1sk?: string`); static `Transaction.create()` enforcing: positive amount, valid ISO8601 occurredAt within range [now − 5 years, now + 1 day] (server time from Clock), categoryId format (either predefined format or UUID), currency matches wallet currency (passed in as arg); emits `TransactionAdded` domain event; `isDeleted(): boolean`
+- [x] **T-04-03** — Create `packages/domain/src/transaction/Transaction.ts` AggregateRoot: props interface (`transactionId`, `walletId`, `userId`, `type: 'income' | 'expense'`, `amount: number` (positive cents), `currency`, `categoryId: string`, `description?: string`, `occurredAt: string`, `createdAt`, `updatedAt`, `deletedAt?`, `gsi1pk?: string`, `gsi1sk?: string`); static `Transaction.create()` enforcing: positive amount, valid ISO8601 occurredAt within range [now − 5 years, now + 1 day] (server time from Clock), categoryId format (either predefined format or UUID), currency matches wallet currency (passed in as arg); emits `TransactionAdded` domain event; `isDeleted(): boolean`
   - Slice: 4
   - Files: `packages/domain/src/transaction/Transaction.ts`
   - Deps: T-03-03, T-04-01, T-04-02
   - Acceptance: REQ-TXN-01, REQ-TXN-02, REQ-TXN-04, REQ-TXN-05, REQ-MNY-03, REQ-MNY-05, REQ-VAL-08; tsc green; eslint clean.
   - Est: L
 
-- [ ] **T-04-04** — Create `packages/domain/src/transaction/TransactionRepository.ts` port interface: `add(input: { transaction: Transaction; walletBalanceDelta: number; idempotencyRecord?: { pk: string; sk: string; ttlEpochSeconds: number } }): Promise<void>`; `findById(userId: UserId, transactionId: TransactionId): Promise<Transaction | null>`; `listByWallet(userId: UserId, walletId: WalletId, filter: ListByWalletFilter): Promise<{ items: Transaction[]; nextCursor?: string }>`; `listByCategory(userId: UserId, categoryId: string, filter: ListByCategoryFilter): Promise<{ items: Transaction[]; nextCursor?: string }>`; `findIdempotentTransactionId(userId: UserId, idempotencyRecordSk: string): Promise<TransactionId | null>`; define `ListByWalletFilter` and `ListByCategoryFilter` inline interfaces (from/to/type/categoryId/limit/cursor)
+- [x] **T-04-04** — Create `packages/domain/src/transaction/TransactionRepository.ts` port interface: `add(input: { transaction: Transaction; walletBalanceDelta: number; idempotencyRecord?: { pk: string; sk: string; ttlEpochSeconds: number } }): Promise<void>`; `findById(userId: UserId, transactionId: TransactionId): Promise<Transaction | null>`; `listByWallet(userId: UserId, walletId: WalletId, filter: ListByWalletFilter): Promise<{ items: Transaction[]; nextCursor?: string }>`; `listByCategory(userId: UserId, categoryId: string, filter: ListByCategoryFilter): Promise<{ items: Transaction[]; nextCursor?: string }>`; `findIdempotentTransactionId(userId: UserId, idempotencyRecordSk: string): Promise<TransactionId | null>`; define `ListByWalletFilter` and `ListByCategoryFilter` inline interfaces (from/to/type/categoryId/limit/cursor)
   - Slice: 4
   - Files: `packages/domain/src/transaction/TransactionRepository.ts`
   - Deps: T-04-03
   - Acceptance: REQ-TXN-03, REQ-TXN-06, REQ-TXN-07, REQ-IDEM-01; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-04-05** — Create `packages/domain/src/transaction/usecases/AddTransaction.ts`: constructor takes `WalletRepository`, `TransactionRepository`, `CategoryRepository`, `Clock`, `IdGenerator`; `execute(userId, walletId, input)` — loads wallet (404 if null/deleted), validates currency, validates category (see category slice note below — AddTransaction depends on CategoryRepository port, which is created in Slice 5; for now stub the interface import and add a TODO comment), creates `Transaction`, calls `repo.add()` with 2-op path (no idempotency yet — extended in Slice 10), returns `Result<Transaction, DomainError>`
+- [x] **T-04-05** — Create `packages/domain/src/transaction/usecases/AddTransaction.ts`: constructor takes `WalletRepository`, `TransactionRepository`, `CategoryRepository`, `Clock`, `IdGenerator`; `execute(userId, walletId, input)` — loads wallet (404 if null/deleted), validates currency, validates category (see category slice note below — AddTransaction depends on CategoryRepository port, which is created in Slice 5; for now stub the interface import and add a TODO comment), creates `Transaction`, calls `repo.add()` with 2-op path (no idempotency yet — extended in Slice 10), returns `Result<Transaction, DomainError>`
   - Slice: 4
   - Files: `packages/domain/src/transaction/usecases/AddTransaction.ts`
   - Deps: T-04-03, T-04-04, T-03-04
   - Acceptance: REQ-TXN-01, REQ-TXN-03, REQ-TXN-08, REQ-TXN-04, REQ-MNY-03; tsc green; eslint clean. Note: category validation is wired after Slice 5.
   - Est: M
 
-- [ ] **T-04-06** — Create `packages/domain/src/transaction/usecases/ListTransactionsByWallet.ts` and `packages/domain/src/transaction/usecases/ListTransactionsByCategory.ts`; update `packages/domain/src/index.ts` barrel to re-export transaction aggregate, errors, repository port, use cases
+- [x] **T-04-06** — Create `packages/domain/src/transaction/usecases/ListTransactionsByWallet.ts` and `packages/domain/src/transaction/usecases/ListTransactionsByCategory.ts`; update `packages/domain/src/index.ts` barrel to re-export transaction aggregate, errors, repository port, use cases
   - Slice: 4
   - Files: `packages/domain/src/transaction/usecases/ListTransactionsByWallet.ts`, `packages/domain/src/transaction/usecases/ListTransactionsByCategory.ts`, `packages/domain/src/index.ts`
   - Deps: T-04-04

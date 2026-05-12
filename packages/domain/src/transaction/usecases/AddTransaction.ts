@@ -1,0 +1,109 @@
+import { err, ok } from '../../shared/Result.js';
+import type { Result } from '../../shared/Result.js';
+import type { Clock } from '../../shared/Clock.js';
+import type { IdGenerator } from '../../shared/IdGenerator.js';
+import type { Currency } from '../../shared/Currency.js';
+import { UserId } from '../../user/UserId.js';
+import type { UserError } from '../../user/UserError.js';
+import { WalletId } from '../../wallet/WalletId.js';
+import type { WalletRepository } from '../../wallet/WalletRepository.js';
+import type { WalletError } from '../../wallet/WalletError.js';
+import { WalletNotFound } from '../../wallet/WalletError.js';
+import { TransactionId } from '../TransactionId.js';
+import { Money } from '../Money.js';
+import { Transaction } from '../Transaction.js';
+import type { TransactionRepository } from '../TransactionRepository.js';
+import type { TransactionType } from '../TransactionType.js';
+import { CurrencyMismatch } from '../TransactionError.js';
+import type { TransactionError } from '../TransactionError.js';
+
+export interface AddTransactionInput {
+  /** Raw userId string from JWT — validated here before use. */
+  userId: string;
+  /** Raw walletId string from path parameter — validated here before use. */
+  walletId: string;
+  type: TransactionType;
+  /** Amount in integer cents — conversion from decimal string done at the handler boundary. */
+  amountCents: number;
+  /** Currency from the request — cross-checked against wallet.currency. */
+  currency: Currency;
+  /** categoryId string — structural check done in Transaction.create(); semantic check deferred to T-05-05. */
+  categoryId: string;
+  description: string | null;
+  occurredAt: Date;
+}
+
+export interface AddTransactionDeps {
+  walletRepo: WalletRepository;
+  transactionRepo: TransactionRepository;
+  /**
+   * TODO (T-05-05): CategoryRepository is NOT wired in PR1.
+   * Category semantic validation (exists + type-match) is added in Slice 5.
+   * For now, Transaction.create() performs structural shape check only (predefined prefix or UUID).
+   */
+  idGen: IdGenerator;
+  clock: Clock;
+}
+
+export type AddTransactionOutput = Result<Transaction, TransactionError | WalletError | UserError>;
+
+export const makeAddTransaction =
+  (deps: AddTransactionDeps) =>
+  async (input: AddTransactionInput): Promise<AddTransactionOutput> => {
+    // 1. Parse + validate raw VO inputs
+    const userIdResult = UserId.create(input.userId);
+    if (!userIdResult.ok) return err(userIdResult.error);
+
+    const walletIdResult = WalletId.create(input.walletId);
+    if (!walletIdResult.ok) return err(walletIdResult.error);
+
+    const userId = userIdResult.value;
+    const walletId = walletIdResult.value;
+
+    // 2. Load wallet — returns null when not found or belongs to another user (DDB partition-scoped)
+    // Optional chain: wallet?.deletedAt is null when wallet is null (short-circuits), so this guards both cases.
+    const wallet = await deps.walletRepo.findById(userId, walletId);
+    if (wallet?.deletedAt !== null) {
+      return err(new WalletNotFound());
+    }
+
+    // 3. Validate that the request currency matches the wallet's locked currency
+    if (input.currency !== wallet.currency) {
+      return err(new CurrencyMismatch());
+    }
+
+    // 4. Construct Money VO (amount must be strictly positive integer cents)
+    const moneyResult = Money.create(input.amountCents, wallet.currency);
+    if (!moneyResult.ok) return err(moneyResult.error);
+
+    const money = moneyResult.value;
+
+    // 5. Generate a new TransactionId
+    const transactionId = TransactionId.generate(deps.idGen);
+
+    // 6. Construct Transaction aggregate — enforces occurredAt range, description length, and categoryId shape
+    const transactionResult = Transaction.create({
+      id: transactionId,
+      walletId,
+      userId,
+      type: input.type,
+      amount: money,
+      categoryId: input.categoryId,
+      description: input.description,
+      occurredAt: input.occurredAt,
+      clock: deps.clock,
+    });
+
+    if (!transactionResult.ok) return transactionResult;
+
+    const transaction = transactionResult.value;
+
+    // 7. Signed balance delta: income increases (+), expense decreases (−)
+    const walletBalanceDelta =
+      input.type === 'income' ? money.amount : money.negate().amount;
+
+    // 8. Persist — TransactWriteItems (2-op path; idempotency 3-op path is Slice 10 / PR3)
+    await deps.transactionRepo.add({ transaction, walletBalanceDelta: walletBalanceDelta });
+
+    return ok(transaction);
+  };
