@@ -1,0 +1,632 @@
+{
+  "info": {
+    "_postman_id": "smart-wallet-mvp-collection",
+    "name": "Smart Wallet MVP",
+    "description": "Postman collection for the Smart Wallet MVP API.\n\n## Setup\n\n1. Import this collection into Postman.\n2. Open the collection variables and verify:\n   - `baseUrl` — defaults to the deployed prod URL\n   - `cognitoClientId` — defaults to the deployed user pool client\n   - `username` / `password` — change these to your test user\n3. Run **🔐 Auth → Login (Cognito)** first to obtain a JWT.\n4. Now any other request automatically uses the JWT via `{{idToken}}` collection variable.\n\n## Variables auto-populated by test scripts\n\n- `idToken` — set after Login\n- `walletId` — set after Create Wallet (used by transaction/balance requests)\n- `transactionId` — set after Add Transaction (used by replay tests)\n- `categoryId` — set after Create Custom Category (used by Delete Custom Category)\n- `idempotencyKey` — set after Add Transaction with Idempotency-Key (used by Replay)\n\n## Currencies supported (MVP)\n\nOnly `USD` and `PEN`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Login (Cognito InitiateAuth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const idToken = json.AuthenticationResult && json.AuthenticationResult.IdToken;",
+                  "pm.test('IdToken present', () => pm.expect(idToken).to.be.a('string').and.not.empty);",
+                  "pm.collectionVariables.set('idToken', idToken);",
+                  "console.log('idToken set (first 40 chars):', idToken.slice(0, 40) + '...');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-amz-json-1.1" },
+              { "key": "X-Amz-Target", "value": "AWSCognitoIdentityProviderService.InitiateAuth" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"AuthFlow\": \"USER_PASSWORD_AUTH\",\n  \"ClientId\": \"{{cognitoClientId}}\",\n  \"AuthParameters\": {\n    \"USERNAME\": \"{{username}}\",\n    \"PASSWORD\": \"{{password}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{cognitoUrl}}/",
+              "host": ["{{cognitoUrl}}"],
+              "path": [""]
+            },
+            "description": "Authenticates against Cognito and stores the IdToken into the `idToken` collection variable.\n\nRun this first. Subsequent requests use `{{idToken}}` automatically."
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Wallets",
+      "item": [
+        {
+          "name": "Create Wallet (USD)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('walletId returned', () => pm.expect(json.walletId).to.be.a('string'));",
+                  "pm.test('balance is 0.00', () => pm.expect(json.balance).to.equal('0.00'));",
+                  "pm.collectionVariables.set('walletId', json.walletId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cash USD\",\n  \"currency\": \"USD\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallets",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets"]
+            }
+          }
+        },
+        {
+          "name": "Create Wallet (PEN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cuenta Soles\",\n  \"currency\": \"PEN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallets",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets"]
+            }
+          }
+        },
+        {
+          "name": "List Wallets",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallets?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Wallet (with balance)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallets/{{walletId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets", "{{walletId}}"]
+            },
+            "description": "Returns the wallet including its current denormalized balance."
+          }
+        }
+      ]
+    },
+    {
+      "name": "💸 Transactions",
+      "item": [
+        {
+          "name": "Add Income (predefined category)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('nowIso', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('transactionId', json.transactionId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"income\",\n  \"amount\": \"1500.00\",\n  \"currency\": \"USD\",\n  \"categoryId\": \"income:salary\",\n  \"description\": \"Monthly salary\",\n  \"occurredAt\": \"{{nowIso}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallets/{{walletId}}/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets", "{{walletId}}", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Add Expense (predefined category)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('nowIso', new Date().toISOString());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"expense\",\n  \"amount\": \"12.50\",\n  \"currency\": \"USD\",\n  \"categoryId\": \"expense:food\",\n  \"description\": \"Lunch at the office\",\n  \"occurredAt\": \"{{nowIso}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallets/{{walletId}}/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets", "{{walletId}}", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Add Transaction with Idempotency-Key",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('nowIso', new Date().toISOString());",
+                  "const key = 'postman-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);",
+                  "pm.collectionVariables.set('idempotencyKey', key);",
+                  "console.log('Generated Idempotency-Key:', key);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created (first write)', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('idempotentTransactionId', json.transactionId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotencyKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"income\",\n  \"amount\": \"50.00\",\n  \"currency\": \"USD\",\n  \"categoryId\": \"income:freelance\",\n  \"description\": \"Side gig\",\n  \"occurredAt\": \"{{nowIso}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallets/{{walletId}}/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets", "{{walletId}}", "transactions"]
+            },
+            "description": "Sends a transaction with a generated `Idempotency-Key`. Run this once, then run **Replay Transaction** to verify the replay semantics."
+          }
+        },
+        {
+          "name": "Replay Transaction (same Idempotency-Key)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('nowIso', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK (replay, not 201)', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const expected = pm.collectionVariables.get('idempotentTransactionId');",
+                  "pm.test('Same transactionId as first write', () => pm.expect(json.transactionId).to.equal(expected));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{idempotencyKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"income\",\n  \"amount\": \"50.00\",\n  \"currency\": \"USD\",\n  \"categoryId\": \"income:freelance\",\n  \"description\": \"Side gig\",\n  \"occurredAt\": \"{{nowIso}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallets/{{walletId}}/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets", "{{walletId}}", "transactions"]
+            },
+            "description": "Run this AFTER **Add Transaction with Idempotency-Key**. Should return HTTP 200 (not 201) with the SAME transactionId — demonstrating replay semantics."
+          }
+        },
+        {
+          "name": "List Transactions by Wallet",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallets/{{walletId}}/transactions?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets", "{{walletId}}", "transactions"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "", "disabled": true },
+                { "key": "from", "value": "2026-01-01T00:00:00.000Z", "disabled": true },
+                { "key": "to", "value": "2026-12-31T23:59:59.999Z", "disabled": true },
+                { "key": "type", "value": "expense", "disabled": true }
+              ]
+            },
+            "description": "Lists transactions for a wallet. Enable the optional query params for date range, type filter, or pagination cursor."
+          }
+        },
+        {
+          "name": "List Transactions by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/transactions?categoryId=expense:food&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions"],
+              "query": [
+                { "key": "categoryId", "value": "expense:food" },
+                { "key": "limit", "value": "50" },
+                { "key": "cursor", "value": "", "disabled": true },
+                { "key": "from", "value": "2026-01-01T00:00:00.000Z", "disabled": true },
+                { "key": "to", "value": "2026-12-31T23:59:59.999Z", "disabled": true }
+              ]
+            },
+            "description": "Cross-wallet listing by category. Uses DynamoDB GSI1."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏷️ Categories",
+      "item": [
+        {
+          "name": "List Categories (predefined + custom)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
+            },
+            "description": "Returns `{ predefined: [...], custom: [...] }`. Predefined are static; custom come from DynamoDB."
+          }
+        },
+        {
+          "name": "Create Custom Category (expense)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('categoryId', json.categoryId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Coffee\",\n  \"type\": \"expense\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Custom Category (income)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dividends\",\n  \"type\": \"income\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Delete Custom Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "{{categoryId}}"]
+            },
+            "description": "Soft-deletes a custom category. Returns 204 on success.\n\n**Cannot delete predefined categories** — they return 400 from path validation (only UUIDs accepted)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 Edge cases / Validation",
+      "item": [
+        {
+          "name": "401 — No Authorization header",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/wallets",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets"]
+            },
+            "description": "API Gateway JWT authorizer rejects requests without a valid token."
+          }
+        },
+        {
+          "name": "400 — Invalid body (missing currency)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('error code is validation_failed', () => pm.expect(pm.response.json().error).to.equal('validation_failed'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invalid wallet\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallets",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets"]
+            }
+          }
+        },
+        {
+          "name": "409 — Currency mismatch",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('nowIso', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"income\",\n  \"amount\": \"100.00\",\n  \"currency\": \"PEN\",\n  \"categoryId\": \"income:salary\",\n  \"occurredAt\": \"{{nowIso}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/wallets/{{walletId}}/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets", "{{walletId}}", "transactions"]
+            },
+            "description": "Tries to add a PEN transaction to a USD wallet. Should return 409 with `currency_mismatch`.\n\n**Note**: assumes `{{walletId}}` points to a USD wallet (created by **Create Wallet (USD)**)."
+          }
+        },
+        {
+          "name": "404 — Wallet not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{idToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallets/00000000-0000-4000-8000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["wallets", "00000000-0000-4000-8000-000000000000"]
+            },
+            "description": "Requests a wallet that doesn't exist. Returns 404 (NOT 403) to avoid leaking existence of other users' resources."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://f4vv2f72ua.execute-api.us-east-1.amazonaws.com",
+      "type": "string",
+      "description": "Production API Gateway URL"
+    },
+    {
+      "key": "cognitoUrl",
+      "value": "https://cognito-idp.us-east-1.amazonaws.com",
+      "type": "string",
+      "description": "Cognito IDP endpoint (us-east-1)"
+    },
+    {
+      "key": "cognitoClientId",
+      "value": "40e2iqcdhaqgq22rg32bm02lsv",
+      "type": "string",
+      "description": "Cognito User Pool App Client ID (public client, no secret)"
+    },
+    {
+      "key": "username",
+      "value": "kevin-test@smart-wallet.local",
+      "type": "string",
+      "description": "Cognito test user email. Change this to your real user."
+    },
+    {
+      "key": "password",
+      "value": "SmartWallet2026!",
+      "type": "string",
+      "description": "Test user password. CHANGE THIS — don't commit real passwords."
+    },
+    {
+      "key": "idToken",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by the Login request"
+    },
+    {
+      "key": "walletId",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by Create Wallet (USD)"
+    },
+    {
+      "key": "transactionId",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by Add Income"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by Add Transaction with Idempotency-Key"
+    },
+    {
+      "key": "idempotentTransactionId",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by Add Transaction with Idempotency-Key (used for replay assertion)"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string",
+      "description": "Auto-populated by Create Custom Category (expense)"
+    }
+  ]
+}
