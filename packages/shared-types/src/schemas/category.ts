@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { zUuid } from './common.js';
 
 const zCategoryType = z.enum(['income', 'expense']);
 
@@ -36,3 +37,14 @@ export const ListCategoriesResponseSchema = z.object({
 });
 
 export type ListCategoriesResponseDTO = z.infer<typeof ListCategoriesResponseSchema>;
+
+/**
+ * Path parameter schema for routes that reference a specific category (UUID v4 only).
+ * Predefined category IDs (type:slug format) are NOT valid path params — they are
+ * rejected here with a 400, satisfying REQ-CAT-04.
+ */
+export const CategoryIdPathSchema = z.object({
+  categoryId: zUuid,
+});
+
+export type CategoryIdPathDTO = z.infer<typeof CategoryIdPathSchema>;

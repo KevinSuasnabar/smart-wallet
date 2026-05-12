@@ -65,4 +65,60 @@ functions:
       - httpApi:
           path: /wallets
           method: post
-          # authorizer: cognitoJwt   # disabled for SPIKE
+          # authorizer: cognitoJwt   # disabled — Slice 13 wires real Cognito
+
+  listWallets:
+    handler: ../api/src/handlers/wallet/listWallets.main
+    events:
+      - httpApi:
+          path: /wallets
+          method: get
+
+  getWallet:
+    handler: ../api/src/handlers/wallet/getWallet.main
+    events:
+      - httpApi:
+          path: /wallets/{walletId}
+          method: get
+
+  addTransaction:
+    handler: ../api/src/handlers/transaction/addTransaction.main
+    events:
+      - httpApi:
+          path: /wallets/{walletId}/transactions
+          method: post
+
+  listTransactionsByWallet:
+    handler: ../api/src/handlers/transaction/listTransactionsByWallet.main
+    events:
+      - httpApi:
+          path: /wallets/{walletId}/transactions
+          method: get
+
+  listTransactionsByCategory:
+    handler: ../api/src/handlers/transaction/listTransactionsByCategory.main
+    events:
+      - httpApi:
+          path: /transactions
+          method: get
+
+  listCategories:
+    handler: ../api/src/handlers/category/listCategories.main
+    events:
+      - httpApi:
+          path: /categories
+          method: get
+
+  createCustomCategory:
+    handler: ../api/src/handlers/category/createCustomCategory.main
+    events:
+      - httpApi:
+          path: /categories
+          method: post
+
+  deleteCustomCategory:
+    handler: ../api/src/handlers/category/deleteCustomCategory.main
+    events:
+      - httpApi:
+          path: /categories/{categoryId}
+          method: delete

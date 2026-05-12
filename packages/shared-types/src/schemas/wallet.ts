@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { zCurrency } from '../currencies.js';
-import { zPaginatedResponse } from '../pagination.js';
+import { zPaginatedResponse, zLimit, zCursor } from '../pagination.js';
+import { zUuid } from './common.js';
 
 export const CreateWalletRequestSchema = z.object({
   name: z
@@ -28,3 +29,25 @@ export type WalletResponseDTO = z.infer<typeof WalletResponseSchema>;
 export const ListWalletsResponseSchema = zPaginatedResponse(WalletResponseSchema);
 
 export type ListWalletsResponseDTO = z.infer<typeof ListWalletsResponseSchema>;
+
+/**
+ * Query string schema for GET /wallets — limit and cursor are both optional.
+ * limit is coerced from string (query param) to number.
+ * REQ-WAL-08
+ */
+export const ListWalletsQuerySchema = z.object({
+  limit: zLimit,
+  cursor: zCursor,
+});
+
+export type ListWalletsQueryDTO = z.infer<typeof ListWalletsQuerySchema>;
+
+/**
+ * Path parameter schema for routes that reference a specific wallet.
+ * Validates that walletId is a UUID v4.
+ */
+export const WalletIdPathSchema = z.object({
+  walletId: zUuid,
+});
+
+export type WalletIdPathDTO = z.infer<typeof WalletIdPathSchema>;
