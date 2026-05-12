@@ -391,21 +391,21 @@
   - Acceptance: REQ-WAL-01, REQ-MNY-04, NFR-ESM-01, NFR-DEV-01; manual curl → 201 with correct JSON shape; tsc green.
   - Est: L
 
-- [ ] **T-09-02** — Create `packages/api/src/handlers/wallet/listWallets.ts`: validate `ListWalletsQuerySchema` (limit, cursor); call `makeListWallets().execute()`; serialize each wallet; return paginated response; create `packages/api/src/handlers/wallet/getWallet.ts`: validate path `{ walletId: zUuid }`; call `makeGetWallet().execute()`; serialize balance with `centsToDecimalString`; return 200 or `mapDomainError()`
+- [x] **T-09-02** — Create `packages/api/src/handlers/wallet/listWallets.ts`: validate `ListWalletsQuerySchema` (limit, cursor); call `makeListWallets().execute()`; serialize each wallet; return paginated response; create `packages/api/src/handlers/wallet/getWallet.ts`: validate path `{ walletId: zUuid }`; call `makeGetWallet().execute()`; serialize balance with `centsToDecimalString`; return 200 or `mapDomainError()`
   - Slice: 9
   - Files: `packages/api/src/handlers/wallet/listWallets.ts`, `packages/api/src/handlers/wallet/getWallet.ts`
   - Deps: T-09-01
   - Acceptance: REQ-WAL-04, REQ-WAL-05, REQ-WAL-08, REQ-MNY-06, REQ-DEL-02, REQ-DEL-03, REQ-VAL-02; tsc green; eslint clean; manual curl smoke-test both endpoints.
   - Est: M
 
-- [ ] **T-09-03** — Create `packages/api/src/handlers/transaction/addTransaction.ts`: validate path `{ walletId: zUuid }` + body `AddTransactionRequestSchema`; extract optional `Idempotency-Key` header; convert `amount` string to cents via `decimalStringToCents` using wallet currency (loaded in use case); call `makeAddTransaction().execute()`; return 201 or 200 (replay) or `mapDomainError()`; NOTE: idempotency replay branch returns 200 vs 201 — wire this after Slice 10 extends AddTransaction; for now, always return 201; create `packages/api/src/handlers/transaction/listTransactionsByWallet.ts`: validate path + `ListTransactionsByWalletQuerySchema`; call use case; serialize amounts; return paginated response
+- [x] **T-09-03** — Create `packages/api/src/handlers/transaction/addTransaction.ts`: validate path `{ walletId: zUuid }` + body `AddTransactionRequestSchema`; extract optional `Idempotency-Key` header; convert `amount` string to cents via `decimalStringToCents` using wallet currency (loaded in use case); call `makeAddTransaction().execute()`; return 201 or 200 (replay) or `mapDomainError()`; NOTE: idempotency replay branch returns 200 vs 201 — wire this after Slice 10 extends AddTransaction; for now, always return 201; create `packages/api/src/handlers/transaction/listTransactionsByWallet.ts`: validate path + `ListTransactionsByWalletQuerySchema`; call use case; serialize amounts; return paginated response
   - Slice: 9
   - Files: `packages/api/src/handlers/transaction/addTransaction.ts`, `packages/api/src/handlers/transaction/listTransactionsByWallet.ts`
   - Deps: T-09-01, T-06-01
   - Acceptance: REQ-TXN-01, REQ-TXN-02, REQ-TXN-03, REQ-TXN-06, REQ-MNY-03, REQ-MNY-04, REQ-VAL-01, REQ-VAL-02; tsc green; eslint clean; manual curl smoke-test.
   - Est: M
 
-- [ ] **T-09-04** — Create `packages/api/src/handlers/transaction/listTransactionsByCategory.ts`: validate `ListTransactionsByCategoryQuerySchema` (categoryId required, from/to/limit/cursor optional); call use case; serialize; return paginated response; create `packages/api/src/handlers/category/listCategories.ts`: no input validation needed (authenticated user only); call `makeListCategories().execute()`; return `{ predefined: [...], custom: [...] }` with `createdAt` on custom items; create `packages/api/src/handlers/category/createCustomCategory.ts`: validate body `CreateCustomCategoryRequestSchema`; call use case; return 201; create `packages/api/src/handlers/category/deleteCustomCategory.ts`: validate path `{ categoryId: zUuid }` (non-UUID returns 400, satisfying REQ-CAT-04); call `makeDeleteCustomCategory().execute()`; return 204 or `mapDomainError()`
+- [x] **T-09-04** — Create `packages/api/src/handlers/transaction/listTransactionsByCategory.ts`: validate `ListTransactionsByCategoryQuerySchema` (categoryId required, from/to/limit/cursor optional); call use case; serialize; return paginated response; create `packages/api/src/handlers/category/listCategories.ts`: no input validation needed (authenticated user only); call `makeListCategories().execute()`; return `{ predefined: [...], custom: [...] }` with `createdAt` on custom items; create `packages/api/src/handlers/category/createCustomCategory.ts`: validate body `CreateCustomCategoryRequestSchema`; call use case; return 201; create `packages/api/src/handlers/category/deleteCustomCategory.ts`: validate path `{ categoryId: zUuid }` (non-UUID returns 400, satisfying REQ-CAT-04); call `makeDeleteCustomCategory().execute()`; return 204 or `mapDomainError()`
   - Slice: 9
   - Files: `packages/api/src/handlers/transaction/listTransactionsByCategory.ts`, `packages/api/src/handlers/category/listCategories.ts`, `packages/api/src/handlers/category/createCustomCategory.ts`, `packages/api/src/handlers/category/deleteCustomCategory.ts`
   - Deps: T-09-01
@@ -416,21 +416,21 @@
 
 ## Slice 10 — Idempotency in AddTransaction
 
-- [ ] **T-10-01** — Extend `packages/domain/src/transaction/usecases/AddTransaction.ts`: add optional `idempotencyRecord?: { hash32: string; ttlEpochSeconds: number }` to the use-case input; when present, pass the `idempotencyRecord` payload to `TransactionRepository.add()` as the 3-op TransactWrite; define `IdempotencyConflict` as a typed adapter-level error class (NOT a DomainError — lives in `packages/api/src/adapters/dynamodb/`) and import it as a type in AddTransaction; when `add()` throws `IdempotencyConflict`, the use case calls `transactionRepo.findIdempotentTransactionId()` → then `transactionRepo.findById()` → returns `Result.ok({ transaction, replayed: true })`. Update the return type signature accordingly.
+- [x] **T-10-01** — Extend `packages/domain/src/transaction/usecases/AddTransaction.ts`: add optional `idempotencyRecord?: { hash32: string; ttlEpochSeconds: number }` to the use-case input; when present, pass the `idempotencyRecord` payload to `TransactionRepository.add()` as the 3-op TransactWrite; define `IdempotencyConflict` as a typed adapter-level error class (NOT a DomainError — lives in `packages/api/src/adapters/dynamodb/`) and import it as a type in AddTransaction; when `add()` throws `IdempotencyConflict`, the use case calls `transactionRepo.findIdempotentTransactionId()` → then `transactionRepo.findById()` → returns `Result.ok({ transaction, replayed: true })`. Update the return type signature accordingly.
   - Slice: 10
   - Files: `packages/domain/src/transaction/usecases/AddTransaction.ts`, `packages/api/src/adapters/dynamodb/IdempotencyConflict.ts` (new error class)
   - Deps: T-04-05, T-07-07
   - Acceptance: REQ-IDEM-01, REQ-IDEM-02, REQ-IDEM-03; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-10-02** — Extend `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts`: implement the 3-op `TransactWriteItems` path in `add()` when `idempotencyRecord` is present — the third `Put` uses `ConditionExpression: "attribute_not_exists(PK)"`; on `TransactionCanceledException` with reason `ConditionalCheckFailed` at item index 2 → throw `IdempotencyConflict`; implement `findIdempotentTransactionId()` with `GetItemCommand` on `IDEMPOTENCY#{hash32}` SK, returning the stored `transactionId`; implement `findById()` with `GetItemCommand` on transaction PK/SK (need to reconstruct SK from stored attributes); TTL set to `Math.floor(Date.now() / 1000) + 86400`
+- [x] **T-10-02** — Extend `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts`: implement the 3-op `TransactWriteItems` path in `add()` when `idempotencyRecord` is present — the third `Put` uses `ConditionExpression: "attribute_not_exists(PK)"`; on `TransactionCanceledException` with reason `ConditionalCheckFailed` at item index 2 → throw `IdempotencyConflict`; implement `findIdempotentTransactionId()` with `GetItemCommand` on `IDEMPOTENCY#{hash32}` SK, returning the stored `transactionId`; implement `findById()` with `GetItemCommand` on transaction PK/SK (need to reconstruct SK from stored attributes); TTL set to `Math.floor(Date.now() / 1000) + 86400`
   - Slice: 10
   - Files: `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts`
   - Deps: T-10-01
   - Acceptance: REQ-IDEM-02, REQ-IDEM-04, REQ-IDEM-05, REQ-IDEM-06; tsc green; eslint clean.
   - Est: L
 
-- [ ] **T-10-03** — Update `packages/api/src/handlers/transaction/addTransaction.ts`: extract `Idempotency-Key` header; compute hash via `computeIdempotencyHash(userId, walletId, key)`; pass `idempotencyRecord` to `makeAddTransaction().execute()`; return 200 when `result.value.replayed === true`, 201 otherwise; manual smoke-test: first call → 201; second call with same key within window → 200 with identical body
+- [x] **T-10-03** — Update `packages/api/src/handlers/transaction/addTransaction.ts`: extract `Idempotency-Key` header; compute hash via `computeIdempotencyHash(userId, walletId, key)`; pass `idempotencyRecord` to `makeAddTransaction().execute()`; return 200 when `result.value.replayed === true`, 201 otherwise; manual smoke-test: first call → 201; second call with same key within window → 200 with identical body
   - Slice: 10
   - Files: `packages/api/src/handlers/transaction/addTransaction.ts`
   - Deps: T-10-01, T-10-02, T-08-04
@@ -441,14 +441,14 @@
 
 ## Slice 11 — CDK stack
 
-- [ ] **T-11-01** — Create `packages/infra-cdk/src/constructs/SingleTable.ts` L3 construct wrapping `dynamodb.TableV2` (or `dynamodb.Table`): PK/SK string keys, GSI1 with `GSI1PK`/`GSI1SK`, `PAY_PER_REQUEST` billing, TTL attribute `ttl`, deletion protection enabled, PITR disabled (cost constraint, add code comment); create `packages/infra-cdk/src/constructs/UserPool.ts` L3 construct: Cognito UserPool (email sign-in, password policy, auto-verify email), UserPoolClient (`generateSecret: false`, `USER_PASSWORD_AUTH` + `USER_SRP_AUTH`), UserPoolDomain prefix `smart-wallet-prod`
+- [x] **T-11-01** — Create `packages/infra-cdk/src/constructs/SingleTable.ts` L3 construct wrapping `dynamodb.TableV2` (or `dynamodb.Table`): PK/SK string keys, GSI1 with `GSI1PK`/`GSI1SK`, `PAY_PER_REQUEST` billing, TTL attribute `ttl`, deletion protection enabled, PITR disabled (cost constraint, add code comment); create `packages/infra-cdk/src/constructs/UserPool.ts` L3 construct: Cognito UserPool (email sign-in, password policy, auto-verify email), UserPoolClient (`generateSecret: false`, `USER_PASSWORD_AUTH` + `USER_SRP_AUTH`), UserPoolDomain prefix `smart-wallet-prod`
   - Slice: 11
   - Files: `packages/infra-cdk/src/constructs/SingleTable.ts`, `packages/infra-cdk/src/constructs/UserPool.ts`
   - Deps: T-00-02
   - Acceptance: NFR-COST-01; `pnpm --filter @smart-wallet/infra-cdk synth` clean; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-11-02** — Create `packages/infra-cdk/src/constructs/SsmParameters.ts` L3 construct: publishes all 8 SSM parameters listed in design §5 (`table-name`, `table-arn`, `gsi1-name`, `user-pool-id`, `user-pool-arn`, `user-pool-client-id`, `issuer-url`, `region`); create `packages/infra-cdk/src/stacks/SmartWalletStack.ts` assembling all three constructs; create `packages/infra-cdk/src/bin/smart-wallet.ts` CDK app entrypoint; run `cdk synth` and verify CloudFormation template is produced without errors
+- [x] **T-11-02** — Create `packages/infra-cdk/src/constructs/SsmParameters.ts` L3 construct: publishes all 8 SSM parameters listed in design §5 (`table-name`, `table-arn`, `gsi1-name`, `user-pool-id`, `user-pool-arn`, `user-pool-client-id`, `issuer-url`, `region`); create `packages/infra-cdk/src/stacks/SmartWalletStack.ts` assembling all three constructs; create `packages/infra-cdk/src/bin/smart-wallet.ts` CDK app entrypoint; run `cdk synth` and verify CloudFormation template is produced without errors
   - Slice: 11
   - Files: `packages/infra-cdk/src/constructs/SsmParameters.ts`, `packages/infra-cdk/src/stacks/SmartWalletStack.ts`, `packages/infra-cdk/src/bin/smart-wallet.ts`
   - Deps: T-11-01
@@ -459,21 +459,21 @@
 
 ## Slice 12 — Serverless config
 
-- [ ] **T-12-01** — Complete `packages/infra-sls/serverless.yml`: provider block (nodejs22.x, arm64, us-east-1 from SSM, memorySize 256, timeout 10, logRetentionInDays 14, NODE_OPTIONS, TABLE_NAME, GSI1_NAME env vars from SSM); httpApi block with CORS and `cognitoJwt` JWT authorizer (issuerUrl + audience from SSM); plugins `serverless-esbuild` + `serverless-offline`; custom esbuild block (`bundle: true`, `minify: true`, `sourcemap: true`, `target: node22`, `platform: node`, `format: esm`, `banner` with createRequire shim, `external: ['@aws-sdk/*']`); serverless-offline block (httpPort 3000, noPrependStageInUrl, useChildProcesses); `package.individually: true`
+- [x] **T-12-01** — Complete `packages/infra-sls/serverless.yml`: provider block (nodejs22.x, arm64, us-east-1 from SSM, memorySize 256, timeout 10, logRetentionInDays 14, NODE_OPTIONS, TABLE_NAME, GSI1_NAME env vars from SSM); httpApi block with CORS and `cognitoJwt` JWT authorizer (issuerUrl + audience from SSM); plugins `serverless-esbuild` + `serverless-offline`; custom esbuild block (`bundle: true`, `minify: true`, `sourcemap: true`, `target: node22`, `platform: node`, `format: esm`, `banner` with createRequire shim, `external: ['@aws-sdk/*']`); serverless-offline block (httpPort 3000, noPrependStageInUrl, useChildProcesses); `package.individually: true`
   - Slice: 12
   - Files: `packages/infra-sls/serverless.yml`
   - Deps: T-09-01
   - Acceptance: Scaffolding only. `sls package --noDeploy` exits 0 locally. tsc green.
   - Est: M
 
-- [ ] **T-12-02** — Add all 9 function entries to `packages/infra-sls/serverless.yml`: `createWallet`, `listWallets`, `getWallet`, `addTransaction`, `listTransactionsByWallet`, `listTransactionsByCategory`, `listCategories`, `createCustomCategory`, `deleteCustomCategory`; each with handler path, httpApi event (path + method + authorizer), `iamRoleStatements` (least privilege: `PutItem` for creates, `Query` for lists, `GetItem` for gets, `UpdateItem` for deletes/soft-deletes, `TransactWriteItems` + `GetItem` for addTransaction, `Query` on `TABLE_ARN/index/GSI1` for listByCategory)
+- [x] **T-12-02** — Add all 9 function entries to `packages/infra-sls/serverless.yml`: `createWallet`, `listWallets`, `getWallet`, `addTransaction`, `listTransactionsByWallet`, `listTransactionsByCategory`, `listCategories`, `createCustomCategory`, `deleteCustomCategory`; each with handler path, httpApi event (path + method + authorizer), `iamRoleStatements` (least privilege: `PutItem` for creates, `Query` for lists, `GetItem` for gets, `UpdateItem` for deletes/soft-deletes, `TransactWriteItems` + `GetItem` for addTransaction, `Query` on `TABLE_ARN/index/GSI1` for listByCategory)
   - Slice: 12
   - Files: `packages/infra-sls/serverless.yml`
   - Deps: T-12-01, T-09-04
   - Acceptance: REQ-AUTH-01, NFR-ESM-01; `sls package --noDeploy` exits 0; all 9 function entries present; IAM resources reference SSM ARNs; tsc green.
   - Est: M
 
-- [ ] **T-12-03** — Create `packages/infra-sls/scripts/init-local-table.ts`: uses `@aws-sdk/client-dynamodb` to `CreateTable` with the same schema (PK/SK, GSI1, TTL on `ttl`) in DDB Local at `http://localhost:8000`; idempotent (catches `ResourceInUseException`); create `packages/infra-sls/.env.local.example` with `IS_OFFLINE=true`, `TABLE_NAME=smart-wallet-local`, `GSI1_NAME=GSI1`, `AWS_REGION=us-east-1`; add `init:local` script to `packages/infra-sls/package.json`
+- [x] **T-12-03** — Create `packages/infra-sls/scripts/init-local-table.ts`: uses `@aws-sdk/client-dynamodb` to `CreateTable` with the same schema (PK/SK, GSI1, TTL on `ttl`) in DDB Local at `http://localhost:8000`; idempotent (catches `ResourceInUseException`); create `packages/infra-sls/.env.local.example` with `IS_OFFLINE=true`, `TABLE_NAME=smart-wallet-local`, `GSI1_NAME=GSI1`, `AWS_REGION=us-east-1`; add `init:local` script to `packages/infra-sls/package.json`
   - Slice: 12
   - Files: `packages/infra-sls/scripts/init-local-table.ts`, `packages/infra-sls/.env.local.example`, `packages/infra-sls/package.json`
   - Deps: T-12-01
@@ -484,14 +484,14 @@
 
 ## Slice 13 — Local dev verification
 
-- [ ] **T-13-01** — Run full local dev stack: `pnpm ddb:up` → `pnpm init:local` → `sls offline start` (or `pnpm dev`). Exercise all 9 endpoints via Bruno collection or curl. Document smoke-test results. Fix any wiring bugs discovered (adapter method signatures, middleware composition order, `exactOptionalPropertyTypes` edge cases in mappers, ESM `.js` import extension issues).
+- [x] **T-13-01** — Run full local dev stack: `pnpm ddb:up` → `pnpm init:local` → `sls offline start` (or `pnpm dev`). Exercise all 9 endpoints via Bruno collection or curl. Document smoke-test results. Fix any wiring bugs discovered (adapter method signatures, middleware composition order, `exactOptionalPropertyTypes` edge cases in mappers, ESM `.js` import extension issues).
   - Slice: 13
   - Files: Any files requiring bug fixes from smoke-testing (expected: mappers, container.ts, serverless.yml)
   - Deps: T-12-03, T-10-03, T-09-04
   - Acceptance: REQ-AUTH-05, NFR-DEV-01, NFR-CODE-01; all 9 endpoints return expected status codes as per spec §3 scenarios; `pnpm typecheck && pnpm lint` exits 0 across all packages.
   - Est: L
 
-- [ ] **T-13-02** — Create `packages/infra-sls/bruno/` Bruno collection with 9 request files (one per endpoint) pre-filled with example request bodies using USD and PEN currencies, predefined category IDs (`income:salary`, `expense:food`), and `X-Mock-User-Id` header; create `packages/infra-sls/LOCAL_DEV.md` documenting local dev startup sequence, mock user header, example curl commands for each endpoint
+- [x] **T-13-02** — Create `packages/infra-sls/bruno/` Bruno collection with 9 request files (one per endpoint) pre-filled with example request bodies using USD and PEN currencies, predefined category IDs (`income:salary`, `expense:food`), and `X-Mock-User-Id` header; create `packages/infra-sls/LOCAL_DEV.md` documenting local dev startup sequence, mock user header, example curl commands for each endpoint
   - Slice: 13
   - Files: `packages/infra-sls/bruno/*.bru` (9 files), `packages/infra-sls/LOCAL_DEV.md`
   - Deps: T-13-01

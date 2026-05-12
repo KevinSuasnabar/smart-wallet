@@ -30,11 +30,15 @@ export {
   CreateWalletRequestSchema,
   WalletResponseSchema,
   ListWalletsResponseSchema,
+  ListWalletsQuerySchema,
+  WalletIdPathSchema,
 } from './schemas/wallet.js';
 export type {
   CreateWalletDTO,
   WalletResponseDTO,
   ListWalletsResponseDTO,
+  ListWalletsQueryDTO,
+  WalletIdPathDTO,
 } from './schemas/wallet.js';
 
 // Transaction schemas + DTOs
@@ -60,10 +64,12 @@ export {
   CategoryResponseSchema,
   PredefinedCategoryResponseSchema,
   ListCategoriesResponseSchema,
+  CategoryIdPathSchema,
 } from './schemas/category.js';
 export type {
   CreateCustomCategoryDTO,
   CategoryResponseDTO,
   PredefinedCategoryResponseDTO,
   ListCategoriesResponseDTO,
+  CategoryIdPathDTO,
 } from './schemas/category.js';

@@ -30,7 +30,13 @@ export const AddTransactionRequestSchema = z.object({
   /** ISO8601 datetime — range [now-5y, now+1d] validated by domain */
   occurredAt: zOccurredAt,
   description: z.string().max(256).optional(),
-  currency: zCurrency.optional(),
+  /**
+   * Currency of the wallet this transaction belongs to.
+   * The handler uses this to convert the decimal amount to cents before calling the use case.
+   * The use case cross-checks against wallet.currency and returns CurrencyMismatch if they differ.
+   * REQ-MNY-03, REQ-TXN-04
+   */
+  currency: zCurrency,
 });
 
 export type AddTransactionDTO = z.infer<typeof AddTransactionRequestSchema>;

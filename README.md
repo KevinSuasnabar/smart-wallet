@@ -50,6 +50,45 @@ pnpm ddb:up            # arranca DynamoDB Local + admin GUI
 | `pnpm ddb:up` | DynamoDB Local + admin en `localhost:8001` |
 | `pnpm ddb:down` | Para los contenedores |
 
+## Local Development
+
+Full local dev loop — no AWS account needed. DynamoDB Local replaces the real table, and
+`serverless-offline` bypasses the Cognito JWT authorizer (the `withAuth` middleware reads the
+`X-Mock-User-Id` header instead).
+
+**Terminal 1 — Infrastructure**
+```bash
+pnpm install
+pnpm ddb:up           # start DynamoDB Local (port 8000) + admin UI (port 8001)
+pnpm ddb:init         # create the single table + GSI1 + TTL config
+```
+
+**Terminal 2 — API**
+```bash
+cd packages/infra-sls
+pnpm dev              # serverless-offline on port 3000
+```
+
+**Terminal 3 — Smoke test**
+```bash
+pnpm smoke            # runs all 12 smoke steps against localhost:3000
+```
+
+Quick curl example:
+```bash
+# Create a wallet
+curl -s -X POST http://localhost:3000/wallets \
+  -H "X-Mock-User-Id: 11111111-1111-4111-8111-111111111111" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Cash","currency":"USD"}' | jq .
+
+# List wallets
+curl -s http://localhost:3000/wallets \
+  -H "X-Mock-User-Id: 11111111-1111-4111-8111-111111111111" | jq .
+```
+
+See `packages/infra-sls/LOCAL_DEV.md` for the full endpoint reference.
+
 ## Workflow
 
 Spec-Driven Development (SDD) interactivo. Issues y milestones en [Linear](https://linear.app/projects-tomoshiro/project/smart-wallet-mvp-20e6e3ef7ee1).
