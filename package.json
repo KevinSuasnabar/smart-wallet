@@ -28,6 +28,7 @@
     "ddb:logs": "docker compose logs -f dynamodb",
     "ddb:init": "pnpm --filter @smart-wallet/infra-sls init:local",
     "smoke": "bash packages/infra-sls/smoke-tests/smoke.sh",
+    "smoke:prod": "bash packages/infra-sls/smoke-tests/smoke-prod.sh",
     "prepare": "husky"
   },
   "devDependencies": {
