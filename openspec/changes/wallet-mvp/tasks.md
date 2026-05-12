@@ -416,21 +416,21 @@
 
 ## Slice 10 — Idempotency in AddTransaction
 
-- [ ] **T-10-01** — Extend `packages/domain/src/transaction/usecases/AddTransaction.ts`: add optional `idempotencyRecord?: { hash32: string; ttlEpochSeconds: number }` to the use-case input; when present, pass the `idempotencyRecord` payload to `TransactionRepository.add()` as the 3-op TransactWrite; define `IdempotencyConflict` as a typed adapter-level error class (NOT a DomainError — lives in `packages/api/src/adapters/dynamodb/`) and import it as a type in AddTransaction; when `add()` throws `IdempotencyConflict`, the use case calls `transactionRepo.findIdempotentTransactionId()` → then `transactionRepo.findById()` → returns `Result.ok({ transaction, replayed: true })`. Update the return type signature accordingly.
+- [x] **T-10-01** — Extend `packages/domain/src/transaction/usecases/AddTransaction.ts`: add optional `idempotencyRecord?: { hash32: string; ttlEpochSeconds: number }` to the use-case input; when present, pass the `idempotencyRecord` payload to `TransactionRepository.add()` as the 3-op TransactWrite; define `IdempotencyConflict` as a typed adapter-level error class (NOT a DomainError — lives in `packages/api/src/adapters/dynamodb/`) and import it as a type in AddTransaction; when `add()` throws `IdempotencyConflict`, the use case calls `transactionRepo.findIdempotentTransactionId()` → then `transactionRepo.findById()` → returns `Result.ok({ transaction, replayed: true })`. Update the return type signature accordingly.
   - Slice: 10
   - Files: `packages/domain/src/transaction/usecases/AddTransaction.ts`, `packages/api/src/adapters/dynamodb/IdempotencyConflict.ts` (new error class)
   - Deps: T-04-05, T-07-07
   - Acceptance: REQ-IDEM-01, REQ-IDEM-02, REQ-IDEM-03; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-10-02** — Extend `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts`: implement the 3-op `TransactWriteItems` path in `add()` when `idempotencyRecord` is present — the third `Put` uses `ConditionExpression: "attribute_not_exists(PK)"`; on `TransactionCanceledException` with reason `ConditionalCheckFailed` at item index 2 → throw `IdempotencyConflict`; implement `findIdempotentTransactionId()` with `GetItemCommand` on `IDEMPOTENCY#{hash32}` SK, returning the stored `transactionId`; implement `findById()` with `GetItemCommand` on transaction PK/SK (need to reconstruct SK from stored attributes); TTL set to `Math.floor(Date.now() / 1000) + 86400`
+- [x] **T-10-02** — Extend `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts`: implement the 3-op `TransactWriteItems` path in `add()` when `idempotencyRecord` is present — the third `Put` uses `ConditionExpression: "attribute_not_exists(PK)"`; on `TransactionCanceledException` with reason `ConditionalCheckFailed` at item index 2 → throw `IdempotencyConflict`; implement `findIdempotentTransactionId()` with `GetItemCommand` on `IDEMPOTENCY#{hash32}` SK, returning the stored `transactionId`; implement `findById()` with `GetItemCommand` on transaction PK/SK (need to reconstruct SK from stored attributes); TTL set to `Math.floor(Date.now() / 1000) + 86400`
   - Slice: 10
   - Files: `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts`
   - Deps: T-10-01
   - Acceptance: REQ-IDEM-02, REQ-IDEM-04, REQ-IDEM-05, REQ-IDEM-06; tsc green; eslint clean.
   - Est: L
 
-- [ ] **T-10-03** — Update `packages/api/src/handlers/transaction/addTransaction.ts`: extract `Idempotency-Key` header; compute hash via `computeIdempotencyHash(userId, walletId, key)`; pass `idempotencyRecord` to `makeAddTransaction().execute()`; return 200 when `result.value.replayed === true`, 201 otherwise; manual smoke-test: first call → 201; second call with same key within window → 200 with identical body
+- [x] **T-10-03** — Update `packages/api/src/handlers/transaction/addTransaction.ts`: extract `Idempotency-Key` header; compute hash via `computeIdempotencyHash(userId, walletId, key)`; pass `idempotencyRecord` to `makeAddTransaction().execute()`; return 200 when `result.value.replayed === true`, 201 otherwise; manual smoke-test: first call → 201; second call with same key within window → 200 with identical body
   - Slice: 10
   - Files: `packages/api/src/handlers/transaction/addTransaction.ts`
   - Deps: T-10-01, T-10-02, T-08-04

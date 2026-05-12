@@ -1,22 +1,31 @@
 import {
+  GetCommand,
   QueryCommand,
   TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { ok, err } from '@smart-wallet/domain';
 import type {
   TransactionRepository,
   AddTransactionPersistInput,
+  AddIdempotentInput,
   Transaction,
   TransactionId,
   UserId,
   WalletId,
   ListByWalletFilter,
   ListByCategoryFilter,
+  Result,
+  TransactionError,
+  WalletError,
 } from '@smart-wallet/domain';
+import { WalletNotFound } from '@smart-wallet/domain';
 import { ddb, TABLE_NAME, GSI1_NAME } from '../DynamoDBClient.js';
 import {
   userPK,
   walletSK,
+  transactionSK,
   transactionSKPrefix,
+  idempotencySK,
 } from '../keyBuilders.js';
 import { encodeCursor, decodeCursor } from '../cursor.js';
 import { transactionToItem, itemToTransaction } from '../mappers/TransactionMapper.js';
@@ -42,26 +51,38 @@ function isTransactionCanceledException(e: unknown): e is TransactionCanceledErr
   return e.name === 'TransactionCanceledException';
 }
 
+// ── IdempotencyRecord item shape ──────────────────────────────────────────
+
+interface IdempotencyRecordItem {
+  PK: string;
+  SK: string;            // IDEMPOTENCY#{hash}
+  entityType: 'IdempotencyRecord';
+  transactionId: string;
+  /** Full TXN#... SK stored to avoid scan-by-transactionId on replay. */
+  transactionSK: string;
+  /** Unix epoch seconds — DynamoDB native TTL. CDK Slice 12 sets TimeToLiveSpecification on `ttl`. */
+  ttl: number;
+  createdAt: string;
+}
+
 // ── Repository ────────────────────────────────────────────────────────────
 
 export class DynamoDBTransactionRepository implements TransactionRepository {
   /**
-   * Atomically:
-   *  1. Put the new Transaction item (condition: item must NOT already exist).
-   *  2. Update the Wallet balance by the signed delta.
+   * Atomically persist a new transaction and update wallet balance (2-op path).
+   *  [0] Put the new Transaction item — fail if already exists (UUID collision guard).
+   *  [1] Update Wallet balance — fail if wallet is missing or soft-deleted.
    *
-   * Slice 11 (PR3) extends this to include a 3rd op for IdempotencyRecord.
+   * Use `addIdempotent` for the 3-op path when an Idempotency-Key header is present.
    */
-  async add(
-    input: AddTransactionPersistInput,
-  ): Promise<void> {
+  async add(input: AddTransactionPersistInput): Promise<void> {
     const { transaction, walletBalanceDelta } = input;
 
     await ddb.send(
       new TransactWriteCommand({
         TransactItems: [
           {
-            // Leg 1: Insert the transaction — fail if a duplicate is somehow written
+            // [0] Insert the transaction — fail if a duplicate is somehow written
             Put: {
               TableName: TABLE_NAME,
               Item: transactionToItem(transaction),
@@ -69,7 +90,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
             },
           },
           {
-            // Leg 2: Update wallet balance — fail if wallet is missing or soft-deleted
+            // [1] Update wallet balance — fail if wallet is missing or soft-deleted
             Update: {
               TableName: TABLE_NAME,
               Key: {
@@ -90,13 +111,159 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
     );
   }
 
+  /**
+   * Idempotent 3-op TransactWriteItems:
+   *   [0] Transaction Put (attribute_not_exists guard — UUID collision protection)
+   *   [1] Wallet Update  (wallet must exist + not soft-deleted)
+   *   [2] IdempotencyRecord Put (attribute_not_exists — the idempotency lock)
+   *
+   * CancellationReasons ordering is FIXED. Error mapping:
+   *   [0] ConditionalCheckFailed → UUID collision (extremely unlikely) → 500-equivalent
+   *   [1] ConditionalCheckFailed → wallet gone or soft-deleted → WalletNotFound (404)
+   *   [2] ConditionalCheckFailed → duplicate request → replay path (200)
+   */
+  async addIdempotent(
+    input: AddIdempotentInput,
+  ): Promise<Result<{ transaction: Transaction; replay: boolean }, TransactionError | WalletError>> {
+    const { transaction, walletBalanceDelta, walletId, idempotencyHash } = input;
+
+    const txItem = transactionToItem(transaction);
+    const occurredAtIso = transaction.occurredAt.toISOString();
+    const txSK = transactionSK(walletId.toString(), occurredAtIso, transaction.id.toString());
+    const pk = userPK(transaction.userId.toString());
+    const idemSK = idempotencySK(idempotencyHash);
+    const now = new Date().toISOString();
+    const ttlEpoch = (Date.now() / 1000 | 0) + 86400; // 24 h from now
+
+    const idempotencyItem: IdempotencyRecordItem = {
+      PK: pk,
+      SK: idemSK,
+      entityType: 'IdempotencyRecord',
+      transactionId: transaction.id.toString(),
+      transactionSK: txSK,
+      ttl: ttlEpoch,
+      createdAt: now,
+    };
+
+    try {
+      await ddb.send(
+        new TransactWriteCommand({
+          TransactItems: [
+            {
+              // [0] Transaction Put — UUID collision guard
+              Put: {
+                TableName: TABLE_NAME,
+                Item: txItem,
+                ConditionExpression: 'attribute_not_exists(PK) AND attribute_not_exists(SK)',
+              },
+            },
+            {
+              // [1] Wallet balance Update — wallet must exist + not be soft-deleted
+              Update: {
+                TableName: TABLE_NAME,
+                Key: {
+                  PK: pk,
+                  SK: walletSK(walletId.toString()),
+                },
+                UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
+                ConditionExpression:
+                  'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                ExpressionAttributeValues: {
+                  ':delta': walletBalanceDelta,
+                  ':now': now,
+                },
+              },
+            },
+            {
+              // [2] IdempotencyRecord Put — attribute_not_exists is the idempotency lock
+              Put: {
+                TableName: TABLE_NAME,
+                Item: idempotencyItem,
+                ConditionExpression: 'attribute_not_exists(PK) AND attribute_not_exists(SK)',
+              },
+            },
+          ],
+        }),
+      );
+
+      return ok({ transaction, replay: false });
+    } catch (e: unknown) {
+      if (!isTransactionCanceledException(e)) throw e;
+
+      const reasons = e.CancellationReasons ?? [];
+      const reason0 = reasons[0];
+      const reason1 = reasons[1];
+      const reason2 = reasons[2];
+
+      // [2] ConditionalCheckFailed → idempotency lock already exists → replay
+      if (reason2?.Code === 'ConditionalCheckFailed') {
+        const replayed = await this.replayTransaction(pk, idemSK);
+        if (replayed === null) {
+          // TTL expired between the condition check and the get — treat as new (re-throw to 500)
+          throw new Error(
+            `Idempotency replay failed: record expired for hash ${idempotencyHash}`,
+          );
+        }
+        return ok({ transaction: replayed, replay: true });
+      }
+
+      // [1] ConditionalCheckFailed → wallet missing or soft-deleted
+      if (reason1?.Code === 'ConditionalCheckFailed') {
+        return err(new WalletNotFound());
+      }
+
+      // [0] ConditionalCheckFailed → Transaction UUID collision (bug-level event)
+      if (reason0?.Code === 'ConditionalCheckFailed') {
+        throw new Error(
+          `Transaction UUID collision on ${transaction.id.toString()} — this is a bug`,
+        );
+      }
+
+      // Unhandled cancellation reason — re-throw for withErrorHandler to catch
+      throw e;
+    }
+  }
+
+  /**
+   * Fetch the original transaction using the transactionSK cached in the IdempotencyRecord.
+   * Avoids a scan-by-transactionId on the replay path.
+   */
+  private async replayTransaction(
+    pk: string,
+    idemSK: string,
+  ): Promise<Transaction | null> {
+    // 1. Get IdempotencyRecord to read the cached transactionSK
+    const idemResponse = await ddb.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { PK: pk, SK: idemSK },
+      }),
+    );
+
+    const idemItem = idemResponse.Item as IdempotencyRecordItem | undefined;
+    if (!idemItem) return null;
+
+    // 2. Get the original Transaction using the cached SK (no scan needed)
+    const txResponse = await ddb.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { PK: pk, SK: idemItem.transactionSK },
+      }),
+    );
+
+    const txItem = txResponse.Item as TransactionItem | undefined;
+    if (!txItem) return null;
+
+    const result = itemToTransaction(txItem);
+    return result.ok ? result.value : null;
+  }
+
   async findById(
     userId: UserId,
     transactionId: TransactionId,
   ): Promise<Transaction | null> {
     // The Transaction SK requires walletId + occurredAt which we don't know here.
-    // Use a GSI or Query by PK + SK filter. For MVP findById we query PK
-    // (user) with a filter on transactionId since we lack the full SK.
+    // Use a Query by PK + SK begins_with filter on transactionId since we lack the full SK.
     // This is a scan-within-partition — acceptable at MVP scale.
     // A more efficient approach would store a GSI2 with transactionId as SK,
     // but that's deferred to a future slice.
@@ -229,7 +396,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
 
   /**
    * Look up a prior transaction by its idempotency record SK.
-   * Deferred to Slice 11 (PR3) — always returns null in this slice.
+   * @deprecated Superseded by addIdempotent() which handles replay internally.
    */
   findIdempotentTransactionId(
     _userId: UserId,

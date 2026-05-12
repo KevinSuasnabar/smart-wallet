@@ -4,9 +4,10 @@ import type { AddTransactionDTO, WalletIdPathDTO } from '@smart-wallet/shared-ty
 import { withAuth, withErrorHandler, validateBody, validatePath } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
 import { container } from '../../composition/container.js';
-import { created, badRequest } from '../../shared/response.js';
+import { ok as responseOk, created, badRequest } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
 import { parseAmountForCurrency, formatMoneyForResponse } from '../../shared/boundary/index.js';
+import { computeIdempotencyHash } from '../../shared/idempotency.js';
 
 /**
  * POST /wallets/{walletId}/transactions — add a new transaction to a wallet.
@@ -16,11 +17,14 @@ import { parseAmountForCurrency, formatMoneyForResponse } from '../../shared/bou
  * - Handler converts the decimal amount string to cents here at the boundary.
  * - Use case validates that input.currency === wallet.currency (CurrencyMismatch on mismatch).
  *
- * Idempotency-Key header is read but not yet wired (Slice 11 / T-10-03).
+ * Idempotency-Key header (optional, 1–128 chars):
+ * - When present: 3-op TransactWrite via addIdempotent(). Returns 201 on first call, 200 on replay.
+ * - When absent: 2-op TransactWrite via add(). Always returns 201.
  *
  * Middleware chain: withErrorHandler → withAuth → handler
  *
- * REQ-TXN-01, REQ-TXN-03, REQ-TXN-04, REQ-TXN-05, REQ-TXN-08
+ * REQ-TXN-01, REQ-TXN-03, REQ-TXN-04, REQ-TXN-05, REQ-TXN-08,
+ * REQ-IDEM-01, REQ-IDEM-02, REQ-IDEM-03
  */
 const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResultV2> => {
   const pathValidation = validatePath(WalletIdPathSchema, event.raw);
@@ -42,6 +46,30 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
 
   const money = moneyResult.value;
 
+  // Extract Idempotency-Key header — case-insensitive per HTTP spec.
+  // API Gateway preserves original header casing in event.raw.headers.
+  const rawHeaders = event.raw.headers ?? {};
+  const idempotencyKey =
+    rawHeaders['idempotency-key'] ??
+    rawHeaders['Idempotency-Key'] ??
+    rawHeaders['IDEMPOTENCY-KEY'];
+
+  // Validate idempotency key length when present (1–128 opaque chars per REQ-IDEM-01).
+  if (idempotencyKey !== undefined) {
+    if (idempotencyKey.length < 1 || idempotencyKey.length > 128) {
+      return badRequest('invalid_idempotency_key', {
+        reason: 'Idempotency-Key must be 1–128 characters',
+      });
+    }
+  }
+
+  // Compute SHA-256 hash at the handler boundary (api layer).
+  // The domain and use case never touch Node's crypto module.
+  const idempotencyHash =
+    idempotencyKey !== undefined
+      ? computeIdempotencyHash(event.userId, path.walletId, idempotencyKey)
+      : undefined;
+
   const result = await container.addTransaction({
     userId: event.userId,
     walletId: path.walletId,
@@ -51,14 +79,14 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     categoryId: input.categoryId,
     description: input.description ?? null,
     occurredAt: new Date(input.occurredAt),
+    ...(idempotencyHash !== undefined ? { idempotencyHash } : {}),
   });
 
   if (!result.ok) return domainErrorToResponse(result.error);
 
-  const transaction = result.value;
+  const { transaction, replay } = result.value;
 
-  // Always 201 for now; Slice 11 (T-10-03) wires idempotency replay → 200
-  return created({
+  const body = {
     transactionId: transaction.id.toString(),
     walletId: transaction.walletId.toString(),
     type: transaction.type,
@@ -68,7 +96,10 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     occurredAt: transaction.occurredAt.toISOString(),
     createdAt: transaction.createdAt.toISOString(),
     ...(transaction.description !== null ? { description: transaction.description } : {}),
-  });
+  };
+
+  // Return 200 on idempotent replay (same transaction), 201 on creation.
+  return replay ? responseOk(body) : created(body);
 };
 
 // Lambda entry point — middleware applied outside-in: error boundary wraps auth

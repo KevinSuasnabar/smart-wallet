@@ -34,6 +34,13 @@ export interface AddTransactionInput {
   categoryId: string;
   description: string | null;
   occurredAt: Date;
+  /**
+   * Pre-computed 32 hex char SHA-256 hash of (userId + ':' + walletId + ':' + idempotencyKey).
+   * Computed at the handler boundary (api layer — Node crypto); domain does not touch it.
+   * When present, the repository uses the 3-op idempotent TransactWrite path.
+   * When absent, the standard 2-op path is used.
+   */
+  idempotencyHash?: string;
 }
 
 export interface AddTransactionDeps {
@@ -45,8 +52,13 @@ export interface AddTransactionDeps {
   clock: Clock;
 }
 
+/**
+ * Unified output shape for both idempotent and non-idempotent paths.
+ * - `replay: false` — new transaction created (handler returns 201).
+ * - `replay: true`  — existing transaction returned from idempotency record (handler returns 200).
+ */
 export type AddTransactionOutput = Result<
-  Transaction,
+  { transaction: Transaction; replay: boolean },
   TransactionError | WalletError | UserError | CategoryError
 >;
 
@@ -119,8 +131,20 @@ export const makeAddTransaction =
     const walletBalanceDelta =
       input.type === 'income' ? money.amount : money.negate().amount;
 
-    // 9. Persist — TransactWriteItems (2-op path; idempotency 3-op path is Slice 10 / PR3)
-    await deps.transactionRepo.add({ transaction, walletBalanceDelta: walletBalanceDelta });
+    // 9. Persist — choose path based on idempotencyHash presence
+    if (input.idempotencyHash !== undefined) {
+      // 3-op idempotent path: Transaction Put + Wallet Update + IdempotencyRecord Put
+      // The repository handles TransactionCanceledException and returns replay: true on retry.
+      return deps.transactionRepo.addIdempotent({
+        transaction,
+        walletBalanceDelta,
+        walletId,
+        idempotencyHash: input.idempotencyHash,
+      });
+    }
 
-    return ok(transaction);
+    // Standard 2-op path: Transaction Put + Wallet balance Update
+    await deps.transactionRepo.add({ transaction, walletBalanceDelta });
+
+    return ok({ transaction, replay: false });
   };
