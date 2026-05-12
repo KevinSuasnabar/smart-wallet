@@ -1,29 +1,34 @@
 import { z } from 'zod';
 import { zCurrency } from '../currencies.js';
 import { zIso8601 } from '../date.js';
-import { zPaginatedResponse } from '../pagination.js';
-import { zLimit, zCursor } from '../pagination.js';
+import { zPaginatedResponse, zLimit, zCursor } from '../pagination.js';
+import { zDecimalString } from '../money.js';
+import { zCategoryIdLike } from './common.js';
 
 const zTransactionType = z.enum(['income', 'expense']);
 
 /**
- * Amount as a non-negative decimal string with exactly 2 decimal places.
- * Must be > 0 (enforced separately by domain).
- * Cents conversion is NOT done in the schema — the handler does it after
- * fetching the wallet's currency (which is unknown at validation time).
- * REQ-MNY-02, REQ-MNY-03
+ * ISO8601 datetime for occurredAt in a transaction request.
+ * Range validation [now-5y, now+1d] is enforced at the domain layer (not here).
+ * REQ-TXN-05
  */
-export const zDecimalAmount = z
-  .string()
-  .regex(/^\d+\.\d{2}$/, 'Amount must be a decimal with exactly 2 decimal places (e.g. "12.34")');
+export const zOccurredAt = zIso8601;
 
 export const AddTransactionRequestSchema = z.object({
   type: zTransactionType,
-  /** Decimal string with exactly 2 decimal places; must be > 0 */
-  amount: zDecimalAmount,
-  categoryId: z.string().min(1),
+  /**
+   * Decimal string with exactly 2 decimal places; must be > 0.
+   * No .transform() — cents conversion happens in the handler after wallet currency is loaded.
+   * REQ-MNY-02, REQ-MNY-03
+   */
+  amount: zDecimalString,
+  /**
+   * Accepts predefined category IDs (e.g. "income:salary") OR UUID v4 (custom categories).
+   * REQ-VAL-05, REQ-CAT-04
+   */
+  categoryId: zCategoryIdLike,
   /** ISO8601 datetime — range [now-5y, now+1d] validated by domain */
-  occurredAt: zIso8601,
+  occurredAt: zOccurredAt,
   description: z.string().max(256).optional(),
   currency: zCurrency.optional(),
 });

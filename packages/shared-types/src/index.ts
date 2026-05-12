@@ -13,7 +13,7 @@ export {
 export type { PredefinedCategoryId } from './categories.js';
 
 // Money helpers
-export { decimalStringToCents, centsToDecimalString } from './money.js';
+export { decimalStringToCents, centsToDecimalString, zDecimalString } from './money.js';
 
 // Pagination
 export { zCursor, zLimit, zPaginatedResponse } from './pagination.js';
@@ -23,7 +23,7 @@ export type { PaginatedResponse } from './pagination.js';
 export { zIso8601 } from './date.js';
 
 // Common schemas
-export { zUuid, zUserId, zWalletId, zTransactionId, zCategoryId, zIdempotencyKey } from './schemas/common.js';
+export { zUuid, zUserId, zWalletId, zTransactionId, zCategoryId, zCategoryIdLike, zIdempotencyKey } from './schemas/common.js';
 
 // Wallet schemas + DTOs
 export {
@@ -39,7 +39,7 @@ export type {
 
 // Transaction schemas + DTOs
 export {
-  zDecimalAmount,
+  zOccurredAt,
   AddTransactionRequestSchema,
   TransactionResponseSchema,
   ListTransactionsResponseSchema,

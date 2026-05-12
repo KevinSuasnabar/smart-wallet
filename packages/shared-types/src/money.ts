@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { Currency } from './currencies.js';
 import { currencyDecimals } from './currencies.js';
 
@@ -58,3 +59,17 @@ export function centsToDecimalString(cents: number, currency: Currency): string 
   const fracPart = (abs % multiplier).toString().padStart(scale, '0');
   return `${negative ? '-' : ''}${intPart}.${fracPart}`;
 }
+
+/**
+ * Zod schema for validating decimal amount strings at the API boundary.
+ *
+ * Accepts: non-negative decimal strings with exactly 2 decimal places (e.g. "12.34").
+ * Does NOT check for > 0 — that is enforced by Money.create() in the domain.
+ * No `.transform()` — stays as string; currency-aware conversion to cents
+ * happens in the handler after loading the wallet's currency.
+ *
+ * REQ-MNY-02, REQ-MNY-03
+ */
+export const zDecimalString = z
+  .string()
+  .regex(/^\d+\.\d{2}$/, 'Amount must be a decimal with exactly 2 decimal places (e.g. "12.34")');

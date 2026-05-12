@@ -267,14 +267,14 @@
 
 ## Slice 6 — Zod transforms + boundary validation
 
-- [ ] **T-06-01** — Create `packages/shared-types/src/money.ts` with `decimalStringToCents(value: string, currency: Currency): number` (throws on >2 decimal places, negative, zero); `centsToDecimalString(cents: number, currency: Currency): string` (always 2 decimal places, signed); `zDecimalString` Zod schema (regex validates decimal format, strictly positive, ≤2 decimal places)
+- [x] **T-06-01** — Create `packages/shared-types/src/money.ts` with `decimalStringToCents(value: string, currency: Currency): number` (throws on >2 decimal places, negative, zero); `centsToDecimalString(cents: number, currency: Currency): string` (always 2 decimal places, signed); `zDecimalString` Zod schema (regex validates decimal format, strictly positive, ≤2 decimal places)
   - Slice: 6
   - Files: `packages/shared-types/src/money.ts`
   - Deps: T-01-01
   - Acceptance: REQ-MNY-01, REQ-MNY-02, REQ-MNY-03, REQ-MNY-04, REQ-MNY-05; tsc green; eslint clean. Manual check: `decimalStringToCents("12.34", "USD") === 1234`, `centsToDecimalString(1234, "USD") === "12.34"`, `centsToDecimalString(-200, "USD") === "-2.00"`, `centsToDecimalString(500, "PEN") === "5.00"`.
   - Est: M
 
-- [ ] **T-06-02** — Update `packages/shared-types/src/schemas/transaction.ts`: replace plain `amount: z.string()` with `zDecimalString` (positive, ≤2 decimal places) in `AddTransactionRequestSchema`; add `zOccurredAt` (ISO8601 string only — range validation done in domain); update `packages/shared-types/src/schemas/common.ts`: add `zCategoryId` that accepts either a predefined category ID string OR a UUID v4 (use `.refine()` or a union); update `packages/shared-types/src/index.ts` barrel to export money helpers
+- [x] **T-06-02** — Update `packages/shared-types/src/schemas/transaction.ts`: replace plain `amount: z.string()` with `zDecimalString` (positive, ≤2 decimal places) in `AddTransactionRequestSchema`; add `zOccurredAt` (ISO8601 string only — range validation done in domain); update `packages/shared-types/src/schemas/common.ts`: add `zCategoryId` that accepts either a predefined category ID string OR a UUID v4 (use `.refine()` or a union); update `packages/shared-types/src/index.ts` barrel to export money helpers
   - Slice: 6
   - Files: `packages/shared-types/src/schemas/transaction.ts`, `packages/shared-types/src/schemas/common.ts`, `packages/shared-types/src/index.ts`
   - Deps: T-06-01, T-01-05, T-01-06
