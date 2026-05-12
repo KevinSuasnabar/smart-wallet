@@ -136,42 +136,42 @@
 
 ## Slice 3 — Wallet aggregate
 
-- [ ] **T-03-01** — Create `packages/domain/src/user/UserId.ts` (VO wrapping Cognito sub string); create `packages/domain/src/wallet/WalletId.ts` (VO wrapping UUID string)
+- [x] **T-03-01** — Create `packages/domain/src/user/UserId.ts` (VO wrapping Cognito sub string); create `packages/domain/src/wallet/WalletId.ts` (VO wrapping UUID string)
   - Slice: 3
   - Files: `packages/domain/src/user/UserId.ts`, `packages/domain/src/wallet/WalletId.ts`
   - Deps: T-02-03
   - Acceptance: REQ-AUTH-02; tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-03-02** — Create `packages/domain/src/wallet/WalletError.ts` with `WalletError.InvalidName` (tag `wallet.invalid_name`, 400), `WalletError.NotFound` (tag `wallet.not_found`, 404); create `packages/domain/src/wallet/events/WalletCreated.ts` domain event
+- [x] **T-03-02** — Create `packages/domain/src/wallet/WalletError.ts` with `WalletError.InvalidName` (tag `wallet.invalid_name`, 400), `WalletError.NotFound` (tag `wallet.not_found`, 404); create `packages/domain/src/wallet/events/WalletCreated.ts` domain event
   - Slice: 3
   - Files: `packages/domain/src/wallet/WalletError.ts`, `packages/domain/src/wallet/events/WalletCreated.ts`
   - Deps: T-02-02, T-03-01
   - Acceptance: Scaffolding only; tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-03-03** — Create `packages/domain/src/wallet/Wallet.ts` AggregateRoot: props interface (`name`, `currency` from `Currency` type, `balance: number`, `createdAt`, `updatedAt`, `deletedAt?`); static `Wallet.create()` returning `Result<Wallet, WalletError>` enforcing non-empty trimmed name ≤64 chars, valid currency, balance=0, equal createdAt/updatedAt; `applyBalanceChange(delta: number): void`; `isDeleted(): boolean` checking `deletedAt`; note: import `Currency` from `@smart-wallet/shared-types` as type-only import (`import type`)
+- [x] **T-03-03** — Create `packages/domain/src/wallet/Wallet.ts` AggregateRoot: props interface (`name`, `currency` from `Currency` type, `balance: number`, `createdAt`, `updatedAt`, `deletedAt?`); static `Wallet.create()` returning `Result<Wallet, WalletError>` enforcing non-empty trimmed name ≤64 chars, valid currency, balance=0, equal createdAt/updatedAt; `applyBalanceChange(delta: number): void`; `isDeleted(): boolean` checking `deletedAt`; note: import `Currency` from `@smart-wallet/shared-types` as type-only import (`import type`)
   - Slice: 3
   - Files: `packages/domain/src/wallet/Wallet.ts`
   - Deps: T-02-03, T-03-01, T-03-02
   - Acceptance: REQ-WAL-01, REQ-WAL-02, REQ-WAL-03, REQ-WAL-06, REQ-VAL-06; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-03-04** — Create `packages/domain/src/wallet/WalletRepository.ts` port interface with `create(wallet: Wallet): Promise<void>`, `findById(userId: UserId, walletId: WalletId): Promise<Wallet | null>`, `listByUser(userId: UserId, page: { limit: number; cursor?: string }): Promise<{ items: Wallet[]; nextCursor?: string }>`
+- [x] **T-03-04** — Create `packages/domain/src/wallet/WalletRepository.ts` port interface with `create(wallet: Wallet): Promise<void>`, `findById(userId: UserId, walletId: WalletId): Promise<Wallet | null>`, `listByUser(userId: UserId, page: { limit: number; cursor?: string }): Promise<{ items: Wallet[]; nextCursor?: string }>`
   - Slice: 3
   - Files: `packages/domain/src/wallet/WalletRepository.ts`
   - Deps: T-03-03
   - Acceptance: REQ-AUTH-03, REQ-WAL-04, REQ-WAL-05, REQ-WAL-08; tsc green; eslint clean.
   - Est: S
 
-- [ ] **T-03-05** — Create `packages/domain/src/wallet/usecases/CreateWallet.ts`: constructor takes `WalletRepository`, `Clock`, `IdGenerator`; `execute(userId: UserId, input: { name: string; currency: string }): Promise<Result<Wallet, WalletError>>` — validates via `Wallet.create()`, calls `repo.create()`, returns the wallet; create `packages/domain/src/wallet/usecases/GetWallet.ts`: `execute(userId, walletId)` calls `repo.findById`, returns `Result<Wallet, WalletError.NotFound>` (404 if null or deleted)
+- [x] **T-03-05** — Create `packages/domain/src/wallet/usecases/CreateWallet.ts`: constructor takes `WalletRepository`, `Clock`, `IdGenerator`; `execute(userId: UserId, input: { name: string; currency: string }): Promise<Result<Wallet, WalletError>>` — validates via `Wallet.create()`, calls `repo.create()`, returns the wallet; create `packages/domain/src/wallet/usecases/GetWallet.ts`: `execute(userId, walletId)` calls `repo.findById`, returns `Result<Wallet, WalletError.NotFound>` (404 if null or deleted)
   - Slice: 3
   - Files: `packages/domain/src/wallet/usecases/CreateWallet.ts`, `packages/domain/src/wallet/usecases/GetWallet.ts`
   - Deps: T-03-03, T-03-04
   - Acceptance: REQ-WAL-01, REQ-WAL-05, REQ-DEL-03; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-03-06** — Create `packages/domain/src/wallet/usecases/ListWallets.ts`: `execute(userId, page)` delegates to `repo.listByUser()` and returns items + nextCursor; update `packages/domain/src/index.ts` barrel to re-export wallet aggregate, errors, repository port, use cases
+- [x] **T-03-06** — Create `packages/domain/src/wallet/usecases/ListWallets.ts`: `execute(userId, page)` delegates to `repo.listByUser()` and returns items + nextCursor; update `packages/domain/src/index.ts` barrel to re-export wallet aggregate, errors, repository port, use cases
   - Slice: 3
   - Files: `packages/domain/src/wallet/usecases/ListWallets.ts`, `packages/domain/src/index.ts`
   - Deps: T-03-04

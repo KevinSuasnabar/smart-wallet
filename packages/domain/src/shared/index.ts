@@ -1,6 +1,8 @@
 export { ok, err, isOk, isErr, mapResult, chainResult } from './Result.js';
 export type { Result } from './Result.js';
 
+export type { Currency } from './Currency.js';
+
 export { DomainError } from './DomainError.js';
 export type { DomainErrorJSON } from './DomainError.js';
 
