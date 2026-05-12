@@ -18,7 +18,19 @@ provider:
   logRetentionInDays: 14
 
   httpApi:
-    cors: true
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Authorization
+        - Content-Type
+        - Idempotency-Key
+      allowedMethods:
+        - GET
+        - POST
+        - DELETE
+        - OPTIONS
+      maxAge: 300
     # JWT authorizer: only configured for prod stage (CDK must be deployed first so SSM params exist).
     # In local stage, serverless-offline ignores JWT validation entirely — auth is handled by
     # the withAuth middleware reading X-Mock-User-Id header (IS_OFFLINE=true).
