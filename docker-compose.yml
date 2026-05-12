@@ -2,12 +2,14 @@ services:
   dynamodb:
     image: amazon/dynamodb-local:2.5.4
     container_name: smart-wallet-ddb
-    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data
+    # -inMemory: data lives in RAM only. No SQLite file → no permission issues
+    # on the Docker named volume (which caused "attempt to write a readonly
+    # database" with host UID overrides on WSL2).
+    # Each container restart starts with an empty DB — re-run `pnpm ddb:init`
+    # to recreate the schema after restarts. Acceptable trade-off for local dev.
+    command: -jar DynamoDBLocal.jar -sharedDb -inMemory
     ports:
       - '8000:8000'
-    volumes:
-      - dynamodb-data:/home/dynamodblocal/data
-    user: '1000'
     working_dir: /home/dynamodblocal
     healthcheck:
       test: ['CMD-SHELL', 'curl -s http://localhost:8000/ > /dev/null || exit 1']
@@ -29,5 +31,3 @@ services:
       dynamodb:
         condition: service_healthy
 
-volumes:
-  dynamodb-data:
