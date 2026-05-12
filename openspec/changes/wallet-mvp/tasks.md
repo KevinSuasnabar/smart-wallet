@@ -285,56 +285,56 @@
 
 ## Slice 7 — DynamoDB adapters + key builders
 
-- [ ] **T-07-01** — Create `packages/api/src/shared/env.ts`: typed reader for `TABLE_NAME`, `GSI1_NAME`, `AWS_REGION`, `IS_OFFLINE` (boolean from string), `LOCAL_USER_ID?`; throws at module load if required vars are absent; create `packages/api/src/adapters/dynamodb/DynamoDBClient.ts`: module-scope `DynamoDBClient` + `DynamoDBDocumentClient` singletons with `marshallOptions: { removeUndefinedValues: true, convertEmptyValues: false, convertClassInstanceToMap: false }` and offline endpoint branch
+- [x] **T-07-01** — Create `packages/api/src/shared/env.ts`: typed reader for `TABLE_NAME`, `GSI1_NAME`, `AWS_REGION`, `IS_OFFLINE` (boolean from string), `LOCAL_USER_ID?`; throws at module load if required vars are absent; create `packages/api/src/adapters/dynamodb/DynamoDBClient.ts`: module-scope `DynamoDBClient` + `DynamoDBDocumentClient` singletons with `marshallOptions: { removeUndefinedValues: true, convertEmptyValues: false, convertClassInstanceToMap: false }` and offline endpoint branch
   - Slice: 7
   - Files: `packages/api/src/shared/env.ts`, `packages/api/src/adapters/dynamodb/DynamoDBClient.ts`
   - Deps: T-00-01, T-00-02
   - Acceptance: Scaffolding only; tsc green; eslint clean. Verify `removeUndefinedValues: true` is present (critical for `attribute_not_exists` filters).
   - Est: S
 
-- [ ] **T-07-02** — Create `packages/api/src/adapters/dynamodb/keyBuilders.ts` with `keyForWallet`, `keyForTransaction`, `keyForTransactionGsi1`, `keyForCategory`, `keyForIdempotency` pure functions matching the DDB schema in proposal §4.2; create `packages/api/src/adapters/dynamodb/cursorCodec.ts` with `encodeCursor(lastKey: Record<string, unknown>): string` (base64 JSON) and `decodeCursor(cursor: string): Record<string, unknown>` (base64 JSON; returns undefined on invalid input)
+- [x] **T-07-02** — Create `packages/api/src/adapters/dynamodb/keyBuilders.ts` with `keyForWallet`, `keyForTransaction`, `keyForTransactionGsi1`, `keyForCategory`, `keyForIdempotency` pure functions matching the DDB schema in proposal §4.2; create `packages/api/src/adapters/dynamodb/cursorCodec.ts` with `encodeCursor(lastKey: Record<string, unknown>): string` (base64 JSON) and `decodeCursor(cursor: string): Record<string, unknown>` (base64 JSON; returns undefined on invalid input)
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/keyBuilders.ts`, `packages/api/src/adapters/dynamodb/cursorCodec.ts`
   - Deps: T-07-01
   - Acceptance: Scaffolding only; tsc green; eslint clean. Keys must match exactly: `USER#{userId}`, `WALLET#{walletId}`, `TXN#{walletId}#{occurredAtISO}#{transactionId}`, `CATEGORY#{categoryId}`, `IDEMPOTENCY#{hash32}`, `CAT#{categoryId}#{occurredAtISO}#{transactionId}` (GSI1SK).
   - Est: S
 
-- [ ] **T-07-03** — Create `packages/api/src/adapters/dynamodb/mappers/WalletMapper.ts` with `toItem(wallet: Wallet): Record<string, unknown>` (adds `entityType: "Wallet"`, omits `deletedAt` when not set via conditional spread) and `fromItem(item: Record<string, unknown>): Result<Wallet, DomainError>` (narrows `entityType`, reconstructs entity); create `packages/api/src/adapters/dynamodb/mappers/CategoryMapper.ts` similarly for `Category`
+- [x] **T-07-03** — Create `packages/api/src/adapters/dynamodb/mappers/WalletMapper.ts` with `toItem(wallet: Wallet): Record<string, unknown>` (adds `entityType: "Wallet"`, omits `deletedAt` when not set via conditional spread) and `fromItem(item: Record<string, unknown>): Result<Wallet, DomainError>` (narrows `entityType`, reconstructs entity); create `packages/api/src/adapters/dynamodb/mappers/CategoryMapper.ts` similarly for `Category`
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/mappers/WalletMapper.ts`, `packages/api/src/adapters/dynamodb/mappers/CategoryMapper.ts`
   - Deps: T-07-02, T-03-03, T-05-02
   - Acceptance: REQ-DEL-01; tsc green; eslint clean. Confirm `exactOptionalPropertyTypes` pattern: conditional spread for `deletedAt`, `updatedAt`, `description`.
   - Est: M
 
-- [ ] **T-07-04** — Create `packages/api/src/adapters/dynamodb/mappers/TransactionMapper.ts` with `toItem(txn: Transaction)` (sets `GSI1PK`, `GSI1SK` attributes) and `fromItem(item)` — handles `entityType: "Transaction"`, reconstructs from DDB attributes including GSI keys
+- [x] **T-07-04** — Create `packages/api/src/adapters/dynamodb/mappers/TransactionMapper.ts` with `toItem(txn: Transaction)` (sets `GSI1PK`, `GSI1SK` attributes) and `fromItem(item)` — handles `entityType: "Transaction"`, reconstructs from DDB attributes including GSI keys
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/mappers/TransactionMapper.ts`
   - Deps: T-07-02, T-04-03
   - Acceptance: REQ-TXN-02, REQ-TXN-10; tsc green; eslint clean. Verify `GSI1PK` and `GSI1SK` are set correctly so `listByCategory` query works.
   - Est: M
 
-- [ ] **T-07-05** — Create `packages/api/src/adapters/dynamodb/DynamoDBWalletRepository.ts` implementing `WalletRepository` port: `create()` uses `PutItemCommand`; `findById()` uses `GetItemCommand`, checks `deletedAt` attribute; `listByUser()` uses `QueryCommand` with `begins_with(SK, "WALLET#")` and `FilterExpression: "attribute_not_exists(deletedAt)"`, pagination via `ExclusiveStartKey`/`LastEvaluatedKey` encoded with `cursorCodec`
+- [x] **T-07-05** — Create `packages/api/src/adapters/dynamodb/DynamoDBWalletRepository.ts` implementing `WalletRepository` port: `create()` uses `PutItemCommand`; `findById()` uses `GetItemCommand`, checks `deletedAt` attribute; `listByUser()` uses `QueryCommand` with `begins_with(SK, "WALLET#")` and `FilterExpression: "attribute_not_exists(deletedAt)"`, pagination via `ExclusiveStartKey`/`LastEvaluatedKey` encoded with `cursorCodec`
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/DynamoDBWalletRepository.ts`
   - Deps: T-07-03, T-07-01
   - Acceptance: REQ-WAL-04, REQ-WAL-05, REQ-DEL-02, REQ-DEL-03, REQ-AUTH-03; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-07-06** — Create `packages/api/src/adapters/dynamodb/DynamoDBCategoryRepository.ts` implementing `CategoryRepository` port: `create()` uses `PutItemCommand`; `findById()` uses `GetItemCommand`; `listCustomByUser()` uses `QueryCommand` with `begins_with(SK, "CATEGORY#")` and excludes `deletedAt`; `softDelete()` uses `UpdateItemCommand` setting `deletedAt`
+- [x] **T-07-06** — Create `packages/api/src/adapters/dynamodb/DynamoDBCategoryRepository.ts` implementing `CategoryRepository` port: `create()` uses `PutItemCommand`; `findById()` uses `GetItemCommand`; `listCustomByUser()` uses `QueryCommand` with `begins_with(SK, "CATEGORY#")` and excludes `deletedAt`; `softDelete()` uses `UpdateItemCommand` setting `deletedAt`
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/DynamoDBCategoryRepository.ts`
   - Deps: T-07-03, T-07-01
   - Acceptance: REQ-CAT-01, REQ-CAT-03, REQ-DEL-01, REQ-DEL-02; tsc green; eslint clean.
   - Est: M
 
-- [ ] **T-07-07** — Create `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts` implementing `TransactionRepository` port: `add()` with 2-op `TransactWriteItems` (Transaction `Put` + Wallet balance `Update` with `ADD balance :delta`); `listByWallet()` with `QueryCommand`, `begins_with(SK, "TXN#{walletId}#")`, optional `from`/`to` range on SK via `BETWEEN`, excludes `deletedAt`; `listByCategory()` with `QueryCommand` on GSI1, `begins_with(GSI1SK, "CAT#{categoryId}#")`; `findIdempotentTransactionId()` placeholder returning `null` (extended in Slice 10); `findById()` placeholder
+- [x] **T-07-07** — Create `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts` implementing `TransactionRepository` port: `add()` with 2-op `TransactWriteItems` (Transaction `Put` + Wallet balance `Update` with `ADD balance :delta`); `listByWallet()` with `QueryCommand`, `begins_with(SK, "TXN#{walletId}#")`, optional `from`/`to` range on SK via `BETWEEN`, excludes `deletedAt`; `listByCategory()` with `QueryCommand` on GSI1, `begins_with(GSI1SK, "CAT#{categoryId}#")`; `findIdempotentTransactionId()` placeholder returning `null` (extended in Slice 10); `findById()` placeholder
   - Slice: 7
   - Files: `packages/api/src/adapters/dynamodb/DynamoDBTransactionRepository.ts`
   - Deps: T-07-04, T-07-01
   - Acceptance: REQ-TXN-03, REQ-TXN-06, REQ-TXN-07, REQ-TXN-10, REQ-DEL-02; tsc green; eslint clean.
   - Est: L
 
-- [ ] **T-07-08** — Create `packages/api/src/adapters/system/SystemClock.ts` implementing `Clock` (`now(): Date { return new Date(); }`); create `packages/api/src/adapters/system/UuidIdGenerator.ts` implementing `IdGenerator` using `crypto.randomUUID()` from Node 22 built-in (no uuid package dependency — confirm during Slice 9 spike that this works with ESM bundler)
+- [x] **T-07-08** — Create `packages/api/src/adapters/system/SystemClock.ts` implementing `Clock` (`now(): Date { return new Date(); }`); create `packages/api/src/adapters/system/UuidIdGenerator.ts` implementing `IdGenerator` using `crypto.randomUUID()` from Node 22 built-in (no uuid package dependency — confirm during Slice 9 spike that this works with ESM bundler)
   - Slice: 7
   - Files: `packages/api/src/adapters/system/SystemClock.ts`, `packages/api/src/adapters/system/UuidIdGenerator.ts`
   - Deps: T-02-02

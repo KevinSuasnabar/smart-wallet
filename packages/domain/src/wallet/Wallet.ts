@@ -11,7 +11,7 @@ import type { WalletCreated } from './events/WalletCreated.js';
 
 const VALID_CURRENCIES: readonly Currency[] = ['USD', 'PEN'];
 
-interface WalletProps {
+export interface WalletProps {
   userId: UserId;
   name: string;
   currency: Currency;
@@ -107,6 +107,19 @@ export class Wallet extends AggregateRoot<WalletId> {
     wallet.addDomainEvent(event);
 
     return ok(wallet);
+  }
+
+  // ── Rehydration ──────────────────────────────────────────────────────────
+
+  /**
+   * Reconstruct a Wallet from persisted storage without running create() validations.
+   * ONLY for use in adapters (DynamoDB repositories). Trusts the stored data is valid.
+   */
+  static rehydrate(
+    id: WalletId,
+    props: WalletProps,
+  ): Wallet {
+    return new Wallet(id, props);
   }
 
   // ── Methods ───────────────────────────────────────────────────────────────

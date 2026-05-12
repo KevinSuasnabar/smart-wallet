@@ -11,7 +11,7 @@ import type { CategoryError } from './CategoryError.js';
 
 const MAX_NAME_LENGTH = 32;
 
-interface CategoryProps {
+export interface CategoryProps {
   userId: UserId;
   name: string;
   type: CategoryType;
@@ -104,6 +104,19 @@ export class Category extends AggregateRoot<CategoryId> {
     category.addDomainEvent(event);
 
     return ok(category);
+  }
+
+  // ── Rehydration ──────────────────────────────────────────────────────────
+
+  /**
+   * Reconstruct a Category from persisted storage without running create() validations.
+   * ONLY for use in adapters (DynamoDB repositories). Trusts the stored data is valid.
+   */
+  static rehydrate(
+    id: CategoryId,
+    props: CategoryProps,
+  ): Category {
+    return new Category(id, props);
   }
 
   // ── Methods ───────────────────────────────────────────────────────────────
