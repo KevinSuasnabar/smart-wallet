@@ -11,18 +11,13 @@ import { WalletDetailPage } from '../features/wallets/pages/WalletDetailPage.js'
 import { CreateWalletPage } from '../features/wallets/pages/CreateWalletPage.js';
 import { AddTransactionPage } from '../features/transactions/pages/AddTransactionPage.js';
 import { TransactionListPage } from '../features/transactions/pages/TransactionListPage.js';
+import { CategoriesPage } from '../features/categories/pages/CategoriesPage.js';
 import { routes } from './routes.js';
 
-// Stub for PR3 → wired to real CategoriesPage in Slice 10 of this PR
+// Stub for PR4 — settings is future scope
 const SettingsPage = () => (
   <div className="p-6">
     <h1 className="text-xl font-semibold">Configuración (próximamente)</h1>
-  </div>
-);
-
-const CategoriesPage = () => (
-  <div className="p-6">
-    <h1 className="text-xl font-semibold">Categorías (próximamente)</h1>
   </div>
 );
 
