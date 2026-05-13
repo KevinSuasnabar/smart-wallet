@@ -9,9 +9,11 @@ import { NotFoundPage } from '../components/common/NotFoundPage.js';
 import { WalletsListPage } from '../features/wallets/pages/WalletsListPage.js';
 import { WalletDetailPage } from '../features/wallets/pages/WalletDetailPage.js';
 import { CreateWalletPage } from '../features/wallets/pages/CreateWalletPage.js';
+import { AddTransactionPage } from '../features/transactions/pages/AddTransactionPage.js';
+import { TransactionListPage } from '../features/transactions/pages/TransactionListPage.js';
 import { routes } from './routes.js';
 
-// Stubs for PR3 (transactions/categories/settings)
+// Stub for PR3 → wired to real CategoriesPage in Slice 10 of this PR
 const SettingsPage = () => (
   <div className="p-6">
     <h1 className="text-xl font-semibold">Configuración (próximamente)</h1>
@@ -46,6 +48,15 @@ export const AppRouter = () => (
         <Route path={routes.wallets} element={<WalletsListPage />} />
         <Route path={routes.walletsNew} element={<CreateWalletPage />} />
         <Route path="/wallets/:walletId" element={<WalletDetailPage />} />
+        <Route
+          path="/wallets/:walletId/transactions"
+          element={<TransactionListPage />}
+        />
+        <Route
+          path="/wallets/:walletId/transactions/new"
+          element={<AddTransactionPage />}
+        />
+        <Route path={routes.transactionsNew} element={<AddTransactionPage />} />
         <Route path={routes.categories} element={<CategoriesPage />} />
         <Route path={routes.settings} element={<SettingsPage />} />
       </Route>
