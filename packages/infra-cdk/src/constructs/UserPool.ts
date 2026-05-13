@@ -22,8 +22,12 @@ export class UserPool extends Construct {
 
     this.userPool = new CognitoUserPool(this, 'UserPool', {
       userPoolName: props.userPoolName,
-      selfSignUpEnabled: true,
+      // Closed signup: only admins create users via `aws cognito-idp admin-create-user`.
+      // Personal-scale app — invitation-only model. See LOCAL_DEV.md → "Crear un usuario".
+      selfSignUpEnabled: false,
       signInAliases: { email: true },
+      // autoVerify: email-only verification is irrelevant when self-signup is closed.
+      // Kept to satisfy `accountRecovery: EMAIL_ONLY` which still uses email codes for forgot-password.
       autoVerify: { email: true },
       passwordPolicy: {
         minLength: 10,

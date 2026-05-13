@@ -1,8 +1,6 @@
 export const routes = {
   // Public
   login: '/login',
-  signup: '/signup',
-  signupConfirm: '/signup/confirm',
   forgotPassword: '/forgot-password',
   // Protected
   home: '/',

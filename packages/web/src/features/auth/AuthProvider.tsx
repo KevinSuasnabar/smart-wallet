@@ -11,7 +11,6 @@ import {
   AuthenticationDetails,
   CognitoRefreshToken,
   CognitoUser,
-  CognitoUserAttribute,
   CognitoUserSession,
 } from 'amazon-cognito-identity-js';
 import { useNavigate } from 'react-router-dom';
@@ -104,56 +103,6 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     },
     [],
   );
-
-  const signUp = useCallback(
-    async ({ email, password }: { email: string; password: string }) => {
-      await new Promise<void>((resolve, reject) => {
-        userPool.signUp(
-          email,
-          password,
-          [new CognitoUserAttribute({ Name: 'email', Value: email })],
-          [],
-          (err) => {
-            if (err) {
-              reject(new Error(err.message));
-            } else {
-              resolve();
-            }
-          },
-        );
-      });
-    },
-    [],
-  );
-
-  const confirmSignUp = useCallback(
-    async ({ email, code }: { email: string; code: string }) => {
-      const cognitoUser = buildCognitoUser(email);
-      await new Promise<void>((resolve, reject) => {
-        cognitoUser.confirmRegistration(code, true, (err) => {
-          if (err) {
-            reject(err instanceof Error ? err : new Error(String(err)));
-          } else {
-            resolve();
-          }
-        });
-      });
-    },
-    [],
-  );
-
-  const resendConfirmationCode = useCallback(async (email: string) => {
-    const cognitoUser = buildCognitoUser(email);
-    await new Promise<void>((resolve, reject) => {
-      cognitoUser.resendConfirmationCode((err) => {
-        if (err) {
-          reject(err instanceof Error ? err : new Error(String(err)));
-        } else {
-          resolve();
-        }
-      });
-    });
-  }, []);
 
   const forgotPassword = useCallback(async (email: string) => {
     const cognitoUser = buildCognitoUser(email);
@@ -248,9 +197,6 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     () => ({
       ...state,
       signIn,
-      signUp,
-      confirmSignUp,
-      resendConfirmationCode,
       forgotPassword,
       confirmForgotPassword,
       signOut,
@@ -259,9 +205,6 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     [
       state,
       signIn,
-      signUp,
-      confirmSignUp,
-      resendConfirmationCode,
       forgotPassword,
       confirmForgotPassword,
       signOut,
