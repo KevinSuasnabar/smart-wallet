@@ -12,9 +12,6 @@ export interface AuthState {
 
 export interface AuthContextValue extends AuthState {
   signIn: (input: { email: string; password: string }) => Promise<void>;
-  signUp: (input: { email: string; password: string }) => Promise<void>;
-  confirmSignUp: (input: { email: string; code: string }) => Promise<void>;
-  resendConfirmationCode: (email: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   confirmForgotPassword: (input: {
     email: string;
@@ -27,9 +24,7 @@ export interface AuthContextValue extends AuthState {
 }
 
 export type AuthError =
-  | { code: 'UserNotConfirmedException'; message: string }
   | { code: 'NotAuthorizedException'; message: string }
-  | { code: 'UsernameExistsException'; message: string }
   | { code: 'CodeMismatchException'; message: string }
   | { code: 'ExpiredCodeException'; message: string }
   | { code: 'InvalidPasswordException'; message: string }
@@ -43,11 +38,7 @@ export const mapCognitoError = (err: unknown): AuthError => {
   const message = e.message ?? 'Error desconocido';
 
   switch (code) {
-    case 'UserNotConfirmedException':
-      return { code, message };
     case 'NotAuthorizedException':
-      return { code, message };
-    case 'UsernameExistsException':
       return { code, message };
     case 'CodeMismatchException':
       return { code, message };

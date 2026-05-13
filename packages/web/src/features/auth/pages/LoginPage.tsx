@@ -125,16 +125,6 @@ export const LoginPage = () => {
             </Button>
           </form>
         </Form>
-
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          {t.auth.noAccount}{' '}
-          <Link
-            to={routes.signup}
-            className="font-medium text-primary underline underline-offset-2"
-          >
-            Crear cuenta
-          </Link>
-        </p>
       </CardContent>
     </Card>
   );
