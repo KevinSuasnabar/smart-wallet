@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Wallet, Plus, Tag, Settings } from 'lucide-react';
+import { LayoutGrid, Wallet, Plus, Tag, Settings } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { routes } from '../../app/routes.js';
 
@@ -28,7 +28,12 @@ export const BottomTabBar = ({ className }: BottomTabBarProps) => {
         className,
       )}
     >
-      <div className="flex h-16 items-center justify-around px-4">
+      <div className="flex h-16 items-center justify-around px-2">
+        <NavLink to={routes.dashboard} className={tabClass}>
+          <LayoutGrid className="size-5" />
+          <span>Resumen</span>
+        </NavLink>
+
         <NavLink to={routes.wallets} className={tabClass}>
           <Wallet className="size-5" />
           <span>Billeteras</span>
