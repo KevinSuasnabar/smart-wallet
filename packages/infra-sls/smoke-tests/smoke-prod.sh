@@ -77,15 +77,19 @@ json_field() {
   python3 -c "import sys, json; d=json.loads(sys.stdin.read()); k='$1'; print(d.get(k, ''))"
 }
 
-# ---------- Helper: assert HTTP status ----------
+# ---------- Helper: assert HTTP status (prints response body on failure) ----------
 assert_status() {
   local expected=$1
   local actual=$2
   local label=$3
+  local body=${4:-}
   if [ "$actual" -eq "$expected" ]; then
     echo "  ✓ $label → HTTP $actual"
   else
     echo "  ✗ $label → expected HTTP $expected, got $actual"
+    if [ -n "$body" ]; then
+      echo "    response body: $body"
+    fi
     exit 1
   fi
 }
@@ -136,10 +140,10 @@ echo ""
 echo "[1] POST /wallets (USD)"
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/wallets" \
   -H "$AUTH_HEADER" -H "$JSON_HEADER" \
-  -d '{"name":"Cash","currency":"USD"}')
+  -d '{"name":"Cash","currency":"USD","color":"lime"}')
 BODY=$(echo "$RESP" | head -n-1)
 STATUS=$(echo "$RESP" | tail -n1)
-assert_status 201 "$STATUS" "create wallet"
+assert_status 201 "$STATUS" "create wallet" "$BODY"
 WALLET_ID=$(echo "$BODY" | json_field walletId)
 echo "  wallet_id=$WALLET_ID"
 
@@ -160,10 +164,10 @@ echo ""
 echo "[4] POST /categories (Coffee, expense)"
 RESP=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/categories" \
   -H "$AUTH_HEADER" -H "$JSON_HEADER" \
-  -d '{"name":"Coffee","type":"expense"}')
+  -d '{"name":"Coffee","type":"expense","color":"coral"}')
 BODY=$(echo "$RESP" | head -n-1)
 STATUS=$(echo "$RESP" | tail -n1)
-assert_status 201 "$STATUS" "create custom category"
+assert_status 201 "$STATUS" "create custom category" "$BODY"
 CATEGORY_ID=$(echo "$BODY" | json_field categoryId)
 
 # 5. List categories
@@ -190,7 +194,7 @@ RESP=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/wallets/$WALLET_ID/transact
   -d "{\"type\":\"income\",\"amount\":\"100.00\",\"currency\":\"USD\",\"categoryId\":\"income:salary\",\"occurredAt\":\"$NOW_ISO\"}")
 BODY=$(echo "$RESP" | head -n-1)
 STATUS=$(echo "$RESP" | tail -n1)
-assert_status 201 "$STATUS" "add income (first)"
+assert_status 201 "$STATUS" "add income (first)" "$BODY"
 FIRST_TXN_ID=$(echo "$BODY" | json_field transactionId)
 
 # 8. Replay with same Idempotency-Key (should be 200 with SAME transactionId)
@@ -201,7 +205,7 @@ RESP=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/wallets/$WALLET_ID/transact
   -d "{\"type\":\"income\",\"amount\":\"100.00\",\"currency\":\"USD\",\"categoryId\":\"income:salary\",\"occurredAt\":\"$NOW_ISO\"}")
 BODY=$(echo "$RESP" | head -n-1)
 STATUS=$(echo "$RESP" | tail -n1)
-assert_status 200 "$STATUS" "replay (idempotent)"
+assert_status 200 "$STATUS" "replay (idempotent)" "$BODY"
 REPLAY_TXN_ID=$(echo "$BODY" | json_field transactionId)
 if [ "$REPLAY_TXN_ID" = "$FIRST_TXN_ID" ]; then
   echo "  ✓ same transactionId returned ($REPLAY_TXN_ID)"
@@ -234,7 +238,7 @@ echo "[12] GET /wallets/{id} — verify balance"
 RESP=$(curl -s -w "\n%{http_code}" "$API_URL/wallets/$WALLET_ID" -H "$AUTH_HEADER")
 BODY=$(echo "$RESP" | head -n-1)
 STATUS=$(echo "$RESP" | tail -n1)
-assert_status 200 "$STATUS" "get wallet final"
+assert_status 200 "$STATUS" "get wallet final" "$BODY"
 BALANCE=$(echo "$BODY" | json_field balance)
 if [ "$BALANCE" = "94.50" ]; then
   echo "  ✓ balance is 94.50 USD (+100.00 income - 5.50 expense, replay counted once)"
