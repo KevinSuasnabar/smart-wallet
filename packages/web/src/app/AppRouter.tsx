@@ -9,6 +9,7 @@ import { NotFoundPage } from '../components/common/NotFoundPage.js';
 import { WalletsListPage } from '../features/wallets/pages/WalletsListPage.js';
 import { WalletDetailPage } from '../features/wallets/pages/WalletDetailPage.js';
 import { CreateWalletPage } from '../features/wallets/pages/CreateWalletPage.js';
+import { EditWalletPage } from '../features/wallets/pages/EditWalletPage.js';
 import { AddTransactionPage } from '../features/transactions/pages/AddTransactionPage.js';
 import { EditTransactionPage } from '../features/transactions/pages/EditTransactionPage.js';
 import { TransactionListPage } from '../features/transactions/pages/TransactionListPage.js';
@@ -40,6 +41,7 @@ export const AppRouter = () => (
         <Route path={routes.wallets} element={<WalletsListPage />} />
         <Route path={routes.walletsNew} element={<CreateWalletPage />} />
         <Route path="/wallets/:walletId" element={<WalletDetailPage />} />
+        <Route path="/wallets/:walletId/edit" element={<EditWalletPage />} />
         <Route
           path="/wallets/:walletId/transactions"
           element={<TransactionListPage />}

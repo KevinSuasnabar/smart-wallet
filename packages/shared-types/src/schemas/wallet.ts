@@ -51,3 +51,26 @@ export const WalletIdPathSchema = z.object({
 });
 
 export type WalletIdPathDTO = z.infer<typeof WalletIdPathSchema>;
+
+/**
+ * Partial update body for PATCH /wallets/{walletId}. All fields optional, at
+ * least one required, unknown keys rejected. Currency change is allowed only
+ * if the wallet has no transactions — that check happens in the use case.
+ */
+export const UpdateWalletRequestSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(1, 'Wallet name must not be empty')
+      .max(64, 'Wallet name must not exceed 64 characters')
+      .optional(),
+    currency: zCurrency.optional(),
+  })
+  .strict()
+  .refine(
+    (data) => data.name !== undefined || data.currency !== undefined,
+    { message: 'At least one mutable field must be provided' },
+  );
+
+export type UpdateWalletDTO = z.infer<typeof UpdateWalletRequestSchema>;

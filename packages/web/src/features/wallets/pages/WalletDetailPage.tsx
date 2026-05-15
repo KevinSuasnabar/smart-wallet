@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { ChevronLeft, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../../../components/ui/button.js';
 import { Skeleton } from '../../../components/ui/skeleton.js';
 import { ErrorState } from '../../../components/common/ErrorState.js';
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { WalletBalanceHeader } from '../components/WalletBalanceHeader.js';
+import { DeleteWalletDialog } from '../components/DeleteWalletDialog.js';
 import { RecentTransactionsList } from '../../transactions/components/RecentTransactionsList.js';
 import { DeleteTransactionDialog } from '../../transactions/components/DeleteTransactionDialog.js';
-import { useWallet } from '../queries.js';
+import { useWallet, useDeleteWallet } from '../queries.js';
 import { useDeleteTransaction } from '../../transactions/queries.js';
 import { userMessageFor } from '../../../lib/api/errors.js';
 import { t } from '../../../lib/i18n.js';
@@ -18,11 +19,21 @@ import { routes } from '../../../app/routes.js';
 export const WalletDetailPage = () => {
   const { walletId } = useParams<{ walletId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: wallet, isLoading, isError, refetch } = useWallet(walletId);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [walletDeleteOpen, setWalletDeleteOpen] = useState(false);
   const deleteMutation = useDeleteTransaction(wallet?.walletId ?? '');
+  const deleteWalletMutation = useDeleteWallet();
 
   const handleBack = () => { void navigate(routes.wallets); };
+
+  const handleEdit = () => {
+    if (wallet === undefined) return;
+    void navigate(routes.walletEdit(wallet.walletId), {
+      state: { from: location.pathname },
+    });
+  };
 
   const confirmDelete = () => {
     if (pendingDeleteId === null) return;
@@ -41,17 +52,61 @@ export const WalletDetailPage = () => {
     );
   };
 
+  const confirmDeleteWallet = () => {
+    if (wallet === undefined) return;
+    deleteWalletMutation.mutate(
+      { walletId: wallet.walletId },
+      {
+        onSuccess: () => {
+          toast.success(t.wallets.deleteSuccess);
+          setWalletDeleteOpen(false);
+          void navigate(routes.wallets, { replace: true });
+        },
+        onError: (err) => {
+          toast.error(userMessageFor(err));
+          setWalletDeleteOpen(false);
+        },
+      },
+    );
+  };
+
   return (
     <div className="flex flex-col gap-6 py-4 pb-4">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleBack}
-        className="-ml-2 self-start gap-1"
-      >
-        <ChevronLeft className="size-4" />
-        {t.common.back}
-      </Button>
+      <div className="flex items-center justify-between gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+          className="-ml-2 gap-1"
+        >
+          <ChevronLeft className="size-4" />
+          {t.common.back}
+        </Button>
+        {wallet !== undefined && (
+          <div className="flex items-center gap-0.5">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleEdit}
+              aria-label={t.wallets.editTitle}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Pencil className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setWalletDeleteOpen(true)}
+              aria-label={t.wallets.deleteDialogTitle}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       {isLoading && (
         <div className="flex flex-col gap-10 rounded-block bg-secondary px-6 py-12 md:px-10 md:py-14">
@@ -116,6 +171,13 @@ export const WalletDetailPage = () => {
         }}
         onConfirm={confirmDelete}
         pending={deleteMutation.isPending}
+      />
+
+      <DeleteWalletDialog
+        open={walletDeleteOpen}
+        onOpenChange={setWalletDeleteOpen}
+        onConfirm={confirmDeleteWallet}
+        pending={deleteWalletMutation.isPending}
       />
     </div>
   );

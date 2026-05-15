@@ -32,6 +32,7 @@ export {
   ListWalletsResponseSchema,
   ListWalletsQuerySchema,
   WalletIdPathSchema,
+  UpdateWalletRequestSchema,
 } from './schemas/wallet.js';
 export type {
   CreateWalletDTO,
@@ -39,6 +40,7 @@ export type {
   ListWalletsResponseDTO,
   ListWalletsQueryDTO,
   WalletIdPathDTO,
+  UpdateWalletDTO,
 } from './schemas/wallet.js';
 
 // Transaction schemas + DTOs

@@ -22,6 +22,8 @@ import {
   makeCreateWallet,
   makeListWallets,
   makeGetWallet,
+  makeUpdateWallet,
+  makeDeleteWallet,
   makeAddTransaction,
   makeGetTransaction,
   makeUpdateTransaction,
@@ -48,6 +50,8 @@ export const container = {
   createWallet: makeCreateWallet({ walletRepo, idGen, clock }),
   listWallets: makeListWallets({ walletRepo }),
   getWallet: makeGetWallet({ walletRepo }),
+  updateWallet: makeUpdateWallet({ walletRepo, transactionRepo, clock }),
+  deleteWallet: makeDeleteWallet({ walletRepo, clock }),
 
   // Transaction operations
   addTransaction: makeAddTransaction({

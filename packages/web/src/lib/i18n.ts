@@ -26,6 +26,21 @@ export const t = {
     emptyState: 'Todavía no tenés billeteras',
     emptyCta: 'Crear tu primera billetera',
     balance: 'Saldo',
+    editEyebrow: 'Editar',
+    editTitle: 'Editar billetera',
+    editSubmit: 'Guardar cambios',
+    editSuccess: 'Billetera actualizada',
+    editNoChanges: 'No hay cambios',
+    notFound: 'Esta billetera ya no existe',
+    currencyLockedHelper:
+      'No se puede cambiar la moneda porque la billetera tiene movimientos.',
+    currencyLockedError:
+      'No se puede cambiar la moneda porque la billetera tiene movimientos.',
+    deleteDialogTitle: 'Eliminar billetera',
+    deleteDialogBody:
+      'Esta acción eliminará la billetera y todos sus movimientos. No se puede deshacer.',
+    deleteDialogConfirm: 'Eliminar',
+    deleteSuccess: 'Billetera eliminada',
   },
   transactions: {
     listTitle: 'Movimientos',

@@ -128,6 +128,24 @@ functions:
           authorizer:
             name: cognitoJwt
 
+  patchWallet:
+    handler: src/handlers/wallet/patchWallet.main
+    events:
+      - httpApi:
+          path: /wallets/{walletId}
+          method: patch
+          authorizer:
+            name: cognitoJwt
+
+  deleteWallet:
+    handler: src/handlers/wallet/deleteWallet.main
+    events:
+      - httpApi:
+          path: /wallets/{walletId}
+          method: delete
+          authorizer:
+            name: cognitoJwt
+
   addTransaction:
     handler: src/handlers/transaction/addTransaction.main
     events:
