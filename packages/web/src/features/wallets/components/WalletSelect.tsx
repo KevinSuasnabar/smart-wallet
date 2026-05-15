@@ -12,6 +12,7 @@ interface WalletSelectProps {
   value: string;
   onChange: (walletId: string) => void;
   disabled?: boolean;
+  id?: string;
 }
 
 export const WalletSelect = ({
@@ -19,9 +20,10 @@ export const WalletSelect = ({
   value,
   onChange,
   disabled,
+  id,
 }: WalletSelectProps) => (
   <Select value={value} onValueChange={onChange} disabled={disabled ?? false}>
-    <SelectTrigger>
+    <SelectTrigger id={id}>
       <SelectValue placeholder="Elegí una billetera" />
     </SelectTrigger>
     <SelectContent>
