@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { Input } from '../ui/input.js';
+import { normalizeAmount } from '../../lib/amount.js';
 
 interface MoneyInputProps {
   value: string;
@@ -13,29 +14,16 @@ interface MoneyInputProps {
 }
 
 /**
- * Normalize a decimal string to the `^\d+\.\d{2}$` shape the API contract
- * expects. Examples:
- *   ""        → ""
- *   "100"     → "100.00"
- *   "100."    → "100.00"
- *   "100.5"   → "100.50"
- *   ".5"      → "0.50"
- *   "100.55"  → "100.55"  (unchanged)
- */
-const normalizeAmount = (value: string): string => {
-  if (value === '') return '';
-  const withLeadingZero = value.startsWith('.') ? `0${value}` : value;
-  const [intPart = '0', decPart = ''] = withLeadingZero.split('.');
-  const normalizedDec = decPart.padEnd(2, '0').slice(0, 2);
-  return `${intPart}.${normalizedDec}`;
-};
-
-/**
  * Decimal money input. Allows free typing — digits, an optional single
  * decimal point, and up to 2 decimal places. On blur, the value is
- * normalized to the API's "exactly 2 decimal places" contract, so a user
- * can type "100" and have it become "100.00" automatically. The form's
- * Zod resolver validates the normalized value.
+ * normalized to the API's "exactly 2 decimal places" contract via
+ * `normalizeAmount`, so a user can type "100" and have it become
+ * "100.00" automatically.
+ *
+ * The form's Zod resolver uses a loose regex that accepts both shapes
+ * (e.g. "100" and "100.00") so the submit button enables while the
+ * user is still typing; final normalization to the API contract shape
+ * happens in the form's submit handler.
  */
 export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
   ({ value, onChange, onBlur, disabled, placeholder, ...rest }, ref) => {

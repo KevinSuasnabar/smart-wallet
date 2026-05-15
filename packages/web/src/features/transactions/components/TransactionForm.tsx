@@ -1,11 +1,26 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   AddTransactionRequestSchema,
   type AddTransactionDTO,
   type WalletResponseDTO,
 } from '@smart-wallet/shared-types';
+import { normalizeAmount, LOOSE_DECIMAL_REGEX } from '../../../lib/amount.js';
+
+/**
+ * Form-side schema: same shape as AddTransactionRequestSchema but the
+ * amount field accepts both integers and decimals with 1-2 places (e.g.
+ * "100", "100.5", "100.55"). This keeps formState.isValid green while
+ * the user is still typing; the final value is normalized to the strict
+ * "100.00" shape in the submit handler before being sent to the API.
+ */
+const FormAddTransactionSchema = AddTransactionRequestSchema.extend({
+  amount: z
+    .string()
+    .regex(LOOSE_DECIMAL_REGEX, 'Ingresá un monto válido (ej. 100 o 100.50)'),
+});
 import {
   Form,
   FormControl,
@@ -70,7 +85,7 @@ export const TransactionForm = ({
   minDate.setFullYear(minDate.getFullYear() - 5); // -5 years
 
   const form = useForm<AddTransactionDTO>({
-    resolver: zodResolver(AddTransactionRequestSchema),
+    resolver: zodResolver(FormAddTransactionSchema),
     // 'onChange' so form.formState.isValid stays in sync with the current
     // field values — otherwise the submit button stays disabled forever
     // because the default 'onSubmit' mode only flips isValid after a submit
@@ -85,6 +100,12 @@ export const TransactionForm = ({
       currency: initialValues?.currency ?? currency,
     },
   });
+
+  // Normalize the amount ("100" → "100.00") before delegating to the parent's
+  // onSubmit, which expects the strict API contract shape.
+  const handleSubmit = (values: AddTransactionDTO) => {
+    onSubmit({ ...values, amount: normalizeAmount(values.amount) });
+  };
 
   // Sync currency from selected wallet
   useEffect(() => {
@@ -103,7 +124,7 @@ export const TransactionForm = ({
   return (
     <Form {...form}>
       <form
-        onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }}
+        onSubmit={(e) => { void form.handleSubmit(handleSubmit)(e); }}
         className="flex flex-col gap-5"
       >
         <FormField
