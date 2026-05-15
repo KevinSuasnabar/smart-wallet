@@ -2,6 +2,11 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * pricing-card (DESIGN.md): white surface, rounded.lg (24px) corners, stroked
+ * with a hairline rather than shadowed. The system is shadow-light by design —
+ * color and border carry depth, never elevation.
+ */
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -9,7 +14,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
+      "rounded-block border border-border bg-card text-card-foreground",
       className
     )}
     {...props}
@@ -35,7 +40,10 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("font-semibold leading-none tracking-tight", className)}
+    className={cn(
+      "text-lg font-semibold leading-tight tracking-tightest",
+      className
+    )}
     {...props}
   />
 ))
