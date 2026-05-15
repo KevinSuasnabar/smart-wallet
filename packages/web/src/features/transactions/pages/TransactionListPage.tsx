@@ -1,30 +1,35 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../../../components/ui/button.js';
 import { Card } from '../../../components/ui/card.js';
 import { ErrorState } from '../../../components/common/ErrorState.js';
 import { EmptyState } from '../../../components/common/EmptyState.js';
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
-import { useWalletTransactions } from '../queries.js';
+import { useWalletTransactions, useDeleteTransaction } from '../queries.js';
 import { useCategories } from '../../categories/queries.js';
 import { useWallet } from '../../wallets/queries.js';
 import { TransactionListItem } from '../components/TransactionListItem.js';
 import { TransactionsListSkeleton } from '../components/TransactionsListSkeleton.js';
+import { DeleteTransactionDialog } from '../components/DeleteTransactionDialog.js';
 import {
   TransactionFilters,
   type TransactionFiltersState,
 } from '../components/TransactionFilters.js';
 import { routes } from '../../../app/routes.js';
+import { userMessageFor } from '../../../lib/api/errors.js';
 import { t } from '../../../lib/i18n.js';
 
 export const TransactionListPage = () => {
   const { walletId = '' } = useParams<{ walletId: string }>();
   const navigate = useNavigate();
   const [filters, setFilters] = useState<TransactionFiltersState>({});
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data: wallet } = useWallet(walletId);
   const { data: categoriesData } = useCategories();
+  const deleteMutation = useDeleteTransaction(walletId);
   const {
     data,
     isLoading,
@@ -34,6 +39,23 @@ export const TransactionListPage = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useWalletTransactions(walletId, filters);
+
+  const confirmDelete = () => {
+    if (pendingDeleteId === null) return;
+    deleteMutation.mutate(
+      { transactionId: pendingDeleteId },
+      {
+        onSuccess: () => {
+          toast.success(t.transactions.deleteSuccess);
+          setPendingDeleteId(null);
+        },
+        onError: (err) => {
+          toast.error(userMessageFor(err));
+          setPendingDeleteId(null);
+        },
+      },
+    );
+  };
 
   const allItems = data?.pages.flatMap((p) => p.items) ?? [];
 
@@ -107,6 +129,7 @@ export const TransactionListPage = () => {
             <TransactionListItem
               key={tx.transactionId}
               transaction={tx}
+              onDelete={(id) => setPendingDeleteId(id)}
               {...(categoryName(tx.categoryId) !== undefined
                 ? { categoryName: categoryName(tx.categoryId) as string }
                 : {})}
@@ -124,6 +147,15 @@ export const TransactionListPage = () => {
           )}
         </Card>
       )}
+
+      <DeleteTransactionDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+        onConfirm={confirmDelete}
+        pending={deleteMutation.isPending}
+      />
     </div>
   );
 };

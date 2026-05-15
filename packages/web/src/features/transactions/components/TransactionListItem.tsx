@@ -1,12 +1,22 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import type { TransactionResponseDTO } from '@smart-wallet/shared-types';
+import { Button } from '../../../components/ui/button.js';
 import { formatSignedAmount } from '../../../lib/currency.js';
 import { cn } from '../../../lib/utils.js';
+import { routes } from '../../../app/routes.js';
 
 interface TransactionListItemProps {
   transaction: TransactionResponseDTO;
   categoryName?: string;
+  /**
+   * When provided, an edit pencil and a delete trash button render on the
+   * right of the row. The pencil navigates to the edit route; the trash
+   * invokes `onDelete(transactionId)` so the parent owns the dialog state.
+   */
+  onDelete?: (transactionId: string) => void;
 }
 
 /**
@@ -14,13 +24,33 @@ interface TransactionListItemProps {
  * for expense) and a display-scale amount — taxonomy by color, magnitude by
  * type-size. The DESIGN.md monochrome chrome stays; the stripe is the only
  * accent the row earns.
+ *
+ * When `onDelete` is passed, an action group (pencil + trash) is appended on
+ * the right side of the row.
  */
 export const TransactionListItem = ({
   transaction,
   categoryName,
+  onDelete,
 }: TransactionListItemProps) => {
-  const { type, amount, currency, description, occurredAt, categoryId } =
-    transaction;
+  const {
+    transactionId,
+    walletId,
+    type,
+    amount,
+    currency,
+    description,
+    occurredAt,
+    categoryId,
+  } = transaction;
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleEdit = () => {
+    void navigate(routes.walletTransactionEdit(walletId, transactionId), {
+      state: { from: location.pathname },
+    });
+  };
 
   return (
     <div className="flex border-b border-border last:border-b-0">
@@ -45,14 +75,40 @@ export const TransactionListItem = ({
             {format(new Date(occurredAt), 'd MMM yyyy', { locale: es })}
           </p>
         </div>
-        <p
-          className={cn(
-            'whitespace-nowrap text-xl font-bold tabular-nums tracking-display md:text-2xl',
-            type === 'income' ? 'text-success' : 'text-foreground',
+        <div className="flex items-center gap-2">
+          <p
+            className={cn(
+              'whitespace-nowrap text-xl font-bold tabular-nums tracking-display md:text-2xl',
+              type === 'income' ? 'text-success' : 'text-foreground',
+            )}
+          >
+            {formatSignedAmount(amount, currency, type)}
+          </p>
+          {onDelete && (
+            <div className="flex items-center gap-0.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleEdit}
+                aria-label="Editar movimiento"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Pencil className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(transactionId)}
+                aria-label="Eliminar movimiento"
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
           )}
-        >
-          {formatSignedAmount(amount, currency, type)}
-        </p>
+        </div>
       </div>
     </div>
   );
