@@ -1,5 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Wallet, Plus, Tag, Settings } from 'lucide-react';
+import {
+  LayoutGrid,
+  Wallet,
+  Plus,
+  Repeat,
+  Tag,
+  Settings,
+} from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { routes } from '../../app/routes.js';
 
@@ -9,7 +16,7 @@ interface BottomTabBarProps {
 
 const tabClass = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'flex flex-col items-center gap-1 min-w-[44px] min-h-[44px] justify-center font-mono text-[10px] uppercase tracking-caption transition-colors',
+    'flex flex-col items-center gap-0.5 min-w-[40px] min-h-[44px] justify-center font-mono text-[10px] uppercase tracking-caption transition-colors',
     isActive ? 'text-background' : 'text-background/55',
   );
 
@@ -17,6 +24,9 @@ const tabClass = ({ isActive }: { isActive: boolean }) =>
  * Mobile chrome — mirrors the desktop sidebar's navy treatment so the app
  * feels consistent across viewports. The center action runs magenta so it
  * reads as the primary "add" affordance even at thumb height.
+ *
+ * Six elements (5 tabs + central FAB) — labels collapse to icon-only below
+ * `sm` to keep the row from overflowing on 320px viewports.
  */
 export const BottomTabBar = ({ className }: BottomTabBarProps) => {
   const navigate = useNavigate();
@@ -28,15 +38,20 @@ export const BottomTabBar = ({ className }: BottomTabBarProps) => {
         className,
       )}
     >
-      <div className="flex h-16 items-center justify-around px-2">
+      <div className="flex h-16 items-center justify-around px-1">
         <NavLink to={routes.dashboard} className={tabClass}>
           <LayoutGrid className="size-5" />
-          <span>Resumen</span>
+          <span className="hidden sm:inline">Resumen</span>
         </NavLink>
 
         <NavLink to={routes.wallets} className={tabClass}>
           <Wallet className="size-5" />
-          <span>Billeteras</span>
+          <span className="hidden sm:inline">Billeteras</span>
+        </NavLink>
+
+        <NavLink to={routes.recurring} className={tabClass}>
+          <Repeat className="size-5" />
+          <span className="hidden sm:inline">Recurrentes</span>
         </NavLink>
 
         <button
@@ -50,12 +65,12 @@ export const BottomTabBar = ({ className }: BottomTabBarProps) => {
 
         <NavLink to={routes.categories} className={tabClass}>
           <Tag className="size-5" />
-          <span>Categorías</span>
+          <span className="hidden sm:inline">Categorías</span>
         </NavLink>
 
         <NavLink to={routes.settings} className={tabClass}>
           <Settings className="size-5" />
-          <span>Ajustes</span>
+          <span className="hidden sm:inline">Ajustes</span>
         </NavLink>
       </div>
     </nav>

@@ -15,6 +15,7 @@ import {
   DynamoDBWalletRepository,
   DynamoDBTransactionRepository,
   DynamoDBCategoryRepository,
+  DynamoDBRecurringTransactionRepository,
 } from '../adapters/dynamodb/index.js';
 import { SystemClock } from '../adapters/system/SystemClock.js';
 import { UuidIdGenerator } from '../adapters/system/UuidIdGenerator.js';
@@ -36,6 +37,12 @@ import {
   makeUpdateCustomCategory,
   makeForkPredefinedCategory,
   makeHidePredefinedCategory,
+  makeCreateRecurring,
+  makeListRecurring,
+  makeGetRecurring,
+  makeUpdateRecurring,
+  makeDeleteRecurring,
+  makeMaterializeRecurrings,
 } from '@smart-wallet/domain';
 
 // ── Infrastructure singletons (module scope = cold-start only) ────────────
@@ -43,6 +50,7 @@ import {
 const walletRepo = new DynamoDBWalletRepository();
 const transactionRepo = new DynamoDBTransactionRepository();
 const categoryRepo = new DynamoDBCategoryRepository();
+const recurringRepo = new DynamoDBRecurringTransactionRepository();
 const clock = new SystemClock();
 const idGen = new UuidIdGenerator();
 
@@ -97,6 +105,24 @@ export const container = {
   hidePredefinedCategory: makeHidePredefinedCategory({
     categoryRepo,
     transactionRepo,
+    clock,
+  }),
+
+  // Recurring transaction operations
+  createRecurring: makeCreateRecurring({
+    walletRepo,
+    categoryRepo,
+    recurringRepo,
+    idGen,
+    clock,
+  }),
+  listRecurring: makeListRecurring({ recurringRepo }),
+  getRecurring: makeGetRecurring({ recurringRepo }),
+  updateRecurring: makeUpdateRecurring({ categoryRepo, recurringRepo, clock }),
+  deleteRecurring: makeDeleteRecurring({ recurringRepo }),
+  materializeRecurrings: makeMaterializeRecurrings({
+    recurringRepo,
+    idGen,
     clock,
   }),
 } as const;

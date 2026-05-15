@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import type { Currency } from '@smart-wallet/shared-types';
@@ -12,6 +12,7 @@ import { CurrencyToggle } from '../components/CurrencyToggle.js';
 import { DashboardSkeleton } from '../components/DashboardSkeleton.js';
 import { useMonthlyDashboard } from '../hooks/useMonthlyDashboard.js';
 import { usePreferredCurrency } from '../../settings/usePreferredCurrency.js';
+import { useMaterializeRecurrings } from '../../recurring/queries.js';
 import { routes } from '../../../app/routes.js';
 import { t } from '../../../lib/i18n.js';
 
@@ -27,6 +28,25 @@ const resolveInitialCurrency = (
 export const DashboardPage = () => {
   const { currency: preferred } = usePreferredCurrency();
   const [override, setOverride] = useState<Currency | null>(null);
+
+  // Fire-and-forget materialization of due recurring transactions, exactly
+  // once per page mount. StrictMode double-mount in dev is guarded by the
+  // ref so we never send two POSTs. On success, the mutation invalidates
+  // wallets + transactions and the dashboard refetches automatically.
+  const materialize = useMaterializeRecurrings();
+  const materializedOnce = useRef(false);
+  useEffect(() => {
+    if (materializedOnce.current) return;
+    materializedOnce.current = true;
+    materialize.mutate(undefined, {
+      onError: (err) => {
+        console.error('[dashboard] materialize failed', err);
+      },
+    });
+    // Intentionally one-shot: do NOT depend on `materialize` (its identity
+    // changes on every render and would re-fire the effect).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Probe with `null` so we can read `availableCurrencies` before deciding
   // which currency to aggregate by. Both calls hit the same React Query

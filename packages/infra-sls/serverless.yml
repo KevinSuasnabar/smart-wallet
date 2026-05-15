@@ -235,3 +235,63 @@ functions:
           method: delete
           authorizer:
             name: cognitoJwt
+
+  # ── Recurring transactions (monthly) ────────────────────────────────────
+  # NOTE: the static `/recurring/materialize` route MUST stay listed before
+  # `/recurring/{recurringId}` so APIGW v2 prefers the exact match. As a
+  # defensive measure, getRecurring's path schema validates UUIDv4 and
+  # would return 400 if "materialize" ever reached it.
+
+  materializeRecurrings:
+    handler: src/handlers/recurring/materializeRecurrings.main
+    events:
+      - httpApi:
+          path: /recurring/materialize
+          method: post
+          authorizer:
+            name: cognitoJwt
+
+  createRecurring:
+    handler: src/handlers/recurring/createRecurring.main
+    events:
+      - httpApi:
+          path: /recurring
+          method: post
+          authorizer:
+            name: cognitoJwt
+
+  listRecurring:
+    handler: src/handlers/recurring/listRecurring.main
+    events:
+      - httpApi:
+          path: /recurring
+          method: get
+          authorizer:
+            name: cognitoJwt
+
+  getRecurring:
+    handler: src/handlers/recurring/getRecurring.main
+    events:
+      - httpApi:
+          path: /recurring/{recurringId}
+          method: get
+          authorizer:
+            name: cognitoJwt
+
+  patchRecurring:
+    handler: src/handlers/recurring/patchRecurring.main
+    events:
+      - httpApi:
+          path: /recurring/{recurringId}
+          method: patch
+          authorizer:
+            name: cognitoJwt
+
+  deleteRecurring:
+    handler: src/handlers/recurring/deleteRecurring.main
+    events:
+      - httpApi:
+          path: /recurring/{recurringId}
+          method: delete
+          authorizer:
+            name: cognitoJwt

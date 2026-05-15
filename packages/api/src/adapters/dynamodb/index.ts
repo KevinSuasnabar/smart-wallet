@@ -12,6 +12,10 @@ export {
   walletSKPrefix,
   transactionSKPrefix,
   categorySKPrefix,
+  recurringSK,
+  recurringSKPrefix,
+  recurringGsi1SK,
+  recurringGsi1SKPrefix,
 } from './keyBuilders.js';
 
 // ── Cursor codec ──────────────────────────────────────────────────────────
@@ -27,6 +31,9 @@ export type { TransactionItem } from './mappers/TransactionMapper.js';
 export { categoryToItem, itemToCategory } from './mappers/CategoryMapper.js';
 export type { CategoryItem } from './mappers/CategoryMapper.js';
 
+export { recurringToItem, itemToRecurring } from './mappers/RecurringMapper.js';
+export type { RecurringItem } from './mappers/RecurringMapper.js';
+
 // ── Repositories ──────────────────────────────────────────────────────────
 export { DynamoDBWalletRepository } from './repositories/DynamoDBWalletRepository.js';
 export {
@@ -38,3 +45,4 @@ export type {
   CancellationReason,
 } from './repositories/DynamoDBTransactionRepository.js';
 export { DynamoDBCategoryRepository } from './repositories/DynamoDBCategoryRepository.js';
+export { DynamoDBRecurringTransactionRepository } from './repositories/DynamoDBRecurringTransactionRepository.js';

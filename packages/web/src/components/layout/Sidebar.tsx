@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Wallet, Tag, Settings, Plus, LogOut } from 'lucide-react';
+import { LayoutGrid, Wallet, Repeat, Tag, Settings, Plus, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { routes } from '../../app/routes.js';
 import { useAuth } from '../../features/auth/useAuth.js';
@@ -13,6 +13,7 @@ interface SidebarProps {
 const navItems = [
   { to: routes.dashboard, icon: LayoutGrid, label: 'Resumen' },
   { to: routes.wallets, icon: Wallet, label: 'Billeteras' },
+  { to: routes.recurring, icon: Repeat, label: 'Recurrentes' },
   { to: routes.categories, icon: Tag, label: 'Categorías' },
   { to: routes.settings, icon: Settings, label: 'Ajustes' },
 ] as const;

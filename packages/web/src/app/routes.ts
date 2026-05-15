@@ -17,4 +17,7 @@ export const routes = {
   transactionsNew: '/transactions/new',
   categories: '/categories',
   settings: '/settings',
+  recurring: '/recurring',
+  recurringNew: '/recurring/new',
+  recurringEdit: (recurringId: string) => `/recurring/${recurringId}/edit`,
 } as const;

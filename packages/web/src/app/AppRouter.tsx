@@ -16,6 +16,9 @@ import { TransactionListPage } from '../features/transactions/pages/TransactionL
 import { CategoriesPage } from '../features/categories/pages/CategoriesPage.js';
 import { SettingsPage } from '../features/settings/pages/SettingsPage.js';
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage.js';
+import { RecurringListPage } from '../features/recurring/pages/RecurringListPage.js';
+import { CreateRecurringPage } from '../features/recurring/pages/CreateRecurringPage.js';
+import { EditRecurringPage } from '../features/recurring/pages/EditRecurringPage.js';
 import { routes } from './routes.js';
 
 export const AppRouter = () => (
@@ -58,6 +61,12 @@ export const AppRouter = () => (
         />
         <Route path={routes.transactionsNew} element={<AddTransactionPage />} />
         <Route path={routes.categories} element={<CategoriesPage />} />
+        <Route path={routes.recurring} element={<RecurringListPage />} />
+        <Route path={routes.recurringNew} element={<CreateRecurringPage />} />
+        <Route
+          path="/recurring/:recurringId/edit"
+          element={<EditRecurringPage />}
+        />
         <Route path={routes.settings} element={<SettingsPage />} />
       </Route>
     </Route>
