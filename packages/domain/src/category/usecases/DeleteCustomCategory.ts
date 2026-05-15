@@ -5,7 +5,12 @@ import { UserId } from '../../user/UserId.js';
 import type { UserError } from '../../user/UserError.js';
 import { CategoryId } from '../CategoryId.js';
 import type { CategoryRepository } from '../CategoryRepository.js';
-import { InvalidCategoryId, CannotDeletePredefined } from '../CategoryError.js';
+import type { TransactionRepository } from '../../transaction/TransactionRepository.js';
+import {
+  InvalidCategoryId,
+  CannotDeletePredefined,
+  CategoryHasTransactions,
+} from '../CategoryError.js';
 import type { CategoryError } from '../CategoryError.js';
 
 export interface DeleteCustomCategoryInput {
@@ -17,6 +22,7 @@ export interface DeleteCustomCategoryInput {
 
 export interface DeleteCustomCategoryDeps {
   categoryRepo: CategoryRepository;
+  transactionRepo: TransactionRepository;
   clock: Clock;
 }
 
@@ -50,6 +56,19 @@ export const makeDeleteCustomCategory =
     if (category === null) {
       // Return InvalidCategoryId (not-found semantic): handler maps this to 404
       return err(new InvalidCategoryId('Category not found or does not belong to user'));
+    }
+
+    // Guard: cannot delete a category that has at least one active transaction.
+    // Uses limit:1 so the read cost is bounded regardless of how many tx the
+    // category has. listByCategory already filters by attribute_not_exists(deletedAt),
+    // so soft-deleted transactions don't block the delete.
+    const txCheck = await deps.transactionRepo.listByCategory(
+      userId,
+      categoryId.toString(),
+      { limit: 1 },
+    );
+    if (txCheck.items.length > 0) {
+      return err(new CategoryHasTransactions());
     }
 
     // Soft-delete (idempotent — already-deleted returns ok)

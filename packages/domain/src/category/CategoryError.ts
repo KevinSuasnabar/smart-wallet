@@ -62,10 +62,25 @@ export class CategoryAlreadyDeleted extends DomainError {
   }
 }
 
+/**
+ * A custom category cannot be deleted while it has at least one active
+ * transaction referencing it. Detected via TransactionRepository.listByCategory
+ * with limit 1.
+ */
+export class CategoryHasTransactions extends DomainError {
+  readonly tag = 'domain.category.has_transactions' as const;
+  readonly httpStatus = 409 as const;
+
+  constructor(message = 'Cannot delete a category that has transactions') {
+    super(message);
+  }
+}
+
 export type CategoryError =
   | InvalidCategoryId
   | InvalidCategoryName
   | InvalidCategoryType
   | CannotDeletePredefined
   | CategoryTypeMismatch
-  | CategoryAlreadyDeleted;
+  | CategoryAlreadyDeleted
+  | CategoryHasTransactions;

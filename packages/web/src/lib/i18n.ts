@@ -67,6 +67,8 @@ export const t = {
     deleteConfirm: '¿Eliminar esta categoría? Esta acción no se puede deshacer.',
     deleteCta: 'Eliminar',
     cancelCta: 'Cancelar',
+    deleteHasTransactionsError:
+      'Esta categoría tiene movimientos asociados. Elimina los movimientos primero o cámbialos de categoría.',
   },
   errors: {
     generic: 'Algo salió mal. Probá de nuevo.',

@@ -75,7 +75,11 @@ export const container = {
   // Category operations
   listCategories: makeListCategories({ categoryRepo }),
   createCustomCategory: makeCreateCustomCategory({ categoryRepo, idGen, clock }),
-  deleteCustomCategory: makeDeleteCustomCategory({ categoryRepo, clock }),
+  deleteCustomCategory: makeDeleteCustomCategory({
+    categoryRepo,
+    transactionRepo,
+    clock,
+  }),
 } as const;
 
 export type Container = typeof container;
