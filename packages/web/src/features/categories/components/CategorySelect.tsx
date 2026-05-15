@@ -38,7 +38,7 @@ export const CategorySelect = ({
       disabled={(disabled ?? false) || isLoading}
     >
       <SelectTrigger>
-        <SelectValue placeholder={isLoading ? 'Cargando…' : 'Elegí una categoría'} />
+        <SelectValue placeholder={isLoading ? 'Cargando…' : 'Elige una categoría'} />
       </SelectTrigger>
       <SelectContent>
         {predefined.length > 0 && (

@@ -26,7 +26,7 @@ export class ErrorBoundary extends Component<PropsWithChildren, ErrorBoundarySta
         <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
           <h1 className="text-xl font-semibold">Algo salió mal.</h1>
           <p className="text-muted-foreground text-sm">
-            Ocurrió un error inesperado. Podés intentar recargar la página.
+            Ocurrió un error inesperado. Puedes intentar recargar la página.
           </p>
           <button
             type="button"

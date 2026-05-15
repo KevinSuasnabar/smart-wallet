@@ -24,7 +24,7 @@ export const WalletSelect = ({
 }: WalletSelectProps) => (
   <Select value={value} onValueChange={onChange} disabled={disabled ?? false}>
     <SelectTrigger id={id}>
-      <SelectValue placeholder="Elegí una billetera" />
+      <SelectValue placeholder="Elige una billetera" />
     </SelectTrigger>
     <SelectContent>
       {wallets.map((w) => (

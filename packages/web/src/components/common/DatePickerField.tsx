@@ -67,7 +67,7 @@ export const DatePickerField = ({
           {selectedDate ? (
             format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: es })
           ) : (
-            <span>Elegí una fecha</span>
+            <span>Elige una fecha</span>
           )}
         </button>
       </PopoverTrigger>
