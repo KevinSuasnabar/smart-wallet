@@ -92,7 +92,7 @@ export const CreateCategoryDialog = ({
                       {...field}
                       maxLength={32}
                       disabled={isPending}
-                      className="min-h-[44px]"
+                      placeholder="Ej: Cafetería, freelance…"
                     />
                   </FormControl>
                   <FormMessage />
@@ -112,7 +112,7 @@ export const CreateCategoryDialog = ({
                       onValueChange={field.onChange}
                       disabled={isPending}
                     >
-                      <SelectTrigger className="min-h-[44px]">
+                      <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { Button } from '../../../components/ui/button.js';
 import { ErrorState } from '../../../components/common/ErrorState.js';
+import { EmptyState } from '../../../components/common/EmptyState.js';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { useWalletTransactions } from '../queries.js';
 import { useCategories } from '../../categories/queries.js';
 import { useWallet } from '../../wallets/queries.js';
@@ -46,18 +48,18 @@ export const TransactionListPage = () => {
     filters.from !== undefined || filters.to !== undefined || filters.type !== undefined;
 
   return (
-    <div className="flex flex-col pb-8">
-      <div className="flex items-center justify-between gap-2 p-4">
+    <div className="flex flex-col gap-6 py-4 pb-4">
+      <div className="flex items-center justify-between gap-2">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleBack}
-          className="gap-1"
+          className="-ml-2 gap-1"
         >
           <ChevronLeft className="size-4" />
           {t.common.back}
         </Button>
-        <Link to={`/wallets/${walletId}/transactions/new`}>
+        <Link to={routes.walletTransactionsNew(walletId)}>
           <Button size="sm" className="gap-1">
             <Plus className="size-4" />
             {t.transactions.addTitle}
@@ -65,57 +67,58 @@ export const TransactionListPage = () => {
         </Link>
       </div>
 
-      <div className="px-4">
-        <h1 className="text-xl font-semibold mb-1">{t.transactions.listTitle}</h1>
-        {wallet && (
-          <p className="text-sm text-muted-foreground mb-4">{wallet.name}</p>
-        )}
-
-        <TransactionFilters value={filters} onChange={setFilters} />
-
-        {isLoading && <TransactionsListSkeleton rows={8} />}
-
-        {isError && (
-          <ErrorState
-            message={t.errors.generic}
-            onRetry={() => { void refetch(); }}
-          />
-        )}
-
-        {!isLoading && !isError && allItems.length === 0 && (
-          <div className="rounded-xl border bg-muted/30 p-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              {hasActiveFilters
-                ? 'No hay transacciones con los filtros aplicados.'
-                : t.transactions.emptyState}
-            </p>
-          </div>
-        )}
-
-        {!isLoading && !isError && allItems.length > 0 && (
-          <div className="flex flex-col">
-            {allItems.map((tx) => (
-              <TransactionListItem
-                key={tx.transactionId}
-                transaction={tx}
-                {...(categoryName(tx.categoryId) !== undefined
-                  ? { categoryName: categoryName(tx.categoryId) as string }
-                  : {})}
-              />
-            ))}
-            {hasNextPage === true && (
-              <Button
-                variant="outline"
-                onClick={() => { void fetchNextPage(); }}
-                disabled={isFetchingNextPage}
-                className="mt-4 w-full"
-              >
-                {isFetchingNextPage ? t.app.loading : t.transactions.loadMore}
-              </Button>
-            )}
-          </div>
-        )}
+      <div className="flex flex-col gap-1.5">
+        {wallet && <Eyebrow>{wallet.name}</Eyebrow>}
+        <h1 className="text-2xl font-bold tracking-display">
+          {t.transactions.listTitle}
+        </h1>
       </div>
+
+      <TransactionFilters value={filters} onChange={setFilters} />
+
+      {isLoading && <TransactionsListSkeleton rows={8} />}
+
+      {isError && (
+        <ErrorState
+          message={t.errors.generic}
+          onRetry={() => { void refetch(); }}
+        />
+      )}
+
+      {!isLoading && !isError && allItems.length === 0 && (
+        <EmptyState
+          eyebrow="Movimientos"
+          message={
+            hasActiveFilters
+              ? 'No hay transacciones con los filtros aplicados.'
+              : t.transactions.emptyState
+          }
+        />
+      )}
+
+      {!isLoading && !isError && allItems.length > 0 && (
+        <div className="flex flex-col">
+          {allItems.map((tx) => (
+            <TransactionListItem
+              key={tx.transactionId}
+              transaction={tx}
+              {...(categoryName(tx.categoryId) !== undefined
+                ? { categoryName: categoryName(tx.categoryId) as string }
+                : {})}
+            />
+          ))}
+          {hasNextPage === true && (
+            <Button
+              variant="outline"
+              onClick={() => { void fetchNextPage(); }}
+              disabled={isFetchingNextPage}
+              className="mt-4 w-full"
+            >
+              {isFetchingNextPage ? t.app.loading : t.transactions.loadMore}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

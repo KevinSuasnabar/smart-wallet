@@ -93,7 +93,7 @@ export const TransactionForm = ({
                   onValueChange={field.onChange}
                   disabled={submitting}
                 >
-                  <SelectTrigger className="min-h-[44px]">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -189,7 +189,7 @@ export const TransactionForm = ({
                   {...field}
                   disabled={submitting}
                   maxLength={256}
-                  className="min-h-[44px]"
+                  placeholder="Ej: Almuerzo, sueldo, alquiler…"
                 />
               </FormControl>
               <FormMessage />
@@ -200,7 +200,7 @@ export const TransactionForm = ({
         <Button
           type="submit"
           disabled={submitting || !form.formState.isValid}
-          className="w-full min-h-[44px]"
+          className="mt-1 w-full"
         >
           {submitting ? t.app.loading : t.transactions.submitButton}
         </Button>

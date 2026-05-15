@@ -4,6 +4,8 @@ import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AddTransactionDTO } from '@smart-wallet/shared-types';
 import { Button } from '../../../components/ui/button.js';
+import { Card } from '../../../components/ui/card.js';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { TransactionForm } from '../components/TransactionForm.js';
 import { useWallets } from '../../wallets/queries.js';
 import { useAddTransaction } from '../queries.js';
@@ -52,22 +54,25 @@ export const AddTransactionPage = () => {
   const wallets = walletsData?.items ?? [];
 
   return (
-    <div className="flex flex-col pb-8">
-      <div className="flex items-center gap-2 p-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="gap-1"
-        >
-          <ChevronLeft className="size-4" />
-          {t.common.back}
-        </Button>
+    <div className="flex flex-col gap-6 py-4 pb-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleBack}
+        className="-ml-2 self-start gap-1"
+      >
+        <ChevronLeft className="size-4" />
+        {t.common.back}
+      </Button>
+
+      <div className="flex flex-col gap-1.5">
+        <Eyebrow>Nuevo movimiento</Eyebrow>
+        <h1 className="text-2xl font-bold tracking-display">
+          {t.transactions.addTitle}
+        </h1>
       </div>
 
-      <div className="px-4">
-        <h1 className="text-xl font-semibold mb-6">{t.transactions.addTitle}</h1>
-
+      <Card className="p-6">
         <TransactionForm
           wallets={wallets}
           walletId={walletId}
@@ -75,7 +80,7 @@ export const AddTransactionPage = () => {
           onSubmit={handleSubmit}
           submitting={isPending}
         />
-      </div>
+      </Card>
     </div>
   );
 };

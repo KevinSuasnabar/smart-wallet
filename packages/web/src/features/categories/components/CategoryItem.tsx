@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import { Button } from '../../../components/ui/button.js';
-import { Badge } from '../../../components/ui/badge.js';
+import { TypeTag } from '../../../components/common/TypeTag.js';
 import { t } from '../../../lib/i18n.js';
 
 interface CategoryItemProps {
@@ -16,23 +16,21 @@ export const CategoryItem = ({
   isCustom,
   onDelete,
 }: CategoryItemProps) => (
-  <div className="flex items-center justify-between gap-3 py-3 border-b last:border-b-0">
-    <div className="flex items-center gap-3 min-w-0 flex-1">
-      <span className="font-medium truncate">{name}</span>
-      <Badge variant={type === 'income' ? 'default' : 'secondary'}>
-        {type === 'income' ? t.transactions.income : t.transactions.expense}
-      </Badge>
+  <div className="flex items-center justify-between gap-3 border-b border-border py-3 last:border-b-0">
+    <div className="flex min-w-0 flex-1 items-center gap-3">
+      <span className="truncate font-medium tracking-tightest">{name}</span>
+      <TypeTag type={type} />
     </div>
     {isCustom && onDelete && (
       <Button
         type="button"
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={onDelete}
-        className="size-11"
+        className="size-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
         aria-label={`${t.common.delete} ${name}`}
       >
-        <Trash2 className="size-4 text-red-600" />
+        <Trash2 className="size-4" />
       </Button>
     )}
   </div>

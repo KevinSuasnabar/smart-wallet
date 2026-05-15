@@ -9,27 +9,39 @@ interface TransactionListItemProps {
   categoryName?: string;
 }
 
+/**
+ * An editorial transaction row — hairline divider, no card. Income carries
+ * the semantic-success green; expense stays neutral ink. The date is set in
+ * mono as a caption, flagging it as metadata rather than body copy.
+ */
 export const TransactionListItem = ({
   transaction,
   categoryName,
 }: TransactionListItemProps) => {
   const { type, amount, currency, description, occurredAt, categoryId } =
     transaction;
-  const amountClass =
-    type === 'income' ? 'text-emerald-600' : 'text-red-600';
 
   return (
-    <div className="flex items-center justify-between gap-3 py-3 border-b last:border-b-0">
-      <div className="flex flex-col min-w-0 flex-1">
-        <p className="font-medium truncate">{categoryName ?? categoryId}</p>
+    <div className="flex items-center justify-between gap-3 border-b border-border py-3.5 last:border-b-0">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <p className="truncate font-semibold tracking-tightest">
+          {categoryName ?? categoryId}
+        </p>
         {description !== undefined && description !== '' && (
-          <p className="text-sm text-muted-foreground truncate">{description}</p>
+          <p className="truncate text-sm text-muted-foreground">
+            {description}
+          </p>
         )}
-        <p className="text-xs text-muted-foreground">
-          {format(new Date(occurredAt), "d MMM yyyy", { locale: es })}
+        <p className="font-mono text-[10px] uppercase tracking-caption text-muted-foreground">
+          {format(new Date(occurredAt), 'd MMM yyyy', { locale: es })}
         </p>
       </div>
-      <p className={cn('font-semibold whitespace-nowrap', amountClass)}>
+      <p
+        className={cn(
+          'whitespace-nowrap font-bold tabular-nums tracking-tightest',
+          type === 'income' ? 'text-success' : 'text-foreground',
+        )}
+      >
         {formatSignedAmount(amount, currency, type)}
       </p>
     </div>
