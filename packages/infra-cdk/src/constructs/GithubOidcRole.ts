@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { CfnOutput } from 'aws-cdk-lib';
+import { CfnOutput, Stack } from 'aws-cdk-lib';
 import {
   OpenIdConnectProvider,
   Role,
@@ -13,6 +13,13 @@ export interface GithubOidcRoleProps {
   repository: string;
   /** SSM parameter name where the role ARN gets published. */
   ssmParameterName: string;
+  /**
+   * Set `true` if the GitHub OIDC provider does NOT yet exist in the
+   * account. AWS only allows ONE provider per URL per account, so this
+   * defaults to `false` (import the existing one). For brand-new accounts,
+   * set this to `true` on the first deploy and back to `false` afterwards.
+   */
+  createProvider?: boolean;
 }
 
 /**
@@ -32,10 +39,10 @@ export interface GithubOidcRoleProps {
  * That means: only workflows running on the `main` branch of this exact
  * repository can assume the role. PRs (including from forks) cannot.
  *
- * AWS only allows ONE OIDC provider per URL per account. If another stack
- * in this account already created the GitHub provider, this construct will
- * fail at deploy time — swap to `OpenIdConnectProvider.fromOpenIdConnectProviderArn`
- * to look up the existing one instead.
+ * AWS only allows ONE OIDC provider per URL per account. By default this
+ * construct IMPORTS the existing one at the canonical ARN. If the account
+ * does not have it yet (brand-new accounts), pass `createProvider: true`
+ * for the first deploy.
  */
 export class GithubOidcRole extends Construct {
   readonly role: Role;
@@ -44,10 +51,18 @@ export class GithubOidcRole extends Construct {
   constructor(scope: Construct, id: string, props: GithubOidcRoleProps) {
     super(scope, id);
 
-    const provider = new OpenIdConnectProvider(this, 'Provider', {
-      url: 'https://token.actions.githubusercontent.com',
-      clientIds: ['sts.amazonaws.com'],
-    });
+    const providerArn = `arn:aws:iam::${Stack.of(this).account}:oidc-provider/token.actions.githubusercontent.com`;
+    const provider =
+      props.createProvider === true
+        ? new OpenIdConnectProvider(this, 'Provider', {
+            url: 'https://token.actions.githubusercontent.com',
+            clientIds: ['sts.amazonaws.com'],
+          })
+        : OpenIdConnectProvider.fromOpenIdConnectProviderArn(
+            this,
+            'Provider',
+            providerArn,
+          );
 
     this.role = new Role(this, 'Role', {
       roleName: 'smart-wallet-github-actions-deploy',
