@@ -11,16 +11,24 @@ interface CurrencySelectProps {
   value: Currency | undefined;
   onChange: (value: Currency) => void;
   disabled?: boolean;
+  id?: string;
+  placeholder?: string;
 }
 
-export const CurrencySelect = ({ value, onChange, disabled }: CurrencySelectProps) => (
+export const CurrencySelect = ({
+  value,
+  onChange,
+  disabled,
+  id,
+  placeholder,
+}: CurrencySelectProps) => (
   <Select
     {...(value !== undefined ? { value } : {})}
     onValueChange={(v) => { onChange(v as Currency); }}
     {...(disabled !== undefined ? { disabled } : {})}
   >
-    <SelectTrigger>
-      <SelectValue placeholder="Seleccioná una moneda" />
+    <SelectTrigger id={id}>
+      <SelectValue placeholder={placeholder ?? 'Seleccioná una moneda'} />
     </SelectTrigger>
     <SelectContent>
       <SelectItem value="USD">USD (Dólar)</SelectItem>

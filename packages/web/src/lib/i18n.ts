@@ -74,4 +74,34 @@ export const t = {
     close: 'Cerrar',
     back: 'Volver',
   },
+  settings: {
+    eyebrow: 'Cuenta',
+    title: 'Ajustes',
+    profile: {
+      eyebrow: 'Perfil',
+      title: 'Tu cuenta',
+      emailLabel: 'Email',
+    },
+    changePassword: {
+      eyebrow: 'Seguridad',
+      title: 'Cambiar contraseña',
+      currentPasswordLabel: 'Contraseña actual',
+      newPasswordLabel: 'Nueva contraseña',
+      confirmNewPasswordLabel: 'Confirmar nueva contraseña',
+      submit: 'Actualizar contraseña',
+      successToast: 'Contraseña actualizada',
+      errors: {
+        wrongCurrent: 'La contraseña actual no es correcta',
+        weakNew: 'La nueva contraseña no cumple los requisitos',
+        rateLimit: 'Demasiados intentos. Probá de nuevo en unos minutos',
+      },
+    },
+    preferredCurrency: {
+      eyebrow: 'Preferencias',
+      title: 'Moneda preferida',
+      helper: 'Se preseleccionará al crear una billetera nueva.',
+      label: 'Moneda',
+      placeholder: 'Elegí tu moneda preferida',
+    },
+  },
 } as const;

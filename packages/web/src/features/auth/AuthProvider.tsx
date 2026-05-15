@@ -137,6 +137,30 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     [],
   );
 
+  const changePassword = useCallback(
+    async ({
+      currentPassword,
+      newPassword,
+    }: {
+      currentPassword: string;
+      newPassword: string;
+    }): Promise<void> => {
+      const cognitoUser = cognitoUserRef.current;
+      if (!cognitoUser) {
+        throw new Error('No active session');
+      }
+      await new Promise<void>((resolve, reject) => {
+        cognitoUser.changePassword(currentPassword, newPassword, (err) => {
+          if (err) {
+            return reject(err instanceof Error ? err : new Error(String(err)));
+          }
+          resolve();
+        });
+      });
+    },
+    [],
+  );
+
   const signOut = useCallback(async () => {
     const cognitoUser = cognitoUserRef.current;
     if (cognitoUser) {
@@ -201,6 +225,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       confirmForgotPassword,
       signOut,
       refreshSession,
+      changePassword,
     }),
     [
       state,
@@ -209,6 +234,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       confirmForgotPassword,
       signOut,
       refreshSession,
+      changePassword,
     ],
   );
 

@@ -19,6 +19,7 @@ import { Card } from '../../../components/ui/card.js';
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { CurrencySelect } from '../components/CurrencySelect.js';
 import { useCreateWallet } from '../queries.js';
+import { usePreferredCurrency } from '../../settings/usePreferredCurrency.js';
 import { userMessageFor } from '../../../lib/api/errors.js';
 import { routes } from '../../../app/routes.js';
 import { t } from '../../../lib/i18n.js';
@@ -26,11 +27,13 @@ import { t } from '../../../lib/i18n.js';
 export const CreateWalletPage = () => {
   const navigate = useNavigate();
   const { mutate, isPending } = useCreateWallet();
+  const { currency: preferred } = usePreferredCurrency();
 
   const form = useForm<CreateWalletDTO>({
     resolver: zodResolver(CreateWalletRequestSchema),
     defaultValues: {
       name: '',
+      currency: preferred ?? 'USD',
     },
   });
 

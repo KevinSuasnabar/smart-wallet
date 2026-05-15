@@ -12,14 +12,8 @@ import { CreateWalletPage } from '../features/wallets/pages/CreateWalletPage.js'
 import { AddTransactionPage } from '../features/transactions/pages/AddTransactionPage.js';
 import { TransactionListPage } from '../features/transactions/pages/TransactionListPage.js';
 import { CategoriesPage } from '../features/categories/pages/CategoriesPage.js';
+import { SettingsPage } from '../features/settings/pages/SettingsPage.js';
 import { routes } from './routes.js';
-
-// Stub for PR4 — settings is future scope
-const SettingsPage = () => (
-  <div className="p-6">
-    <h1 className="text-xl font-semibold">Configuración (próximamente)</h1>
-  </div>
-);
 
 export const AppRouter = () => (
   <Routes>
