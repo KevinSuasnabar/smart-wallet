@@ -42,8 +42,8 @@ export const WalletsListPage = () => {
           ? <EmptyWalletsState />
           : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {data.items.map((wallet, i) => (
-                <WalletCard key={wallet.walletId} wallet={wallet} index={i} />
+              {data.items.map((wallet) => (
+                <WalletCard key={wallet.walletId} wallet={wallet} />
               ))}
             </div>
           )

@@ -3,9 +3,15 @@ import { ok, err } from '../shared/Result.js';
 import type { Result } from '../shared/Result.js';
 import type { Clock } from '../shared/Clock.js';
 import type { Currency } from '../shared/Currency.js';
+import { isWalletColor } from '../shared/WalletColor.js';
+import type { WalletColor } from '../shared/WalletColor.js';
 import type { WalletId } from './WalletId.js';
 import type { UserId } from '../user/UserId.js';
-import { InvalidWalletName, InvalidWalletCurrency } from './WalletError.js';
+import {
+  InvalidWalletName,
+  InvalidWalletCurrency,
+  InvalidWalletColor,
+} from './WalletError.js';
 import type { WalletError } from './WalletError.js';
 import type { WalletCreated } from './events/WalletCreated.js';
 
@@ -15,6 +21,7 @@ export interface WalletProps {
   userId: UserId;
   name: string;
   currency: Currency;
+  color: WalletColor;
   /** Integer cents — always 0 at creation; may go negative if expenses exceed income. */
   balance: number;
   createdAt: Date;
@@ -28,6 +35,7 @@ export interface CreateWalletProps {
   userId: UserId;
   name: string;
   currency: string;
+  color: string;
   clock: Clock;
 }
 
@@ -51,6 +59,10 @@ export class Wallet extends AggregateRoot<WalletId> {
 
   get currency(): Currency {
     return this._props.currency;
+  }
+
+  get color(): WalletColor {
+    return this._props.color;
   }
 
   get balance(): number {
@@ -82,6 +94,10 @@ export class Wallet extends AggregateRoot<WalletId> {
       return err(new InvalidWalletCurrency());
     }
 
+    if (!isWalletColor(props.color)) {
+      return err(new InvalidWalletColor());
+    }
+
     const currency = props.currency as Currency;
     const now = props.clock.now();
 
@@ -89,6 +105,7 @@ export class Wallet extends AggregateRoot<WalletId> {
       userId: props.userId,
       name: trimmedName,
       currency,
+      color: props.color,
       balance: 0,
       createdAt: now,
       updatedAt: now,
@@ -161,7 +178,7 @@ export class Wallet extends AggregateRoot<WalletId> {
    * allowed to change currency given its transactions?".
    */
   applyEdits(
-    edits: { name?: string; currency?: string },
+    edits: { name?: string; currency?: string; color?: string },
     clock: Clock,
   ): Result<void, WalletError> {
     const snapshot: WalletProps = { ...this._props };
@@ -180,6 +197,14 @@ export class Wallet extends AggregateRoot<WalletId> {
         return err(new InvalidWalletCurrency());
       }
       this._props.currency = edits.currency as Currency;
+    }
+
+    if (edits.color !== undefined) {
+      if (!isWalletColor(edits.color)) {
+        this._props = snapshot;
+        return err(new InvalidWalletColor());
+      }
+      this._props.color = edits.color;
     }
 
     this._props.updatedAt = clock.now();

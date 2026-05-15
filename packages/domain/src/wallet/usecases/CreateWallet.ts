@@ -15,6 +15,8 @@ export interface CreateWalletInput {
   userId: string;
   name: string;
   currency: Currency;
+  /** Raw color string — validated by Wallet.create against the palette. */
+  color: string;
 }
 
 export interface CreateWalletDeps {
@@ -40,6 +42,7 @@ export const makeCreateWallet =
       userId: userIdResult.value,
       name: input.name,
       currency: input.currency,
+      color: input.color,
       clock: deps.clock,
     });
 

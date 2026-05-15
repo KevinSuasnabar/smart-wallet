@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { zCurrency } from '../currencies.js';
+import { zWalletColor } from '../wallet-colors.js';
 import { zPaginatedResponse, zLimit, zCursor } from '../pagination.js';
 import { zUuid } from './common.js';
 
@@ -10,6 +11,7 @@ export const CreateWalletRequestSchema = z.object({
     .min(1, 'Wallet name must not be empty')
     .max(64, 'Wallet name must not exceed 64 characters'),
   currency: zCurrency,
+  color: zWalletColor,
 });
 
 export type CreateWalletDTO = z.infer<typeof CreateWalletRequestSchema>;
@@ -18,6 +20,7 @@ export const WalletResponseSchema = z.object({
   walletId: z.string(),
   name: z.string(),
   currency: zCurrency,
+  color: zWalletColor,
   /** Balance serialized as signed decimal string, e.g. "12.34" or "-3.50" */
   balance: z.string(),
   createdAt: z.string(),
@@ -66,10 +69,14 @@ export const UpdateWalletRequestSchema = z
       .max(64, 'Wallet name must not exceed 64 characters')
       .optional(),
     currency: zCurrency.optional(),
+    color: zWalletColor.optional(),
   })
   .strict()
   .refine(
-    (data) => data.name !== undefined || data.currency !== undefined,
+    (data) =>
+      data.name !== undefined ||
+      data.currency !== undefined ||
+      data.color !== undefined,
     { message: 'At least one mutable field must be provided' },
   );
 

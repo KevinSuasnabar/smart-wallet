@@ -36,6 +36,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
       walletId: wallet.id.toString(),
       name: wallet.name,
       currency: wallet.currency,
+      color: wallet.color,
       balance: formatCentsForResponse(wallet.balance, wallet.currency),
       createdAt: wallet.createdAt.toISOString(),
       updatedAt: wallet.updatedAt.toISOString(),

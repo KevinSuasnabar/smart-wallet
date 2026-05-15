@@ -2,6 +2,10 @@
 export { CURRENCIES, currencyDecimals, zCurrency } from './currencies.js';
 export type { Currency } from './currencies.js';
 
+// Wallet colors
+export { WALLET_COLORS, zWalletColor, isWalletColor } from './wallet-colors.js';
+export type { WalletColor } from './wallet-colors.js';
+
 // Categories
 export {
   PREDEFINED_INCOME_IDS,

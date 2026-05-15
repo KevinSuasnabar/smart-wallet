@@ -51,7 +51,7 @@ echo ""
 echo "=== 1. Create wallet (USD) ==="
 WALLET_RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/wallets" \
   -H "$HEADER_AUTH" -H "$HEADER_JSON" \
-  -d '{"name":"Cash","currency":"USD"}')
+  -d '{"name":"Cash","currency":"USD","color":"lime"}')
 WALLET_BODY=$(echo "$WALLET_RESP" | head -n -1)
 WALLET_STATUS=$(echo "$WALLET_RESP" | tail -n 1)
 echo "$WALLET_BODY" | json_pretty

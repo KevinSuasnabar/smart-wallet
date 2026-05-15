@@ -1,10 +1,14 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { ChevronLeft } from 'lucide-react';
-import { CreateWalletRequestSchema } from '@smart-wallet/shared-types';
-import type { CreateWalletDTO } from '@smart-wallet/shared-types';
+import {
+  CreateWalletRequestSchema,
+  WALLET_COLORS,
+} from '@smart-wallet/shared-types';
+import type { CreateWalletDTO, WalletColor } from '@smart-wallet/shared-types';
 import {
   Form,
   FormField,
@@ -18,7 +22,8 @@ import { Button } from '../../../components/ui/button.js';
 import { Card } from '../../../components/ui/card.js';
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { CurrencySelect } from '../components/CurrencySelect.js';
-import { useCreateWallet } from '../queries.js';
+import { ColorPicker } from '../components/ColorPicker.js';
+import { useCreateWallet, useWallets } from '../queries.js';
 import { usePreferredCurrency } from '../../settings/usePreferredCurrency.js';
 import { userMessageFor } from '../../../lib/api/errors.js';
 import { routes } from '../../../app/routes.js';
@@ -28,12 +33,22 @@ export const CreateWalletPage = () => {
   const navigate = useNavigate();
   const { mutate, isPending } = useCreateWallet();
   const { currency: preferred } = usePreferredCurrency();
+  const { data: walletsData } = useWallets();
+
+  // Smart default: first WALLET_COLORS value not already used by an existing
+  // wallet. Encourages a varied palette out of the box. Falls back to 'lime'
+  // when wallets are still loading, or when all seven colors are in use.
+  const defaultColor: WalletColor = useMemo(() => {
+    const used = new Set(walletsData?.items.map((w) => w.color) ?? []);
+    return WALLET_COLORS.find((c) => !used.has(c)) ?? 'lime';
+  }, [walletsData]);
 
   const form = useForm<CreateWalletDTO>({
     resolver: zodResolver(CreateWalletRequestSchema),
     defaultValues: {
       name: '',
       currency: preferred ?? 'USD',
+      color: defaultColor,
     },
   });
 
@@ -102,6 +117,24 @@ export const CreateWalletPage = () => {
                   <FormLabel>{t.wallets.currencyLabel}</FormLabel>
                   <FormControl>
                     <CurrencySelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.wallets.colorLabel}</FormLabel>
+                  <FormControl>
+                    <ColorPicker
                       value={field.value}
                       onChange={field.onChange}
                       disabled={isPending}

@@ -32,6 +32,16 @@ export const t = {
     editSuccess: 'Billetera actualizada',
     editNoChanges: 'No hay cambios',
     notFound: 'Esta billetera ya no existe',
+    colorLabel: 'Color',
+    colors: {
+      lime: 'Lima',
+      lilac: 'Lila',
+      cream: 'Crema',
+      pink: 'Rosa',
+      mint: 'Menta',
+      coral: 'Coral',
+      navy: 'Azul marino',
+    },
     currencyLockedHelper:
       'No se puede cambiar la moneda porque la billetera tiene movimientos.',
     currencyLockedError:
