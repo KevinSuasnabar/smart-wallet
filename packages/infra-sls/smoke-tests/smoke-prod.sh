@@ -5,7 +5,10 @@
 # a real JWT, then deletes the user at the end (even on failure, via trap).
 #
 # Requirements:
-#   - AWS CLI configured with profile that has Cognito + SSM read+write
+#   - AWS credentials with Cognito + SSM access. Two ways:
+#       - Local: export AWS_PROFILE=tomishi-account (uses ~/.aws/credentials).
+#       - CI: env-var credentials set by aws-actions/configure-aws-credentials
+#             via OIDC. AWS_PROFILE is left unset.
 #   - python3 (for JSON parsing — replaces jq for portability)
 #   - curl
 #
@@ -22,7 +25,15 @@
 set -euo pipefail
 
 # ---------- Config ----------
-: "${AWS_PROFILE:?Set AWS_PROFILE (e.g. AWS_PROFILE=tomishi-account)}"
+# AWS_PROFILE is optional. When unset (e.g. CI with OIDC), the aws CLI
+# resolves credentials from env vars (AWS_ACCESS_KEY_ID, AWS_SESSION_TOKEN, …)
+# already set by configure-aws-credentials. Local runs still pass --profile.
+AWS_PROFILE="${AWS_PROFILE:-}"
+if [[ -n "$AWS_PROFILE" ]]; then
+  AWS_CLI_ARGS=(--profile "$AWS_PROFILE")
+else
+  AWS_CLI_ARGS=()
+fi
 AWS_REGION="${AWS_REGION:-us-east-1}"
 
 # Read identifiers from SSM (single source of truth, written by CDK stack).
@@ -30,11 +41,11 @@ echo "→ Reading deployment config from SSM..."
 USER_POOL_ID=$(aws ssm get-parameter \
   --name /smart-wallet/prod/cognito/user-pool-id \
   --query 'Parameter.Value' --output text \
-  --region "$AWS_REGION" --profile "$AWS_PROFILE")
+  --region "$AWS_REGION" "${AWS_CLI_ARGS[@]}")
 CLIENT_ID=$(aws ssm get-parameter \
   --name /smart-wallet/prod/cognito/user-pool-client-id \
   --query 'Parameter.Value' --output text \
-  --region "$AWS_REGION" --profile "$AWS_PROFILE")
+  --region "$AWS_REGION" "${AWS_CLI_ARGS[@]}")
 # API URL is not in SSM (Serverless Framework owns it). Hardcoded but documented:
 # This is a public URL, not a secret.
 API_URL="${API_URL:-https://f4vv2f72ua.execute-api.us-east-1.amazonaws.com}"
@@ -54,7 +65,7 @@ cleanup() {
   aws cognito-idp admin-delete-user \
     --user-pool-id "$USER_POOL_ID" \
     --username "$TEST_EMAIL" \
-    --region "$AWS_REGION" --profile "$AWS_PROFILE" 2>/dev/null \
+    --region "$AWS_REGION" "${AWS_CLI_ARGS[@]}" 2>/dev/null \
     && echo "  ✓ user deleted" \
     || echo "  ! could not delete (might not exist if create failed)"
   exit "$exit_code"
@@ -88,7 +99,7 @@ aws cognito-idp admin-create-user \
   --username "$TEST_EMAIL" \
   --user-attributes Name=email,Value="$TEST_EMAIL" Name=email_verified,Value=true \
   --message-action SUPPRESS \
-  --region "$AWS_REGION" --profile "$AWS_PROFILE" > /dev/null
+  --region "$AWS_REGION" "${AWS_CLI_ARGS[@]}" > /dev/null
 echo "✓ user created"
 
 aws cognito-idp admin-set-user-password \
@@ -96,14 +107,14 @@ aws cognito-idp admin-set-user-password \
   --username "$TEST_EMAIL" \
   --password "$TEST_PASSWORD" \
   --permanent \
-  --region "$AWS_REGION" --profile "$AWS_PROFILE"
+  --region "$AWS_REGION" "${AWS_CLI_ARGS[@]}"
 echo "✓ password set (permanent)"
 
 ID_TOKEN=$(aws cognito-idp initiate-auth \
   --client-id "$CLIENT_ID" \
   --auth-flow USER_PASSWORD_AUTH \
   --auth-parameters USERNAME="$TEST_EMAIL",PASSWORD="$TEST_PASSWORD" \
-  --region "$AWS_REGION" --profile "$AWS_PROFILE" \
+  --region "$AWS_REGION" "${AWS_CLI_ARGS[@]}" \
   --query 'AuthenticationResult.IdToken' --output text)
 
 if [ -z "$ID_TOKEN" ] || [ "$ID_TOKEN" = "None" ]; then

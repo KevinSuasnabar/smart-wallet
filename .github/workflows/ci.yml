@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancel an in-flight CI run for the same ref when a newer commit lands.
+# We don't care about the intermediate state of a PR — only the latest.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Note: `pnpm format:check` is intentionally NOT included yet.
+      # The repository has pre-existing prettier drift (~200 files) that
+      # would fail every PR. Cleanup is tracked as a follow-up SDD.
+      # Husky + lint-staged auto-format new commits in the meantime.
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
