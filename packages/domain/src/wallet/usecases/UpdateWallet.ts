@@ -19,6 +19,7 @@ export interface UpdateWalletInput {
   edits: {
     name?: string;
     currency?: string;
+    color?: string;
   };
 }
 

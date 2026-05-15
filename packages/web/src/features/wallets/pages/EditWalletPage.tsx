@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import {
   UpdateWalletRequestSchema,
+  zWalletColor,
   type UpdateWalletDTO,
   type WalletResponseDTO,
 } from '@smart-wallet/shared-types';
@@ -25,6 +26,7 @@ import {
 } from '../../../components/ui/form.js';
 import { Input } from '../../../components/ui/input.js';
 import { CurrencySelect } from '../components/CurrencySelect.js';
+import { ColorPicker } from '../components/ColorPicker.js';
 import { useWallet, useUpdateWallet } from '../queries.js';
 import { useWalletTransactions } from '../../transactions/queries.js';
 import { ApiError, userMessageFor } from '../../../lib/api/errors.js';
@@ -44,6 +46,7 @@ const FormSchema = z.object({
     .min(1, 'El nombre es requerido')
     .max(64, 'El nombre debe tener máximo 64 caracteres'),
   currency: UpdateWalletRequestSchema._def.schema.shape.currency.unwrap(),
+  color: zWalletColor,
 });
 type FormValues = z.infer<typeof FormSchema>;
 
@@ -162,6 +165,7 @@ const EditWalletForm = ({
     defaultValues: {
       name: wallet.name,
       currency: wallet.currency,
+      color: wallet.color,
     },
   });
 
@@ -169,6 +173,7 @@ const EditWalletForm = ({
     const diff: UpdateWalletDTO = {};
     if (values.name !== wallet.name) diff.name = values.name;
     if (values.currency !== wallet.currency) diff.currency = values.currency;
+    if (values.color !== wallet.color) diff.color = values.color;
 
     if (Object.keys(diff).length === 0) {
       toast(t.wallets.editNoChanges);
@@ -234,6 +239,24 @@ const EditWalletForm = ({
                       {t.wallets.currencyLockedHelper}
                     </p>
                   )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.wallets.colorLabel}</FormLabel>
+                  <FormControl>
+                    <ColorPicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={submitting}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

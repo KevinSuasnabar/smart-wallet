@@ -27,6 +27,15 @@ export class InvalidWalletCurrency extends DomainError {
   }
 }
 
+export class InvalidWalletColor extends DomainError {
+  readonly tag = 'domain.wallet.invalid_color' as const;
+  readonly httpStatus = 400 as const;
+
+  constructor(message = 'Wallet color must be one of the predefined palette values') {
+    super(message);
+  }
+}
+
 export class WalletAlreadyDeleted extends DomainError {
   readonly tag = 'domain.wallet.already_deleted' as const;
   readonly httpStatus = 404 as const;
@@ -63,6 +72,7 @@ export type WalletError =
   | InvalidWalletId
   | InvalidWalletName
   | InvalidWalletCurrency
+  | InvalidWalletColor
   | WalletAlreadyDeleted
   | WalletNotFound
   | WalletCurrencyLocked;

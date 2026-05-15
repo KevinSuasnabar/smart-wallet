@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
+import { isWalletColor } from '@smart-wallet/shared-types';
 import { ColorBlock, type ColorBlockTone } from '../../../components/common/ColorBlock.js';
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { formatCurrency } from '../../../lib/currency.js';
@@ -8,26 +9,19 @@ import type { WalletResponseDTO } from '@smart-wallet/shared-types';
 
 interface WalletCardProps {
   wallet: WalletResponseDTO;
-  index: number;
 }
 
 /**
  * A wallet as a pastel tile in the bento grid — the DESIGN.md "color block as
- * story section" pattern, scaled down to a card. Tiles rotate through the
- * block palette by index so a list of wallets reads as an editorial poster
- * wall rather than a uniform table.
+ * story section" pattern, scaled down to a card. The tone is the wallet's
+ * own `color` attribute (chosen by the user); legacy wallets without a
+ * stored color fall back to 'lime' (the mapper already handles that; the
+ * runtime guard here is belt-and-suspenders).
  */
-const TONES: ColorBlockTone[] = [
-  'lime',
-  'lilac',
-  'cream',
-  'pink',
-  'mint',
-  'coral',
-];
-
-export const WalletCard = ({ wallet, index }: WalletCardProps) => {
-  const tone = TONES[index % TONES.length] ?? 'lime';
+export const WalletCard = ({ wallet }: WalletCardProps) => {
+  const tone: ColorBlockTone = isWalletColor(wallet.color)
+    ? wallet.color
+    : 'lime';
 
   return (
     <Link

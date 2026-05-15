@@ -5,6 +5,7 @@ export {
   InvalidWalletId,
   InvalidWalletName,
   InvalidWalletCurrency,
+  InvalidWalletColor,
   WalletAlreadyDeleted,
   WalletNotFound,
   WalletCurrencyLocked,

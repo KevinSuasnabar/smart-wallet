@@ -3,6 +3,9 @@ export type { Result } from './Result.js';
 
 export type { Currency } from './Currency.js';
 
+export { WALLET_COLORS, isWalletColor } from './WalletColor.js';
+export type { WalletColor } from './WalletColor.js';
+
 export { DomainError } from './DomainError.js';
 export type { DomainErrorJSON } from './DomainError.js';
 

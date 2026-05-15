@@ -33,9 +33,10 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   if (!bodyValidation.ok) return bodyValidation.response;
   const body: UpdateWalletDTO = bodyValidation.data;
 
-  const edits: { name?: string; currency?: string } = {};
+  const edits: { name?: string; currency?: string; color?: string } = {};
   if (body.name !== undefined) edits.name = body.name;
   if (body.currency !== undefined) edits.currency = body.currency;
+  if (body.color !== undefined) edits.color = body.color;
 
   const result = await container.updateWallet({
     userId: event.userId,
@@ -55,6 +56,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     walletId: w.id.toString(),
     name: w.name,
     currency: w.currency,
+    color: w.color,
     balance: formatCentsForResponse(w.balance, w.currency),
     createdAt: w.createdAt.toISOString(),
     updatedAt: w.updatedAt.toISOString(),
