@@ -8,6 +8,9 @@ import type {
   TransactionRepository,
   AddTransactionPersistInput,
   AddIdempotentInput,
+  UpdateTransactionPersistInput,
+  UpdateIdempotentInput,
+  HardDeleteInput,
   Transaction,
   TransactionId,
   UserId,
@@ -18,7 +21,7 @@ import type {
   TransactionError,
   WalletError,
 } from '@smart-wallet/domain';
-import { WalletNotFound } from '@smart-wallet/domain';
+import { WalletNotFound, TransactionNotFound } from '@smart-wallet/domain';
 import { ddb, TABLE_NAME, GSI1_NAME } from '../DynamoDBClient.js';
 import {
   userPK,
@@ -404,6 +407,385 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
   ): Promise<TransactionId | null> {
     return Promise.resolve(null);
   }
+
+  /**
+   * Atomically apply edits to an existing transaction and adjust the wallet
+   * balance.
+   *
+   * The Transaction SK includes `occurredAt` and the GSI1SK includes
+   * `categoryId`. When either changes, the item must MOVE (Delete old + Put
+   * new) — DynamoDB does not allow Update to mutate keys. When neither
+   * changes, a normal Update is fine. We branch on key shape:
+   *
+   *  - SK unchanged: 2-op TransactWrite (Transaction Update + Wallet Update)
+   *  - SK changed:   3-op TransactWrite (Transaction Delete + Transaction Put + Wallet Update)
+   */
+  async update(input: UpdateTransactionPersistInput): Promise<void> {
+    const { transaction, walletBalanceDelta, oldOccurredAt, oldCategoryId } = input;
+
+    const pk = userPK(transaction.userId.toString());
+    const walletIdStr = transaction.walletId.toString();
+    const txIdStr = transaction.id.toString();
+    const newOccurredAtIso = transaction.occurredAt.toISOString();
+    const oldOccurredAtIso = oldOccurredAt.toISOString();
+    const newCategoryId = transaction.categoryId;
+
+    const skMoved =
+      newOccurredAtIso !== oldOccurredAtIso || newCategoryId !== oldCategoryId;
+
+    const now = transaction.updatedAt.toISOString();
+
+    if (!skMoved) {
+      // 2-op: Update tx in place + Update wallet balance
+      await ddb.send(
+        new TransactWriteCommand({
+          TransactItems: [
+            {
+              Update: {
+                TableName: TABLE_NAME,
+                Key: {
+                  PK: pk,
+                  SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
+                },
+                UpdateExpression:
+                  'SET amount = :amount, description = :description, updatedAt = :now',
+                ConditionExpression:
+                  'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                ExpressionAttributeValues: {
+                  ':amount': transaction.amount.amount,
+                  ':description': transaction.description,
+                  ':now': now,
+                },
+              },
+            },
+            {
+              Update: {
+                TableName: TABLE_NAME,
+                Key: { PK: pk, SK: walletSK(walletIdStr) },
+                UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
+                ConditionExpression:
+                  'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                ExpressionAttributeValues: {
+                  ':delta': walletBalanceDelta,
+                  ':now': now,
+                },
+              },
+            },
+          ],
+        }),
+      ).catch((e: unknown) => {
+        throw mapUpdateCancellation(e, transaction.id);
+      });
+      return;
+    }
+
+    // 3-op: Delete old tx + Put new tx + Update wallet
+    const newTxItem = transactionToItem(transaction);
+
+    await ddb.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Delete: {
+              TableName: TABLE_NAME,
+              Key: {
+                PK: pk,
+                SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
+              },
+              ConditionExpression: 'attribute_exists(PK) AND attribute_exists(SK)',
+            },
+          },
+          {
+            Put: {
+              TableName: TABLE_NAME,
+              Item: newTxItem,
+              ConditionExpression:
+                'attribute_not_exists(PK) AND attribute_not_exists(SK)',
+            },
+          },
+          {
+            Update: {
+              TableName: TABLE_NAME,
+              Key: { PK: pk, SK: walletSK(walletIdStr) },
+              UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
+              ConditionExpression:
+                'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+              ExpressionAttributeValues: {
+                ':delta': walletBalanceDelta,
+                ':now': now,
+              },
+            },
+          },
+        ],
+      }),
+    ).catch((e: unknown) => {
+      throw mapMovedUpdateCancellation(e, transaction.id);
+    });
+  }
+
+  /**
+   * Idempotent counterpart of `update`. Adds an IdempotencyRecord Put with
+   * `attribute_not_exists` as the dedupe lock. Same SK-move branching as
+   * `update`, so the operation count is 3 (in-place edit) or 4 (key moved).
+   */
+  async updateIdempotent(
+    input: UpdateIdempotentInput,
+  ): Promise<Result<{ transaction: Transaction; replay: boolean }, TransactionError | WalletError>> {
+    const { transaction, walletId, walletBalanceDelta, idempotencyHash, oldOccurredAt, oldCategoryId } =
+      input;
+
+    const pk = userPK(transaction.userId.toString());
+    const walletIdStr = walletId.toString();
+    const txIdStr = transaction.id.toString();
+    const newOccurredAtIso = transaction.occurredAt.toISOString();
+    const oldOccurredAtIso = oldOccurredAt.toISOString();
+    const newCategoryId = transaction.categoryId;
+    const skMoved =
+      newOccurredAtIso !== oldOccurredAtIso || newCategoryId !== oldCategoryId;
+
+    const idemSK = idempotencySK(idempotencyHash);
+    const now = new Date().toISOString();
+    const ttlEpoch = (Date.now() / 1000 | 0) + 86400;
+    const idempotencyItem: IdempotencyRecordItem = {
+      PK: pk,
+      SK: idemSK,
+      entityType: 'IdempotencyRecord',
+      transactionId: txIdStr,
+      transactionSK: transactionSK(walletIdStr, newOccurredAtIso, txIdStr),
+      ttl: ttlEpoch,
+      createdAt: now,
+    };
+
+    const idempotencyPutOp = {
+      Put: {
+        TableName: TABLE_NAME,
+        Item: idempotencyItem,
+        ConditionExpression:
+          'attribute_not_exists(PK) AND attribute_not_exists(SK)',
+      },
+    } as const;
+
+    try {
+      if (!skMoved) {
+        await ddb.send(
+          new TransactWriteCommand({
+            TransactItems: [
+              {
+                Update: {
+                  TableName: TABLE_NAME,
+                  Key: {
+                    PK: pk,
+                    SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
+                  },
+                  UpdateExpression:
+                    'SET amount = :amount, description = :description, updatedAt = :now',
+                  ConditionExpression:
+                    'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                  ExpressionAttributeValues: {
+                    ':amount': transaction.amount.amount,
+                    ':description': transaction.description,
+                    ':now': now,
+                  },
+                },
+              },
+              {
+                Update: {
+                  TableName: TABLE_NAME,
+                  Key: { PK: pk, SK: walletSK(walletIdStr) },
+                  UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
+                  ConditionExpression:
+                    'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                  ExpressionAttributeValues: {
+                    ':delta': walletBalanceDelta,
+                    ':now': now,
+                  },
+                },
+              },
+              idempotencyPutOp,
+            ],
+          }),
+        );
+      } else {
+        const newTxItem = transactionToItem(transaction);
+        await ddb.send(
+          new TransactWriteCommand({
+            TransactItems: [
+              {
+                Delete: {
+                  TableName: TABLE_NAME,
+                  Key: {
+                    PK: pk,
+                    SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
+                  },
+                  ConditionExpression: 'attribute_exists(PK) AND attribute_exists(SK)',
+                },
+              },
+              {
+                Put: {
+                  TableName: TABLE_NAME,
+                  Item: newTxItem,
+                  ConditionExpression:
+                    'attribute_not_exists(PK) AND attribute_not_exists(SK)',
+                },
+              },
+              {
+                Update: {
+                  TableName: TABLE_NAME,
+                  Key: { PK: pk, SK: walletSK(walletIdStr) },
+                  UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
+                  ConditionExpression:
+                    'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                  ExpressionAttributeValues: {
+                    ':delta': walletBalanceDelta,
+                    ':now': now,
+                  },
+                },
+              },
+              idempotencyPutOp,
+            ],
+          }),
+        );
+      }
+
+      return ok({ transaction, replay: false });
+    } catch (e: unknown) {
+      if (!isTransactionCanceledException(e)) throw e;
+      const reasons = e.CancellationReasons ?? [];
+      // The idempotency Put is the LAST item in either branch. If its check
+      // fails, this is a replay — read the cached transaction and return it.
+      const idempotencyIndex = skMoved ? 3 : 2;
+      const idempotencyReason = reasons[idempotencyIndex];
+      if (idempotencyReason?.Code === 'ConditionalCheckFailed') {
+        const replayed = await this.replayTransaction(pk, idemSK);
+        if (replayed === null) {
+          throw new Error(
+            `Idempotency replay failed: record expired for hash ${idempotencyHash}`,
+          );
+        }
+        return ok({ transaction: replayed, replay: true });
+      }
+
+      // Wallet reason is always the second-to-last item (index 1 for 2-op
+      // SK-in-place + idempotency = 3 total; index 2 for 3-op SK-moved + idempotency = 4 total).
+      const walletReasonIndex = skMoved ? 2 : 1;
+      const walletReason = reasons[walletReasonIndex];
+      if (walletReason?.Code === 'ConditionalCheckFailed') {
+        return err(new WalletNotFound());
+      }
+
+      // Transaction reason: index 0 (the Update/Delete on the tx item).
+      const txReason = reasons[0];
+      if (txReason?.Code === 'ConditionalCheckFailed') {
+        return err(new TransactionNotFound(`Transaction ${txIdStr} not found`));
+      }
+
+      // For 3-op path, also check the Put (new SK collision — should not happen).
+      if (skMoved && reasons[1]?.Code === 'ConditionalCheckFailed') {
+        throw new Error(
+          `Transaction SK collision on move for ${txIdStr} — this is a bug`,
+        );
+      }
+
+      throw e;
+    }
+  }
+
+  /**
+   * Hard-delete a transaction and reverse its impact on the wallet balance,
+   * atomically. Two ops:
+   *   [0] Delete the Transaction item (must exist)
+   *   [1] Update the Wallet balance (must exist + not soft-deleted)
+   */
+  async hardDelete(input: HardDeleteInput): Promise<void> {
+    const { userId, transactionId, walletId, walletBalanceDelta, occurredAt } = input;
+    const pk = userPK(userId.toString());
+    const walletIdStr = walletId.toString();
+    const txIdStr = transactionId.toString();
+    const occurredAtIso = occurredAt.toISOString();
+    const now = new Date().toISOString();
+
+    try {
+      await ddb.send(
+        new TransactWriteCommand({
+          TransactItems: [
+            {
+              Delete: {
+                TableName: TABLE_NAME,
+                Key: {
+                  PK: pk,
+                  SK: transactionSK(walletIdStr, occurredAtIso, txIdStr),
+                },
+                ConditionExpression: 'attribute_exists(PK) AND attribute_exists(SK)',
+              },
+            },
+            {
+              Update: {
+                TableName: TABLE_NAME,
+                Key: { PK: pk, SK: walletSK(walletIdStr) },
+                UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
+                ConditionExpression:
+                  'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                ExpressionAttributeValues: {
+                  ':delta': walletBalanceDelta,
+                  ':now': now,
+                },
+              },
+            },
+          ],
+        }),
+      );
+    } catch (e: unknown) {
+      throw mapDeleteCancellation(e, transactionId);
+    }
+  }
+}
+
+// ── Error narrowing helpers ────────────────────────────────────────────────
+// These translate TransactWriteItems CancellationReasons into typed domain
+// errors. Re-thrown so the use case can catch and return them via Result.
+
+function mapUpdateCancellation(e: unknown, transactionId: TransactionId): Error {
+  if (!isTransactionCanceledException(e)) return e instanceof Error ? e : new Error(String(e));
+  const reasons = e.CancellationReasons ?? [];
+  // 2-op: [0] tx Update, [1] wallet Update
+  if (reasons[0]?.Code === 'ConditionalCheckFailed') {
+    return new TransactionNotFound(`Transaction ${transactionId.toString()} not found`);
+  }
+  if (reasons[1]?.Code === 'ConditionalCheckFailed') {
+    return new WalletNotFound();
+  }
+  return e;
+}
+
+function mapMovedUpdateCancellation(e: unknown, transactionId: TransactionId): Error {
+  if (!isTransactionCanceledException(e)) return e instanceof Error ? e : new Error(String(e));
+  const reasons = e.CancellationReasons ?? [];
+  // 3-op: [0] tx Delete, [1] tx Put (new SK), [2] wallet Update
+  if (reasons[0]?.Code === 'ConditionalCheckFailed') {
+    return new TransactionNotFound(`Transaction ${transactionId.toString()} not found`);
+  }
+  if (reasons[1]?.Code === 'ConditionalCheckFailed') {
+    return new Error(
+      `Transaction SK collision on move for ${transactionId.toString()} — this is a bug`,
+    );
+  }
+  if (reasons[2]?.Code === 'ConditionalCheckFailed') {
+    return new WalletNotFound();
+  }
+  return e;
+}
+
+function mapDeleteCancellation(e: unknown, transactionId: TransactionId): Error {
+  if (!isTransactionCanceledException(e)) return e instanceof Error ? e : new Error(String(e));
+  const reasons = e.CancellationReasons ?? [];
+  // 2-op: [0] tx Delete, [1] wallet Update
+  if (reasons[0]?.Code === 'ConditionalCheckFailed') {
+    return new TransactionNotFound(`Transaction ${transactionId.toString()} not found`);
+  }
+  if (reasons[1]?.Code === 'ConditionalCheckFailed') {
+    return new WalletNotFound();
+  }
+  return e;
 }
 
 // Re-export error helpers used by this module so callers don't need

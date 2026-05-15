@@ -48,6 +48,54 @@ export interface AddIdempotentInput {
   idempotencyHash: string;
 }
 
+export interface UpdateTransactionPersistInput {
+  /** Edited transaction in its post-edit state. The repo reads its new fields. */
+  transaction: Transaction;
+  /**
+   * Signed cents adjustment to apply to the parent wallet's balance:
+   * `newDelta - oldDelta`. Zero when only non-amount fields changed.
+   */
+  walletBalanceDelta: number;
+  /**
+   * Pre-edit `occurredAt` of the transaction. Used by the repo to detect
+   * whether the SK changed (Transaction SK includes occurredAt) and choose
+   * between Update (SK unchanged) and Delete-old + Put-new (SK moved).
+   */
+  oldOccurredAt: Date;
+  /**
+   * Pre-edit `categoryId` of the transaction. Used by the repo to detect
+   * whether the GSI1SK changed (it includes categoryId).
+   */
+  oldCategoryId: string;
+}
+
+export interface UpdateIdempotentInput {
+  transaction: Transaction;
+  walletId: WalletId;
+  walletBalanceDelta: number;
+  /**
+   * Pre-computed SHA-256 hash scoped to (userId, walletId, transactionId, key).
+   * The scope difference vs AddIdempotentInput's hash means PATCH and POST
+   * idempotency records cannot collide.
+   */
+  idempotencyHash: string;
+  oldOccurredAt: Date;
+  oldCategoryId: string;
+}
+
+export interface HardDeleteInput {
+  userId: UserId;
+  transactionId: TransactionId;
+  walletId: WalletId;
+  /** Reverse of the original signed delta: `-tx.signedDelta()`. */
+  walletBalanceDelta: number;
+  /**
+   * The transaction's occurredAt at the moment of delete. Needed to construct
+   * the SK for the Delete TransactItem (Transaction SK includes occurredAt).
+   */
+  occurredAt: Date;
+}
+
 export interface TransactionRepository {
   /**
    * Persist a new transaction and atomically update the wallet balance.
@@ -95,4 +143,39 @@ export interface TransactionRepository {
     userId: UserId,
     idempotencyRecordSk: string,
   ): Promise<TransactionId | null>;
+
+  /**
+   * Persist edits to an existing transaction and adjust the wallet balance in
+   * a single 2-op TransactWriteItems:
+   *   [0] Transaction Update (ConditionExpression: attribute_exists(PK) AND attribute_not_exists(deletedAt))
+   *   [1] Wallet balance Update (ConditionExpression: attribute_exists(PK) AND attribute_not_exists(deletedAt))
+   *
+   * Errors:
+   *   CancellationReasons[0] === ConditionalCheckFailed → transaction missing/deleted.
+   *   CancellationReasons[1] === ConditionalCheckFailed → wallet missing/soft-deleted.
+   * The use case maps these to TransactionNotFound / WalletNotFound respectively.
+   */
+  update(input: UpdateTransactionPersistInput): Promise<void>;
+
+  /**
+   * Idempotent counterpart of `update`. 3-op TransactWriteItems with an
+   * IdempotencyRecord Put. Hash scope includes transactionId (see
+   * UpdateIdempotentInput.idempotencyHash). Same replay semantics as
+   * addIdempotent.
+   */
+  updateIdempotent(
+    input: UpdateIdempotentInput,
+  ): Promise<Result<{ transaction: Transaction; replay: boolean }, TransactionError | WalletError>>;
+
+  /**
+   * Hard-delete a transaction and reverse its impact on the wallet balance,
+   * atomically via a 2-op TransactWriteItems:
+   *   [0] Transaction Delete (ConditionExpression: attribute_exists(PK) AND attribute_exists(SK))
+   *   [1] Wallet balance Update (ConditionExpression: attribute_exists(PK) AND attribute_not_exists(deletedAt))
+   *
+   * Errors:
+   *   CancellationReasons[0] → transaction already gone (race) → TransactionNotFound.
+   *   CancellationReasons[1] → wallet missing/soft-deleted → WalletNotFound.
+   */
+  hardDelete(input: HardDeleteInput): Promise<void>;
 }

@@ -49,6 +49,8 @@ export {
   ListTransactionsResponseSchema,
   ListTransactionsByWalletQuerySchema,
   ListTransactionsByCategoryQuerySchema,
+  TransactionIdPathSchema,
+  UpdateTransactionRequestSchema,
 } from './schemas/transaction.js';
 export type {
   AddTransactionDTO,
@@ -56,6 +58,8 @@ export type {
   ListTransactionsResponseDTO,
   ListTransactionsByWalletQueryDTO,
   ListTransactionsByCategoryQueryDTO,
+  TransactionIdPathDTO,
+  UpdateTransactionDTO,
 } from './schemas/transaction.js';
 
 // Category schemas + DTOs

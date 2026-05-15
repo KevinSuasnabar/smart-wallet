@@ -29,6 +29,7 @@
     "ddb:init": "pnpm --filter @smart-wallet/infra-sls init:local",
     "smoke": "bash packages/infra-sls/smoke-tests/smoke.sh",
     "smoke:prod": "bash packages/infra-sls/smoke-tests/smoke-prod.sh",
+    "smoke:edit-delete:prod": "bash packages/infra-sls/smoke-tests/smoke-edit-delete-prod.sh",
     "prepare": "husky"
   },
   "devDependencies": {

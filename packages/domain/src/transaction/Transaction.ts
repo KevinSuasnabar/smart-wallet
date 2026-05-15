@@ -181,13 +181,81 @@ export class Transaction extends AggregateRoot<TransactionId> {
 
   /**
    * Soft-delete this transaction.
-   * NOTE: no DELETE endpoint exists in MVP — this method exists for schema
-   * completeness and future use.
+   * NOTE: not used by the current hard-delete flow (see DeleteTransaction use
+   * case). Kept for schema completeness and possible future audit/undo.
    */
   softDelete(clock: Clock): void {
     if (this._props.deletedAt !== null) return;
     const now = clock.now();
     this._props.deletedAt = now;
     this._props.updatedAt = now;
+  }
+
+  /**
+   * Returns the signed integer-cents delta this transaction contributes to its
+   * wallet balance: positive for income, negative for expense. Single source
+   * of truth for balance math in UpdateTransaction and DeleteTransaction.
+   */
+  signedDelta(): number {
+    return this._props.type === 'income'
+      ? this._props.amount.amount
+      : this._props.amount.negate().amount;
+  }
+
+  /**
+   * Apply a partial edit in place. Only call from the UpdateTransaction use
+   * case — callers are responsible for resolving the new Money VO and for
+   * validating category membership against the (immutable) transaction type
+   * before invoking this method.
+   *
+   * Field validators that DO live here:
+   *  - description length (≤ 256 chars; trimmed; empty → null)
+   *  - occurredAt range ([now − 5y, now + 1d])
+   *
+   * On success, bumps `updatedAt`. On failure, leaves the entity untouched.
+   */
+  applyEdits(
+    edits: {
+      amount?: Money;
+      description?: string | null;
+      categoryId?: string;
+      occurredAt?: Date;
+    },
+    clock: Clock,
+  ): Result<void, TransactionError> {
+    // Snapshot to roll back on failure (avoid partial in-place mutation).
+    const snapshot: TransactionProps = { ...this._props };
+
+    if (edits.description !== undefined) {
+      const trimmed =
+        edits.description === null ? null : edits.description.trim();
+      const normalized = trimmed === '' ? null : trimmed;
+      if (normalized !== null && normalized.length > MAX_DESCRIPTION_LENGTH) {
+        return err(new InvalidDescription());
+      }
+      this._props.description = normalized;
+    }
+
+    if (edits.occurredAt !== undefined) {
+      const now = clock.now();
+      const lowerBound = new Date(now.getTime() - FIVE_YEARS_MS);
+      const upperBound = new Date(now.getTime() + ONE_DAY_MS);
+      if (edits.occurredAt < lowerBound || edits.occurredAt > upperBound) {
+        this._props = snapshot;
+        return err(new InvalidOccurredAt());
+      }
+      this._props.occurredAt = edits.occurredAt;
+    }
+
+    if (edits.amount !== undefined) {
+      this._props.amount = edits.amount;
+    }
+
+    if (edits.categoryId !== undefined) {
+      this._props.categoryId = edits.categoryId;
+    }
+
+    this._props.updatedAt = clock.now();
+    return ok(undefined);
   }
 }

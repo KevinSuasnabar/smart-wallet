@@ -9,3 +9,6 @@ export * from './events/TransactionAdded.js';
 export * from './usecases/AddTransaction.js';
 export * from './usecases/ListTransactionsByWallet.js';
 export * from './usecases/ListTransactionsByCategory.js';
+export * from './usecases/GetTransaction.js';
+export * from './usecases/UpdateTransaction.js';
+export * from './usecases/DeleteTransaction.js';
