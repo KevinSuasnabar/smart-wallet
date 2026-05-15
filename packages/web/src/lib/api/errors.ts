@@ -19,6 +19,8 @@ export const userMessageFor = (err: unknown): string => {
     // but the message wouldn't break if the status changed in the future).
     if (err.code === 'category_has_transactions')
       return t.categories.deleteHasTransactionsError;
+    if (err.code === 'wallet_currency_locked')
+      return t.wallets.currencyLockedError;
     if (err.code === 'validation_failed') return t.errors.validation;
     if (err.code === 'currency_mismatch') return t.errors.currencyMismatch;
     if (err.code === 'category_type_mismatch') return t.errors.categoryTypeMismatch;

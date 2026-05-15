@@ -152,4 +152,37 @@ export class Wallet extends AggregateRoot<WalletId> {
     this._props.updatedAt = clock.now();
     return ok(undefined);
   }
+
+  /**
+   * Apply a partial edit in place. Validates each provided field with the
+   * factory's validators. Rolls back to the pre-call state on any failure.
+   *
+   * The use case is responsible for higher-level checks like "is this wallet
+   * allowed to change currency given its transactions?".
+   */
+  applyEdits(
+    edits: { name?: string; currency?: string },
+    clock: Clock,
+  ): Result<void, WalletError> {
+    const snapshot: WalletProps = { ...this._props };
+
+    if (edits.name !== undefined) {
+      const trimmed = edits.name.trim();
+      if (trimmed.length === 0 || trimmed.length > 64) {
+        return err(new InvalidWalletName());
+      }
+      this._props.name = trimmed;
+    }
+
+    if (edits.currency !== undefined) {
+      if (!VALID_CURRENCIES.includes(edits.currency as Currency)) {
+        this._props = snapshot;
+        return err(new InvalidWalletCurrency());
+      }
+      this._props.currency = edits.currency as Currency;
+    }
+
+    this._props.updatedAt = clock.now();
+    return ok(undefined);
+  }
 }

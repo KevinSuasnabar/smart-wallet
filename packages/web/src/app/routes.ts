@@ -7,6 +7,7 @@ export const routes = {
   wallets: '/wallets',
   walletsNew: '/wallets/new',
   walletDetail: (walletId: string) => `/wallets/${walletId}`,
+  walletEdit: (walletId: string) => `/wallets/${walletId}/edit`,
   walletTransactions: (walletId: string) => `/wallets/${walletId}/transactions`,
   walletTransactionsNew: (walletId: string) =>
     `/wallets/${walletId}/transactions/new`,

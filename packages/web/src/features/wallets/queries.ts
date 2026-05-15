@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   CreateWalletDTO,
+  UpdateWalletDTO,
   WalletResponseDTO,
   ListWalletsQueryDTO,
 } from '@smart-wallet/shared-types';
@@ -38,6 +39,39 @@ export const useCreateWallet = () => {
     mutationFn: (dto: CreateWalletDTO) => walletsApi.create(dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: walletKeys.all });
+    },
+  });
+};
+
+/**
+ * Edit a wallet. Invalidates the wallet caches on success.
+ */
+export const useUpdateWallet = () => {
+  const qc = useQueryClient();
+  return useMutation<
+    WalletResponseDTO,
+    Error,
+    { walletId: string; dto: UpdateWalletDTO }
+  >({
+    mutationFn: ({ walletId, dto }) => walletsApi.update(walletId, dto),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: walletKeys.all });
+    },
+  });
+};
+
+/**
+ * Hard-delete a wallet + cascade delete all its transactions. Invalidates
+ * BOTH wallet AND transaction caches because the cascade clears tx rows
+ * the frontend may have shown for this wallet.
+ */
+export const useDeleteWallet = () => {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { walletId: string }>({
+    mutationFn: ({ walletId }) => walletsApi.remove(walletId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: walletKeys.all });
+      void qc.invalidateQueries({ queryKey: ['transactions'] });
     },
   });
 };

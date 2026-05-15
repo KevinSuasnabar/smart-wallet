@@ -45,9 +45,24 @@ export class WalletNotFound extends DomainError {
   }
 }
 
+/**
+ * Cannot change a wallet's currency once it has at least one active
+ * transaction. Detected via TransactionRepository.listByWallet with limit 1
+ * inside the UpdateWallet use case.
+ */
+export class WalletCurrencyLocked extends DomainError {
+  readonly tag = 'domain.wallet.currency_locked' as const;
+  readonly httpStatus = 409 as const;
+
+  constructor(message = 'Cannot change currency of a wallet with transactions') {
+    super(message);
+  }
+}
+
 export type WalletError =
   | InvalidWalletId
   | InvalidWalletName
   | InvalidWalletCurrency
   | WalletAlreadyDeleted
-  | WalletNotFound;
+  | WalletNotFound
+  | WalletCurrencyLocked;
