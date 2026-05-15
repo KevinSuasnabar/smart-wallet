@@ -4,9 +4,13 @@ import type { CategoryIdPathDTO } from '@smart-wallet/shared-types';
 import { withAuth, withErrorHandler, validatePath } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
 import { container } from '../../composition/container.js';
-import { noContent, badRequest, notFound } from '../../shared/response.js';
+import { noContent, badRequest, notFound, conflict } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
-import { CannotDeletePredefined, InvalidCategoryId } from '@smart-wallet/domain';
+import {
+  CannotDeletePredefined,
+  InvalidCategoryId,
+  CategoryHasTransactions,
+} from '@smart-wallet/domain';
 
 /**
  * DELETE /categories/{categoryId} — soft-delete a custom category.
@@ -47,6 +51,11 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     // InvalidCategoryId from the use case signals "not found" semantics
     if (error instanceof InvalidCategoryId) {
       return notFound('category_not_found');
+    }
+
+    // The category has at least one active transaction; deletion is blocked
+    if (error instanceof CategoryHasTransactions) {
+      return conflict('category_has_transactions');
     }
 
     return domainErrorToResponse(error);
