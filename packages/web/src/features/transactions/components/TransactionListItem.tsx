@@ -9,29 +9,51 @@ interface TransactionListItemProps {
   categoryName?: string;
 }
 
+/**
+ * A transaction row carries a left pastel stripe (mint for income, coral
+ * for expense) and a display-scale amount — taxonomy by color, magnitude by
+ * type-size. The DESIGN.md monochrome chrome stays; the stripe is the only
+ * accent the row earns.
+ */
 export const TransactionListItem = ({
   transaction,
   categoryName,
 }: TransactionListItemProps) => {
   const { type, amount, currency, description, occurredAt, categoryId } =
     transaction;
-  const amountClass =
-    type === 'income' ? 'text-emerald-600' : 'text-red-600';
 
   return (
-    <div className="flex items-center justify-between gap-3 py-3 border-b last:border-b-0">
-      <div className="flex flex-col min-w-0 flex-1">
-        <p className="font-medium truncate">{categoryName ?? categoryId}</p>
-        {description !== undefined && description !== '' && (
-          <p className="text-sm text-muted-foreground truncate">{description}</p>
+    <div className="flex border-b border-border last:border-b-0">
+      <span
+        aria-hidden
+        className={cn(
+          'my-3 w-1.5 shrink-0 self-stretch rounded-sm',
+          type === 'income' ? 'bg-block-mint' : 'bg-block-coral',
         )}
-        <p className="text-xs text-muted-foreground">
-          {format(new Date(occurredAt), "d MMM yyyy", { locale: es })}
+      />
+      <div className="flex flex-1 items-center justify-between gap-3 py-4 pl-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <p className="truncate font-semibold tracking-tightest">
+            {categoryName ?? categoryId}
+          </p>
+          {description !== undefined && description !== '' && (
+            <p className="truncate text-sm text-muted-foreground">
+              {description}
+            </p>
+          )}
+          <p className="font-mono text-[10px] uppercase tracking-caption text-muted-foreground">
+            {format(new Date(occurredAt), 'd MMM yyyy', { locale: es })}
+          </p>
+        </div>
+        <p
+          className={cn(
+            'whitespace-nowrap text-xl font-bold tabular-nums tracking-display md:text-2xl',
+            type === 'income' ? 'text-success' : 'text-foreground',
+          )}
+        >
+          {formatSignedAmount(amount, currency, type)}
         </p>
       </div>
-      <p className={cn('font-semibold whitespace-nowrap', amountClass)}>
-        {formatSignedAmount(amount, currency, type)}
-      </p>
     </div>
   );
 };

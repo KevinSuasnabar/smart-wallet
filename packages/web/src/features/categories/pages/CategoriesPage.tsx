@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { Button } from '../../../components/ui/button.js';
 import { Skeleton } from '../../../components/ui/skeleton.js';
 import { ErrorState } from '../../../components/common/ErrorState.js';
+import { PageHeader } from '../../../components/common/PageHeader.js';
 import { useCategories } from '../queries.js';
 import { CategoryList } from '../components/CategoryList.js';
 import { CreateCategoryDialog } from '../components/CreateCategoryDialog.js';
@@ -17,23 +18,22 @@ export const CategoriesPage = () => {
   >(null);
 
   return (
-    <div className="flex flex-col pb-8 px-4">
-      <div className="flex items-center justify-between gap-2 py-4">
-        <h1 className="text-xl font-semibold">{t.categories.listTitle}</h1>
-        <Button
-          size="sm"
-          onClick={() => setCreateOpen(true)}
-          className="gap-1"
-        >
-          <Plus className="size-4" />
-          {t.categories.createButton}
-        </Button>
-      </div>
+    <div className="flex flex-col pb-4">
+      <PageHeader
+        eyebrow="Organización"
+        title={t.categories.listTitle}
+        action={
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1">
+            <Plus className="size-4" />
+            {t.categories.createButton}
+          </Button>
+        }
+      />
 
       {isLoading && (
-        <div className="flex flex-col gap-2 py-4">
+        <div className="flex flex-col gap-2">
           {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-xl" />
+            <Skeleton key={i} className="h-12 w-full rounded-md" />
           ))}
         </div>
       )}

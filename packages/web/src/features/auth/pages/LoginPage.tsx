@@ -7,12 +7,8 @@ import { useAuth } from '../useAuth.js';
 import { mapCognitoError } from '../types.js';
 import { routes } from '../../../app/routes.js';
 import { t } from '../../../lib/i18n.js';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../components/ui/card.js';
+import { Card } from '../../../components/ui/card.js';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import {
   Form,
   FormControl,
@@ -34,6 +30,12 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+/**
+ * Split-screen login — the only page in the app where the brand has room to
+ * speak. Left: navy panel with editorial display copy and a lime accent line.
+ * Right: a white card on the cream canvas with the actual sign-in form.
+ * Stacks on mobile (navy hero on top, form filling the rest).
+ */
 export const LoginPage = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -59,73 +61,106 @@ export const LoginPage = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl text-center">{t.auth.loginTitle}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }}
-            className="space-y-4"
-          >
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.auth.emailLabel}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      autoComplete="email"
-                      className="min-h-[44px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <div className="grid min-h-dvh grid-cols-1 grid-rows-[auto_1fr] bg-background lg:grid-cols-2 lg:grid-rows-1">
+      {/* Navy hero — the brand side */}
+      <aside className="flex flex-col justify-between gap-12 bg-foreground px-6 py-10 text-background md:px-12 md:py-14 lg:px-16">
+        <span className="font-mono text-[11px] uppercase tracking-eyebrow text-background/55">
+          {t.app.name}
+        </span>
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.auth.passwordLabel}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="current-password"
-                      className="min-h-[44px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className="flex flex-col gap-6">
+          <Eyebrow className="text-background/55">
+            Tu billetera personal
+          </Eyebrow>
+          <h1 className="text-4xl font-bold leading-[1.05] tracking-display md:text-5xl lg:text-[56px] xl:text-[64px]">
+            Tu plata,
+            <br />
+            con orden.
+          </h1>
+          <p className="max-w-md text-base leading-snug text-background/70 md:text-lg">
+            Un lugar para tus cuentas, gastos y categorías.
+            <br />
+            Simple. Tuyo.
+          </p>
+          <span aria-hidden className="mt-2 block h-1 w-16 bg-block-lime" />
+        </div>
 
-            <div className="flex justify-end">
-              <Link
-                to={routes.forgotPassword}
-                className="text-xs text-muted-foreground hover:text-primary underline underline-offset-2"
-              >
-                {t.auth.forgotPassword}
-              </Link>
+        <span className="font-mono text-[10px] uppercase tracking-caption text-background/40">
+          Personal finance · {new Date().getFullYear()}
+        </span>
+      </aside>
+
+      {/* Form panel — cream canvas with a white card */}
+      <div className="flex items-center justify-center px-5 py-10 md:p-12">
+        <div className="w-full max-w-sm">
+          <Card className="p-7 md:p-8">
+            <div className="mb-6 flex flex-col gap-2">
+              <Eyebrow>Acceso</Eyebrow>
+              <h2 className="text-3xl font-bold leading-none tracking-display md:text-4xl">
+                Iniciar sesión
+              </h2>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full min-h-[44px]"
-              disabled={form.formState.isSubmitting}
-            >
-              {form.formState.isSubmitting ? t.app.loading : t.auth.loginButton}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            <Form {...form}>
+              <form
+                onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.auth.emailLabel}</FormLabel>
+                      <FormControl>
+                        <Input type="email" autoComplete="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t.auth.passwordLabel}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          autoComplete="current-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end pt-1">
+                  <Link
+                    to={routes.forgotPassword}
+                    className="font-mono text-[11px] uppercase tracking-caption text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {t.auth.forgotPassword}
+                  </Link>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={form.formState.isSubmitting}
+                >
+                  {form.formState.isSubmitting
+                    ? t.app.loading
+                    : t.auth.loginButton}
+                </Button>
+              </form>
+            </Form>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 };

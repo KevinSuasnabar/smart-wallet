@@ -34,7 +34,7 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
   };
 
   return (
-    <div className="rounded-xl border p-3 mb-3">
+    <div className="rounded-md border border-border bg-card p-3">
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -45,7 +45,7 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
           <Filter className="size-4" />
           {t.transactions.filtersTitle}
           {hasFilters && (
-            <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
+            <span className="rounded-full bg-primary px-2 py-0.5 font-mono text-[10px] uppercase tracking-caption text-primary-foreground">
               Activos
             </span>
           )}
@@ -65,7 +65,7 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
       </div>
 
       {open && (
-        <div className="flex flex-col gap-3 mt-3">
+        <div className="mt-4 flex flex-col gap-4 border-t border-border pt-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="filter-type">{t.transactions.filterByType}</Label>
             <Select
@@ -79,7 +79,7 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
                 }
               }}
             >
-              <SelectTrigger id="filter-type" className="min-h-[44px]">
+              <SelectTrigger id="filter-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

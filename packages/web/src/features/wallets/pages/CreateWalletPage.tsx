@@ -15,6 +15,8 @@ import {
 } from '../../../components/ui/form.js';
 import { Input } from '../../../components/ui/input.js';
 import { Button } from '../../../components/ui/button.js';
+import { Card } from '../../../components/ui/card.js';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { CurrencySelect } from '../components/CurrencySelect.js';
 import { useCreateWallet } from '../queries.js';
 import { userMessageFor } from '../../../lib/api/errors.js';
@@ -47,22 +49,25 @@ export const CreateWalletPage = () => {
   const handleBack = () => { void navigate(routes.wallets); };
 
   return (
-    <div className="flex flex-col pb-8">
-      <div className="flex items-center gap-2 p-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="gap-1"
-        >
-          <ChevronLeft className="size-4" />
-          {t.common.back}
-        </Button>
+    <div className="flex flex-col gap-6 py-4 pb-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleBack}
+        className="-ml-2 self-start gap-1"
+      >
+        <ChevronLeft className="size-4" />
+        {t.common.back}
+      </Button>
+
+      <div className="flex flex-col gap-2">
+        <Eyebrow>Nueva billetera</Eyebrow>
+        <h1 className="text-3xl font-bold leading-none tracking-display md:text-4xl">
+          {t.wallets.createTitle}
+        </h1>
       </div>
 
-      <div className="px-4">
-        <h1 className="text-xl font-semibold mb-6">{t.wallets.createTitle}</h1>
-
+      <Card className="p-6">
         <Form {...form}>
           <form
             onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }}
@@ -104,12 +109,12 @@ export const CreateWalletPage = () => {
               )}
             />
 
-            <Button type="submit" disabled={isPending} className="w-full mt-2">
+            <Button type="submit" disabled={isPending} className="mt-1 w-full">
               {isPending ? t.app.loading : t.wallets.createCta}
             </Button>
           </form>
         </Form>
-      </div>
+      </Card>
     </div>
   );
 };

@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ErrorState } from '../../../components/common/ErrorState.js';
+import { EmptyState } from '../../../components/common/EmptyState.js';
+import { Card } from '../../../components/ui/card.js';
+import { Button } from '../../../components/ui/button.js';
 import { useWalletTransactions } from '../queries.js';
 import { TransactionListItem } from './TransactionListItem.js';
 import { TransactionsListSkeleton } from './TransactionsListSkeleton.js';
@@ -29,7 +32,13 @@ export const RecentTransactionsList = ({
     return all.find((c) => c.categoryId === categoryId)?.name;
   };
 
-  if (isLoading) return <TransactionsListSkeleton rows={5} />;
+  if (isLoading) {
+    return (
+      <Card className="p-2 md:p-4">
+        <TransactionsListSkeleton rows={5} />
+      </Card>
+    );
+  }
 
   if (isError) {
     return (
@@ -41,15 +50,11 @@ export const RecentTransactionsList = ({
   }
 
   if (items.length === 0) {
-    return (
-      <div className="rounded-xl border bg-muted/30 p-6 text-center">
-        <p className="text-sm text-muted-foreground">{t.transactions.emptyState}</p>
-      </div>
-    );
+    return <EmptyState eyebrow="Actividad" message={t.transactions.emptyState} />;
   }
 
   return (
-    <div className="flex flex-col">
+    <Card className="px-4 pb-4 pt-2 md:px-6">
       {items.map((tx) => (
         <TransactionListItem
           key={tx.transactionId}
@@ -59,12 +64,11 @@ export const RecentTransactionsList = ({
             : {})}
         />
       ))}
-      <Link
-        to={routes.walletTransactions(walletId)}
-        className="text-center text-sm text-primary underline underline-offset-2 mt-3 py-2"
-      >
-        Ver todos
-      </Link>
-    </div>
+      <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+        <Link to={routes.walletTransactions(walletId)}>
+          Ver todos los movimientos
+        </Link>
+      </Button>
+    </Card>
   );
 };

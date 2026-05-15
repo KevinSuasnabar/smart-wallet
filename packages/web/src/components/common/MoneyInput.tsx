@@ -37,7 +37,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
         onChange={handleChange}
         disabled={disabled ?? false}
         placeholder={placeholder ?? '0.00'}
-        className="min-h-[44px]"
+        className="text-base font-medium tabular-nums"
         {...rest}
       />
     );

@@ -2,6 +2,7 @@ import type {
   CategoryResponseDTO,
   PredefinedCategoryResponseDTO,
 } from '@smart-wallet/shared-types';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { CategoryItem } from './CategoryItem.js';
 
 interface CategoryListProps {
@@ -11,16 +12,21 @@ interface CategoryListProps {
 }
 
 const Section = ({
+  eyebrow,
   title,
   children,
 }: {
+  eyebrow: string;
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="mb-6">
-    <h3 className="text-sm font-semibold text-muted-foreground mb-2">{title}</h3>
-    <div className="rounded-xl border bg-card px-4">{children}</div>
-  </div>
+  <section className="flex flex-col gap-4">
+    <div className="flex flex-col gap-1">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <h2 className="text-2xl font-bold tracking-display">{title}</h2>
+    </div>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">{children}</div>
+  </section>
 );
 
 export const CategoryList = ({
@@ -28,70 +34,34 @@ export const CategoryList = ({
   custom,
   onDeleteCustom,
 }: CategoryListProps) => {
-  const predefinedIncome = predefined.filter((c) => c.type === 'income');
-  const predefinedExpense = predefined.filter((c) => c.type === 'expense');
-  const customIncome = custom.filter((c) => c.type === 'income');
-  const customExpense = custom.filter((c) => c.type === 'expense');
+  const hasCustom = custom.length > 0;
 
   return (
-    <div>
-      {(customIncome.length > 0 || customExpense.length > 0) && (
-        <>
-          <h2 className="text-base font-semibold mb-3">Personalizadas</h2>
-          {customExpense.length > 0 && (
-            <Section title="Gastos">
-              {customExpense.map((c) => (
-                <CategoryItem
-                  key={c.categoryId}
-                  name={c.name}
-                  type={c.type}
-                  isCustom
-                  onDelete={() => onDeleteCustom(c.categoryId, c.name)}
-                />
-              ))}
-            </Section>
-          )}
-          {customIncome.length > 0 && (
-            <Section title="Ingresos">
-              {customIncome.map((c) => (
-                <CategoryItem
-                  key={c.categoryId}
-                  name={c.name}
-                  type={c.type}
-                  isCustom
-                  onDelete={() => onDeleteCustom(c.categoryId, c.name)}
-                />
-              ))}
-            </Section>
-          )}
-        </>
+    <div className="flex flex-col gap-10">
+      {hasCustom && (
+        <Section eyebrow="Tuyas" title="Personalizadas">
+          {custom.map((c) => (
+            <CategoryItem
+              key={c.categoryId}
+              name={c.name}
+              type={c.type}
+              isCustom
+              onDelete={() => onDeleteCustom(c.categoryId, c.name)}
+            />
+          ))}
+        </Section>
       )}
 
-      <h2 className="text-base font-semibold mb-3">Predefinidas</h2>
-      {predefinedExpense.length > 0 && (
-        <Section title="Gastos">
-          {predefinedExpense.map((c) => (
-            <CategoryItem
-              key={c.categoryId}
-              name={c.name}
-              type={c.type}
-              isCustom={false}
-            />
-          ))}
-        </Section>
-      )}
-      {predefinedIncome.length > 0 && (
-        <Section title="Ingresos">
-          {predefinedIncome.map((c) => (
-            <CategoryItem
-              key={c.categoryId}
-              name={c.name}
-              type={c.type}
-              isCustom={false}
-            />
-          ))}
-        </Section>
-      )}
+      <Section eyebrow="Del sistema" title="Predefinidas">
+        {predefined.map((c) => (
+          <CategoryItem
+            key={c.categoryId}
+            name={c.name}
+            type={c.type}
+            isCustom={false}
+          />
+        ))}
+      </Section>
     </div>
   );
 };

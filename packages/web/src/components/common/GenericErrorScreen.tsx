@@ -1,16 +1,16 @@
+import { Button } from '../ui/button.js';
+import { Eyebrow } from './Eyebrow.js';
+
 // Full-screen error fallback used by ErrorBoundary.
 export const GenericErrorScreen = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
-    <h1 className="text-xl font-semibold">Algo salió mal.</h1>
-    <p className="text-muted-foreground text-sm">
-      Ocurrió un error inesperado. Podés intentar recargar la página.
-    </p>
-    <button
-      type="button"
-      className="rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm font-medium hover:bg-primary/90"
-      onClick={() => window.location.reload()}
-    >
-      Recargar
-    </button>
+  <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background p-6 text-center">
+    <div className="flex flex-col items-center gap-2">
+      <Eyebrow className="text-destructive">Error</Eyebrow>
+      <h1 className="text-3xl font-bold tracking-display">Algo salió mal</h1>
+      <p className="mt-1 max-w-sm text-muted-foreground">
+        Ocurrió un error inesperado. Podés intentar recargar la página.
+      </p>
+    </div>
+    <Button onClick={() => window.location.reload()}>Recargar</Button>
   </div>
 );

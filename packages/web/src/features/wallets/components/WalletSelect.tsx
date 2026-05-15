@@ -21,7 +21,7 @@ export const WalletSelect = ({
   disabled,
 }: WalletSelectProps) => (
   <Select value={value} onValueChange={onChange} disabled={disabled ?? false}>
-    <SelectTrigger className="min-h-[44px]">
+    <SelectTrigger>
       <SelectValue placeholder="Elegí una billetera" />
     </SelectTrigger>
     <SelectContent>

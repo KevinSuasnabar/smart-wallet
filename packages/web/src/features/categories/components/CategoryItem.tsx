@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
-import { Button } from '../../../components/ui/button.js';
-import { Badge } from '../../../components/ui/badge.js';
+import { cn } from '../../../lib/utils.js';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { t } from '../../../lib/i18n.js';
 
 interface CategoryItemProps {
@@ -10,30 +10,36 @@ interface CategoryItemProps {
   onDelete?: () => void;
 }
 
+/**
+ * A category as a pastel chip in the grid — mint for income, coral for
+ * expense. The type label sits above the name as a mono eyebrow; custom
+ * categories carry a top-right delete affordance.
+ */
 export const CategoryItem = ({
   name,
   type,
   isCustom,
   onDelete,
 }: CategoryItemProps) => (
-  <div className="flex items-center justify-between gap-3 py-3 border-b last:border-b-0">
-    <div className="flex items-center gap-3 min-w-0 flex-1">
-      <span className="font-medium truncate">{name}</span>
-      <Badge variant={type === 'income' ? 'default' : 'secondary'}>
-        {type === 'income' ? t.transactions.income : t.transactions.expense}
-      </Badge>
-    </div>
+  <div
+    className={cn(
+      'relative flex min-h-[108px] flex-col gap-2 rounded-block p-4',
+      type === 'income' ? 'bg-block-mint' : 'bg-block-coral',
+    )}
+  >
+    <Eyebrow className="text-ink/55">
+      {type === 'income' ? t.transactions.income : t.transactions.expense}
+    </Eyebrow>
+    <p className="text-base font-bold tracking-tightest text-ink">{name}</p>
     {isCustom && onDelete && (
-      <Button
+      <button
         type="button"
-        variant="ghost"
-        size="sm"
         onClick={onDelete}
-        className="size-11"
         aria-label={`${t.common.delete} ${name}`}
+        className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-ink/5 text-ink/55 transition-colors hover:bg-ink/15 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
       >
-        <Trash2 className="size-4 text-red-600" />
-      </Button>
+        <Trash2 className="size-3.5" />
+      </button>
     )}
   </div>
 );

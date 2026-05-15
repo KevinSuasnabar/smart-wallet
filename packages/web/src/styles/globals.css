@@ -2,50 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Smart Wallet palette — a real color system, not pure monochrome.
+ *
+ * Decision: DESIGN.md's "all monochrome chrome" is for a marketing site
+ * where color blocks interrupt full viewports. For an app it would feel
+ * sterile, so the body canvas runs a warm cream and the chrome (sidebar,
+ * bottom tab bar, primary CTAs) runs deep navy. Pastel block-* colors stay
+ * as accent surfaces. Magenta is the single-shot promo CTA.
+ *
+ * The shadcn CSS-variable contract is preserved so every ui/* component
+ * picks the new palette up automatically.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Canvas — warm cream paper, NOT pure white. */
+    --background: 45 60% 95%;
+    --foreground: 244 35% 18%; /* deep navy ink */
+
+    /* Surfaces — pure white pops against cream. */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 244 35% 18%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --popover-foreground: 244 35% 18%;
+
+    /* Primary CTA — deep navy, not black. The signature button color. */
+    --primary: 244 35% 18%;
+    --primary-foreground: 45 60% 95%; /* cream text on navy */
+
+    /* Secondary — warm muted off-canvas. */
+    --secondary: 45 40% 89%;
+    --secondary-foreground: 244 35% 18%;
+
+    /* Muted surfaces + a navy-grey for dense metadata. */
+    --muted: 45 40% 89%;
+    --muted-foreground: 245 13% 43%;
+
+    /* Accent — slightly warmer wash for hover. */
+    --accent: 45 40% 86%;
+    --accent-foreground: 244 35% 18%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Warm hairlines, not slate-blue. */
+    --border: 45 25% 84%;
+    --input: 45 25% 84%;
+    --ring: 244 35% 18%;
     --radius: 0.5rem;
   }
 
+  /* App ships light; .dark is a monochrome safety net only. */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --background: 244 25% 10%;
+    --foreground: 45 50% 92%;
+    --card: 244 25% 13%;
+    --card-foreground: 45 50% 92%;
+    --popover: 244 25% 13%;
+    --popover-foreground: 45 50% 92%;
+    --primary: 45 50% 92%;
+    --primary-foreground: 244 25% 10%;
+    --secondary: 244 20% 18%;
+    --secondary-foreground: 45 50% 92%;
+    --muted: 244 20% 18%;
+    --muted-foreground: 45 15% 65%;
+    --accent: 244 20% 22%;
+    --accent-foreground: 45 50% 92%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 244 20% 22%;
+    --input: 244 20% 22%;
+    --ring: 45 50% 92%;
   }
 }
 
@@ -54,7 +81,23 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2 {
+    @apply tracking-display;
+  }
+  h3 {
+    @apply tracking-tightest;
+  }
+}
+
+@layer components {
+  /* figmaMono eyebrow — uppercase taxonomy label, positive tracking. */
+  .eyebrow {
+    @apply font-mono text-xs uppercase tracking-eyebrow text-muted-foreground;
   }
 }
 

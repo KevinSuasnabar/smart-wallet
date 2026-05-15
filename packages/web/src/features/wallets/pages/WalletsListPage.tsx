@@ -14,8 +14,9 @@ export const WalletsListPage = () => {
   const { data, isLoading, isError, refetch } = useWallets();
 
   return (
-    <div className="flex flex-col gap-4 p-4 pb-8">
+    <div className="flex flex-col pb-4">
       <PageHeader
+        eyebrow="Cuentas"
         title={t.wallets.listTitle}
         action={
           <Button asChild size="sm" className="gap-1">
@@ -40,9 +41,9 @@ export const WalletsListPage = () => {
         data.items.length === 0
           ? <EmptyWalletsState />
           : (
-            <div className="flex flex-col gap-3">
-              {data.items.map((wallet) => (
-                <WalletCard key={wallet.walletId} wallet={wallet} />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {data.items.map((wallet, i) => (
+                <WalletCard key={wallet.walletId} wallet={wallet} index={i} />
               ))}
             </div>
           )

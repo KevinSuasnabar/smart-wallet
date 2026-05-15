@@ -1,6 +1,13 @@
 import type { Config } from 'tailwindcss';
 import animate from 'tailwindcss-animate';
 
+/**
+ * Design system: editorial monochrome frame + oversized pastel color blocks.
+ * Adapted from DESIGN.md (Figma marketing system) for an authenticated app:
+ * - Monochrome core (pure black/white), hierarchy carried by font weight.
+ * - Pastel `block-*` colors used as accents (balance, empty states, headers).
+ * - Pill is the only CTA shape; hairline borders instead of shadows.
+ */
 const config: Config = {
   darkMode: ['class'],
   content: [
@@ -10,18 +17,26 @@ const config: Config = {
   theme: {
     container: {
       center: true,
-      padding: '2rem',
+      padding: '1.5rem',
       screens: {
-        '2xl': '1400px',
+        '2xl': '1280px',
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        // Raw aliases — used by pastel blocks where the foreground is fixed
+        // to the brand ink (deep navy) regardless of theme.
+        ink: '#1f1d3d',
+        canvas: '#faf6e8',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
@@ -50,11 +65,35 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Oversized pastel color blocks — the signature surface of the system.
+        block: {
+          lime: '#dceeb1',
+          lilac: '#c5b0f4',
+          cream: '#f4ecd6',
+          pink: '#efd4d4',
+          mint: '#c8e6cd',
+          coral: '#f3c9b6',
+          navy: '#1f1d3d',
+        },
+        // Single-shot promo accent + semantic success glyph.
+        magenta: '#ff3d8b',
+        success: '#1ea64a',
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        // DESIGN.md named scale: cards/large frames vs. oversized callouts.
+        block: '24px',
+        panel: '32px',
+      },
+      letterSpacing: {
+        // figmaMono eyebrows/captions run positive tracking.
+        eyebrow: '0.08em',
+        caption: '0.05em',
+        // Display headings pull tight negative tracking.
+        display: '-0.03em',
+        tightest: '-0.02em',
       },
       keyframes: {
         'accordion-down': {
