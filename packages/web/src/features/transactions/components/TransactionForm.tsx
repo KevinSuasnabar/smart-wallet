@@ -71,6 +71,11 @@ export const TransactionForm = ({
 
   const form = useForm<AddTransactionDTO>({
     resolver: zodResolver(AddTransactionRequestSchema),
+    // 'onChange' so form.formState.isValid stays in sync with the current
+    // field values — otherwise the submit button stays disabled forever
+    // because the default 'onSubmit' mode only flips isValid after a submit
+    // that we never let happen.
+    mode: 'onChange',
     defaultValues: {
       type: initialValues?.type ?? 'expense',
       amount: initialValues?.amount ?? '',
