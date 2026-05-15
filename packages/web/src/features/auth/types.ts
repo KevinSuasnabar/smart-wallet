@@ -21,6 +21,12 @@ export interface AuthContextValue extends AuthState {
   signOut: () => Promise<void>;
   // Returns new IdToken; reused across concurrent 401s via single-flight
   refreshSession: () => Promise<string>;
+  // Changes the Cognito password for the current user. Does not invalidate
+  // the active session — the user stays signed in.
+  changePassword: (input: {
+    currentPassword: string;
+    newPassword: string;
+  }) => Promise<void>;
 }
 
 export type AuthError =
@@ -32,10 +38,17 @@ export type AuthError =
   | { code: 'TooManyRequestsException'; message: string }
   | { code: 'unknown'; message: string };
 
-export const mapCognitoError = (err: unknown): AuthError => {
+// Per-call message overrides keyed by Cognito error code. Append-only: callers
+// that pass nothing observe the prior behavior (raw Cognito message).
+export type CognitoErrorOverrides = Partial<Record<string, string>>;
+
+export const mapCognitoError = (
+  err: unknown,
+  overrides?: CognitoErrorOverrides,
+): AuthError => {
   const e = err as { code?: string; message?: string; name?: string };
   const code = e.code ?? e.name ?? 'unknown';
-  const message = e.message ?? 'Error desconocido';
+  const message = overrides?.[code] ?? e.message ?? 'Error desconocido';
 
   switch (code) {
     case 'NotAuthorizedException':
