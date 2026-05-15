@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from '../../../components/ui/form.js';
 import { Input } from '../../../components/ui/input.js';
+import { Label } from '../../../components/ui/label.js';
 import { Button } from '../../../components/ui/button.js';
 import {
   Select,
@@ -107,17 +108,19 @@ export const TransactionForm = ({
           )}
         />
 
-        <FormItem>
-          <FormLabel>Billetera</FormLabel>
-          <FormControl>
-            <WalletSelect
-              wallets={wallets}
-              value={walletId}
-              onChange={onWalletChange}
-              disabled={submitting}
-            />
-          </FormControl>
-        </FormItem>
+        {/* Wallet selector lives outside react-hook-form (controlled by the
+            parent page) so we use plain Label + the component directly, not
+            the Form/FormField primitives which require a FormFieldContext. */}
+        <div className="space-y-2">
+          <Label htmlFor="wallet-select">Billetera</Label>
+          <WalletSelect
+            id="wallet-select"
+            wallets={wallets}
+            value={walletId}
+            onChange={onWalletChange}
+            disabled={submitting}
+          />
+        </div>
 
         <FormField
           control={form.control}
