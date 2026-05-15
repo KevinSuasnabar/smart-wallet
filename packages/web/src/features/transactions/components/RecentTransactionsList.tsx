@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ErrorState } from '../../../components/common/ErrorState.js';
 import { EmptyState } from '../../../components/common/EmptyState.js';
+import { Card } from '../../../components/ui/card.js';
 import { Button } from '../../../components/ui/button.js';
 import { useWalletTransactions } from '../queries.js';
 import { TransactionListItem } from './TransactionListItem.js';
@@ -31,7 +32,13 @@ export const RecentTransactionsList = ({
     return all.find((c) => c.categoryId === categoryId)?.name;
   };
 
-  if (isLoading) return <TransactionsListSkeleton rows={5} />;
+  if (isLoading) {
+    return (
+      <Card className="p-2 md:p-4">
+        <TransactionsListSkeleton rows={5} />
+      </Card>
+    );
+  }
 
   if (isError) {
     return (
@@ -47,7 +54,7 @@ export const RecentTransactionsList = ({
   }
 
   return (
-    <div className="flex flex-col">
+    <Card className="px-4 pb-4 pt-2 md:px-6">
       {items.map((tx) => (
         <TransactionListItem
           key={tx.transactionId}
@@ -62,6 +69,6 @@ export const RecentTransactionsList = ({
           Ver todos los movimientos
         </Link>
       </Button>
-    </div>
+    </Card>
   );
 };

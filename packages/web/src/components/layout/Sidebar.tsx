@@ -1,10 +1,9 @@
 import { NavLink } from 'react-router-dom';
-import { Wallet, Tag, Settings, Plus } from 'lucide-react';
+import { Wallet, Tag, Settings, Plus, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { routes } from '../../app/routes.js';
 import { useAuth } from '../../features/auth/useAuth.js';
 import { Button } from '../ui/button.js';
-import { Eyebrow } from '../common/Eyebrow.js';
 import { t } from '../../lib/i18n.js';
 
 interface SidebarProps {
@@ -17,17 +16,29 @@ const navItems = [
   { to: routes.settings, icon: Settings, label: 'Ajustes' },
 ] as const;
 
+/**
+ * Navy chrome — the wall that breaks the cream canvas. Cream text on navy,
+ * lime block on the active item (the "selected = primary surface" pattern,
+ * but using lime as the brand accent inside the inverse surface).
+ */
 export const Sidebar = ({ className }: SidebarProps) => {
   const { signOut, user } = useAuth();
 
   return (
-    <aside className={cn('flex flex-col bg-background px-5 py-8', className)}>
+    <aside
+      className={cn(
+        'flex flex-col bg-foreground px-5 py-8 text-background',
+        className,
+      )}
+    >
       <div className="mb-12 text-3xl font-bold leading-none tracking-display">
         {t.app.name}
       </div>
 
-      <Eyebrow className="mb-3 block px-3">Menú</Eyebrow>
-      <nav className="flex flex-col gap-1.5 flex-1">
+      <span className="mb-3 block px-3 font-mono text-[11px] uppercase tracking-eyebrow text-background/45">
+        Menú
+      </span>
+      <nav className="flex flex-1 flex-col gap-1.5">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -36,8 +47,8 @@ export const Sidebar = ({ className }: SidebarProps) => {
               cn(
                 'flex items-center gap-3 rounded-full px-3 py-2.5 text-[15px] transition-colors',
                 isActive
-                  ? 'bg-primary font-semibold text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                  ? 'bg-block-lime font-semibold text-ink'
+                  : 'text-background/75 hover:bg-background/10 hover:text-background',
               )
             }
           >
@@ -48,26 +59,26 @@ export const Sidebar = ({ className }: SidebarProps) => {
       </nav>
 
       <NavLink to={routes.transactionsNew} className="mt-6">
-        <Button variant="outline" className="w-full gap-2">
+        <Button variant="promo" className="w-full gap-2">
           <Plus className="size-4" />
           Agregar movimiento
         </Button>
       </NavLink>
 
-      <div className="mt-6 border-t border-border pt-4">
+      <div className="mt-6 border-t border-background/10 pt-4">
         {user?.email && (
-          <p className="mb-3 truncate font-mono text-[11px] tracking-caption text-muted-foreground">
+          <p className="mb-3 truncate font-mono text-[11px] tracking-caption text-background/55">
             {user.email}
           </p>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
+          type="button"
           onClick={() => { void signOut(); }}
-          className="w-full"
+          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-background/70 transition-colors hover:bg-background/10 hover:text-background"
         >
+          <LogOut className="size-4" />
           {t.auth.signOut}
-        </Button>
+        </button>
       </div>
     </aside>
   );

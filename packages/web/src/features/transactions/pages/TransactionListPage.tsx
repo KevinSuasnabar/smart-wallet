@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { Button } from '../../../components/ui/button.js';
+import { Card } from '../../../components/ui/card.js';
 import { ErrorState } from '../../../components/common/ErrorState.js';
 import { EmptyState } from '../../../components/common/EmptyState.js';
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
@@ -76,7 +77,11 @@ export const TransactionListPage = () => {
 
       <TransactionFilters value={filters} onChange={setFilters} />
 
-      {isLoading && <TransactionsListSkeleton rows={8} />}
+      {isLoading && (
+        <Card className="p-2 md:p-4">
+          <TransactionsListSkeleton rows={8} />
+        </Card>
+      )}
 
       {isError && (
         <ErrorState
@@ -97,7 +102,7 @@ export const TransactionListPage = () => {
       )}
 
       {!isLoading && !isError && allItems.length > 0 && (
-        <div className="flex flex-col">
+        <Card className="px-4 pb-4 pt-2 md:px-6">
           {allItems.map((tx) => (
             <TransactionListItem
               key={tx.transactionId}
@@ -117,7 +122,7 @@ export const TransactionListPage = () => {
               {isFetchingNextPage ? t.app.loading : t.transactions.loadMore}
             </Button>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );

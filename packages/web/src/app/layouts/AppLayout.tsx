@@ -2,19 +2,21 @@ import { Outlet } from 'react-router-dom';
 import { BottomTabBar } from '../../components/layout/BottomTabBar.js';
 import { Sidebar } from '../../components/layout/Sidebar.js';
 
+/**
+ * The shell: navy sidebar (desktop) or navy bottom tab (mobile) framing a
+ * cream canvas. The color shift between chrome and canvas is what carries
+ * the structure — no internal borders needed.
+ */
 export const AppLayout = () => (
-  <div className="min-h-dvh flex flex-col md:flex-row bg-background">
-    {/* Desktop sidebar — hairline rule, hidden on mobile */}
-    <Sidebar className="hidden md:flex md:w-64 md:border-r md:border-border" />
+  <div className="flex min-h-dvh flex-col bg-background md:flex-row">
+    <Sidebar className="hidden md:flex md:w-64 md:sticky md:top-0 md:h-dvh" />
 
-    {/* Main content area — capped width for editorial line length */}
-    <main className="flex-1 pb-28 md:pb-10 px-5 md:px-10">
+    <main className="flex-1 px-5 pb-28 md:px-10 md:pb-10">
       <div className="mx-auto w-full max-w-3xl">
         <Outlet />
       </div>
     </main>
 
-    {/* Mobile bottom tab bar — hidden on desktop */}
     <BottomTabBar className="md:hidden" />
   </div>
 );

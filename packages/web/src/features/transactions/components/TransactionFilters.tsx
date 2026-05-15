@@ -34,7 +34,7 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
   };
 
   return (
-    <div className="rounded-md border border-border p-3">
+    <div className="rounded-md border border-border bg-card p-3">
       <div className="flex items-center justify-between">
         <button
           type="button"

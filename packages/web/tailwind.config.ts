@@ -33,9 +33,10 @@ const config: Config = {
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
-        // DESIGN.md raw aliases — pure black ink on pure white canvas.
-        ink: '#000000',
-        canvas: '#ffffff',
+        // Raw aliases — used by pastel blocks where the foreground is fixed
+        // to the brand ink (deep navy) regardless of theme.
+        ink: '#1f1d3d',
+        canvas: '#faf6e8',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
