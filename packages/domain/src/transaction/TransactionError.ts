@@ -70,6 +70,16 @@ export class UnknownCategory extends DomainError {
   }
 }
 
+/** Transaction does not exist, was deleted, or is not owned by the caller. */
+export class TransactionNotFound extends DomainError {
+  readonly tag = 'domain.transaction.not_found' as const;
+  readonly httpStatus = 404 as const;
+
+  constructor(message = 'Transaction not found') {
+    super(message);
+  }
+}
+
 export type TransactionError =
   | InvalidTransactionId
   | InvalidMoneyAmount
@@ -77,4 +87,5 @@ export type TransactionError =
   | InvalidCategoryReference
   | InvalidOccurredAt
   | InvalidDescription
-  | UnknownCategory;
+  | UnknownCategory
+  | TransactionNotFound;

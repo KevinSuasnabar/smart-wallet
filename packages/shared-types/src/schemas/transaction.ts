@@ -3,7 +3,7 @@ import { zCurrency } from '../currencies.js';
 import { zIso8601 } from '../date.js';
 import { zPaginatedResponse, zLimit, zCursor } from '../pagination.js';
 import { zDecimalString } from '../money.js';
-import { zCategoryIdLike } from './common.js';
+import { zCategoryIdLike, zUuid } from './common.js';
 
 const zTransactionType = z.enum(['income', 'expense']);
 
@@ -82,3 +82,43 @@ export const ListTransactionsByCategoryQuerySchema = z.object({
 export type ListTransactionsByCategoryQueryDTO = z.infer<
   typeof ListTransactionsByCategoryQuerySchema
 >;
+
+/**
+ * Path schema for endpoints that operate on a single transaction:
+ *   GET    /wallets/{walletId}/transactions/{transactionId}
+ *   PATCH  /wallets/{walletId}/transactions/{transactionId}
+ *   DELETE /wallets/{walletId}/transactions/{transactionId}
+ */
+export const TransactionIdPathSchema = z.object({
+  walletId: zUuid,
+  transactionId: zUuid,
+});
+
+export type TransactionIdPathDTO = z.infer<typeof TransactionIdPathSchema>;
+
+/**
+ * Partial update body. All four mutable fields are optional, at least one
+ * must be present, and unknown keys are rejected (so PATCH cannot mutate
+ * `type`, `walletId`, `currency`, etc.).
+ *
+ * Cents conversion for `amount` happens in the use case after the wallet is
+ * loaded (currency is non-mutable, so we always know the correct precision).
+ */
+export const UpdateTransactionRequestSchema = z
+  .object({
+    amount: zDecimalString.optional(),
+    description: z.string().max(256).optional(),
+    categoryId: zCategoryIdLike.optional(),
+    occurredAt: zOccurredAt.optional(),
+  })
+  .strict()
+  .refine(
+    (data) =>
+      data.amount !== undefined ||
+      data.description !== undefined ||
+      data.categoryId !== undefined ||
+      data.occurredAt !== undefined,
+    { message: 'At least one mutable field must be provided' },
+  );
+
+export type UpdateTransactionDTO = z.infer<typeof UpdateTransactionRequestSchema>;
