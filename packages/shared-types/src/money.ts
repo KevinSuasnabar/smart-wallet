@@ -72,4 +72,4 @@ export function centsToDecimalString(cents: number, currency: Currency): string 
  */
 export const zDecimalString = z
   .string()
-  .regex(/^\d+\.\d{2}$/, 'Amount must be a decimal with exactly 2 decimal places (e.g. "12.34")');
+  .regex(/^\d+\.\d{2}$/, 'Ingresá un monto válido (ej. 100 o 100.50)');
