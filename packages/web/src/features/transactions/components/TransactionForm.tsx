@@ -19,7 +19,7 @@ import { normalizeAmount, LOOSE_DECIMAL_REGEX } from '../../../lib/amount.js';
 const FormAddTransactionSchema = AddTransactionRequestSchema.extend({
   amount: z
     .string()
-    .regex(LOOSE_DECIMAL_REGEX, 'Ingresá un monto válido (ej. 100 o 100.50)'),
+    .regex(LOOSE_DECIMAL_REGEX, 'Ingresa un monto válido (ej. 100 o 100.50)'),
 });
 import {
   Form,

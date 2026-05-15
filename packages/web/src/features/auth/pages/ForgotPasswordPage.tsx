@@ -60,7 +60,7 @@ export const ForgotPasswordPage = () => {
             {t.auth.forgotTitle}
           </h1>
           <p className="mt-2 text-sm text-foreground/70">
-            Ingresá tu email y te enviamos un código para recuperar tu
+            Ingresa tu email y te enviaremos un código para recuperar tu
             contraseña.
           </p>
         </div>

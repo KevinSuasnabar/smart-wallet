@@ -26,7 +26,7 @@ export const AddTransactionPage = () => {
 
   const handleSubmit = (values: AddTransactionDTO) => {
     if (walletId === '') {
-      toast.error('Elegí una billetera');
+      toast.error('Elige una billetera');
       return;
     }
     mutate(

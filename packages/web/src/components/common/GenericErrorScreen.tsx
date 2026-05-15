@@ -8,7 +8,7 @@ export const GenericErrorScreen = () => (
       <Eyebrow className="text-destructive">Error</Eyebrow>
       <h1 className="text-3xl font-bold tracking-display">Algo salió mal</h1>
       <p className="mt-1 max-w-sm text-muted-foreground">
-        Ocurrió un error inesperado. Podés intentar recargar la página.
+        Ocurrió un error inesperado. Puedes intentar recargar la página.
       </p>
     </div>
     <Button onClick={() => window.location.reload()}>Recargar</Button>

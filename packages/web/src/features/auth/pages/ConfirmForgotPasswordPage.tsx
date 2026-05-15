@@ -58,7 +58,7 @@ export const ConfirmForgotPasswordPage = () => {
         code: values.code,
         newPassword: values.newPassword,
       });
-      toast.success('Contraseña actualizada. ¡Podés iniciar sesión!');
+      toast.success('Contraseña actualizada. ¡Ya puedes iniciar sesión!');
       void navigate(routes.login);
     } catch (err) {
       const authErr = mapCognitoError(err);
@@ -75,7 +75,7 @@ export const ConfirmForgotPasswordPage = () => {
             {t.auth.resetButton}
           </h1>
           <p className="mt-2 text-sm text-foreground/70">
-            Ingresá el código que enviamos a tu email y tu nueva contraseña.
+            Ingresa el código que enviamos a tu email y tu nueva contraseña.
           </p>
         </div>
 
