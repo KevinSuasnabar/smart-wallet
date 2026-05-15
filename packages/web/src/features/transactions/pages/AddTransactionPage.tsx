@@ -65,9 +65,9 @@ export const AddTransactionPage = () => {
         {t.common.back}
       </Button>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <Eyebrow>Nuevo movimiento</Eyebrow>
-        <h1 className="text-2xl font-bold tracking-display">
+        <h1 className="text-3xl font-bold leading-none tracking-display md:text-4xl">
           {t.transactions.addTitle}
         </h1>
       </div>

@@ -21,13 +21,13 @@ export const Sidebar = ({ className }: SidebarProps) => {
   const { signOut, user } = useAuth();
 
   return (
-    <aside className={cn('flex flex-col bg-background px-5 py-7', className)}>
-      <div className="mb-9 text-xl font-bold tracking-display">
+    <aside className={cn('flex flex-col bg-background px-5 py-8', className)}>
+      <div className="mb-12 text-3xl font-bold leading-none tracking-display">
         {t.app.name}
       </div>
 
-      <Eyebrow className="mb-3 px-3">Menú</Eyebrow>
-      <nav className="flex flex-col gap-1 flex-1">
+      <Eyebrow className="mb-3 block px-3">Menú</Eyebrow>
+      <nav className="flex flex-col gap-1.5 flex-1">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -36,7 +36,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
               cn(
                 'flex items-center gap-3 rounded-full px-3 py-2.5 text-[15px] transition-colors',
                 isActive
-                  ? 'bg-secondary font-semibold text-foreground'
+                  ? 'bg-primary font-semibold text-primary-foreground'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground',
               )
             }
@@ -47,8 +47,8 @@ export const Sidebar = ({ className }: SidebarProps) => {
         ))}
       </nav>
 
-      <NavLink to={routes.transactionsNew} className="mt-4">
-        <Button className="w-full gap-2">
+      <NavLink to={routes.transactionsNew} className="mt-6">
+        <Button variant="outline" className="w-full gap-2">
           <Plus className="size-4" />
           Agregar movimiento
         </Button>
@@ -61,7 +61,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
           </p>
         )}
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => { void signOut(); }}
           className="w-full"

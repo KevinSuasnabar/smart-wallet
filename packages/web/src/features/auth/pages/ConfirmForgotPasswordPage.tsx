@@ -69,9 +69,9 @@ export const ConfirmForgotPasswordPage = () => {
   return (
     <div className="space-y-5">
       <ColorBlock tone="lime" className="p-6 md:p-7">
-        <div className="mb-6">
+        <div className="mb-7">
           <Eyebrow>Recuperación</Eyebrow>
-          <h1 className="mt-2 text-2xl font-bold tracking-display">
+          <h1 className="mt-2 text-3xl font-bold leading-none tracking-display md:text-4xl">
             {t.auth.resetButton}
           </h1>
           <p className="mt-2 text-sm text-foreground/70">

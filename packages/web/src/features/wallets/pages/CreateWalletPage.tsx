@@ -60,9 +60,9 @@ export const CreateWalletPage = () => {
         {t.common.back}
       </Button>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <Eyebrow>Nueva billetera</Eyebrow>
-        <h1 className="text-2xl font-bold tracking-display">
+        <h1 className="text-3xl font-bold leading-none tracking-display md:text-4xl">
           {t.wallets.createTitle}
         </h1>
       </div>

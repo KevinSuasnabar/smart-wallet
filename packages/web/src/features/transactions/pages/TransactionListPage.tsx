@@ -67,9 +67,9 @@ export const TransactionListPage = () => {
         </Link>
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         {wallet && <Eyebrow>{wallet.name}</Eyebrow>}
-        <h1 className="text-2xl font-bold tracking-display">
+        <h1 className="text-3xl font-bold leading-none tracking-display md:text-4xl">
           {t.transactions.listTitle}
         </h1>
       </div>

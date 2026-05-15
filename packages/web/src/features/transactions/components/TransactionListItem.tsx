@@ -10,9 +10,10 @@ interface TransactionListItemProps {
 }
 
 /**
- * An editorial transaction row — hairline divider, no card. Income carries
- * the semantic-success green; expense stays neutral ink. The date is set in
- * mono as a caption, flagging it as metadata rather than body copy.
+ * A transaction row carries a left pastel stripe (mint for income, coral
+ * for expense) and a display-scale amount — taxonomy by color, magnitude by
+ * type-size. The DESIGN.md monochrome chrome stays; the stripe is the only
+ * accent the row earns.
  */
 export const TransactionListItem = ({
   transaction,
@@ -22,28 +23,37 @@ export const TransactionListItem = ({
     transaction;
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border py-3.5 last:border-b-0">
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <p className="truncate font-semibold tracking-tightest">
-          {categoryName ?? categoryId}
-        </p>
-        {description !== undefined && description !== '' && (
-          <p className="truncate text-sm text-muted-foreground">
-            {description}
-          </p>
+    <div className="flex border-b border-border last:border-b-0">
+      <span
+        aria-hidden
+        className={cn(
+          'my-3 w-1.5 shrink-0 self-stretch rounded-sm',
+          type === 'income' ? 'bg-block-mint' : 'bg-block-coral',
         )}
-        <p className="font-mono text-[10px] uppercase tracking-caption text-muted-foreground">
-          {format(new Date(occurredAt), 'd MMM yyyy', { locale: es })}
+      />
+      <div className="flex flex-1 items-center justify-between gap-3 py-4 pl-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <p className="truncate font-semibold tracking-tightest">
+            {categoryName ?? categoryId}
+          </p>
+          {description !== undefined && description !== '' && (
+            <p className="truncate text-sm text-muted-foreground">
+              {description}
+            </p>
+          )}
+          <p className="font-mono text-[10px] uppercase tracking-caption text-muted-foreground">
+            {format(new Date(occurredAt), 'd MMM yyyy', { locale: es })}
+          </p>
+        </div>
+        <p
+          className={cn(
+            'whitespace-nowrap text-xl font-bold tabular-nums tracking-display md:text-2xl',
+            type === 'income' ? 'text-success' : 'text-foreground',
+          )}
+        >
+          {formatSignedAmount(amount, currency, type)}
         </p>
       </div>
-      <p
-        className={cn(
-          'whitespace-nowrap font-bold tabular-nums tracking-tightest',
-          type === 'income' ? 'text-success' : 'text-foreground',
-        )}
-      >
-        {formatSignedAmount(amount, currency, type)}
-      </p>
     </div>
   );
 };

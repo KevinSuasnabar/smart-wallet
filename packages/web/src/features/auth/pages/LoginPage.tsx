@@ -56,9 +56,9 @@ export const LoginPage = () => {
 
   return (
     <ColorBlock tone="lime" className="p-6 md:p-7">
-      <div className="mb-6">
+      <div className="mb-7">
         <Eyebrow>Acceso</Eyebrow>
-        <h1 className="mt-2 text-2xl font-bold tracking-display">
+        <h1 className="mt-2 text-3xl font-bold leading-none tracking-display md:text-4xl">
           {t.auth.loginTitle}
         </h1>
       </div>

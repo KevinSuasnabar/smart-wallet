@@ -30,10 +30,13 @@ export const WalletDetailPage = () => {
       </Button>
 
       {isLoading && (
-        <div className="flex flex-col items-center gap-3 rounded-block bg-secondary py-12">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-3 w-28" />
+        <div className="flex flex-col gap-10 rounded-block bg-secondary px-6 py-12 md:px-10 md:py-14">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-3 w-24 rounded-sm" />
+            <Skeleton className="h-3 w-12 rounded-sm" />
+          </div>
+          <Skeleton className="h-14 w-3/4 rounded-sm md:h-20" />
+          <Skeleton className="h-3 w-28 rounded-sm" />
         </div>
       )}
 
@@ -59,9 +62,9 @@ export const WalletDetailPage = () => {
 
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 <Eyebrow>Actividad</Eyebrow>
-                <h2 className="text-lg font-bold tracking-tightest">
+                <h2 className="text-2xl font-bold leading-none tracking-display md:text-3xl">
                   {t.transactions.listTitle}
                 </h2>
               </div>

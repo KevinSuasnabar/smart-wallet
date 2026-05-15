@@ -12,18 +12,21 @@ interface CategoryListProps {
 }
 
 const Section = ({
+  eyebrow,
   title,
   children,
 }: {
+  eyebrow: string;
   title: string;
   children: React.ReactNode;
 }) => (
-  <div>
-    <Eyebrow className="mb-2 block px-1">{title}</Eyebrow>
-    <div className="rounded-md border border-border bg-card px-4">
-      {children}
+  <section className="flex flex-col gap-4">
+    <div className="flex flex-col gap-1">
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <h2 className="text-2xl font-bold tracking-display">{title}</h2>
     </div>
-  </div>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">{children}</div>
+  </section>
 );
 
 export const CategoryList = ({
@@ -31,76 +34,34 @@ export const CategoryList = ({
   custom,
   onDeleteCustom,
 }: CategoryListProps) => {
-  const predefinedIncome = predefined.filter((c) => c.type === 'income');
-  const predefinedExpense = predefined.filter((c) => c.type === 'expense');
-  const customIncome = custom.filter((c) => c.type === 'income');
-  const customExpense = custom.filter((c) => c.type === 'expense');
-
-  const hasCustom = customIncome.length > 0 || customExpense.length > 0;
+  const hasCustom = custom.length > 0;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-10">
       {hasCustom && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-bold tracking-tightest">
-            Personalizadas
-          </h2>
-          {customExpense.length > 0 && (
-            <Section title="Gastos">
-              {customExpense.map((c) => (
-                <CategoryItem
-                  key={c.categoryId}
-                  name={c.name}
-                  type={c.type}
-                  isCustom
-                  onDelete={() => onDeleteCustom(c.categoryId, c.name)}
-                />
-              ))}
-            </Section>
-          )}
-          {customIncome.length > 0 && (
-            <Section title="Ingresos">
-              {customIncome.map((c) => (
-                <CategoryItem
-                  key={c.categoryId}
-                  name={c.name}
-                  type={c.type}
-                  isCustom
-                  onDelete={() => onDeleteCustom(c.categoryId, c.name)}
-                />
-              ))}
-            </Section>
-          )}
-        </div>
+        <Section eyebrow="Tuyas" title="Personalizadas">
+          {custom.map((c) => (
+            <CategoryItem
+              key={c.categoryId}
+              name={c.name}
+              type={c.type}
+              isCustom
+              onDelete={() => onDeleteCustom(c.categoryId, c.name)}
+            />
+          ))}
+        </Section>
       )}
 
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-bold tracking-tightest">Predefinidas</h2>
-        {predefinedExpense.length > 0 && (
-          <Section title="Gastos">
-            {predefinedExpense.map((c) => (
-              <CategoryItem
-                key={c.categoryId}
-                name={c.name}
-                type={c.type}
-                isCustom={false}
-              />
-            ))}
-          </Section>
-        )}
-        {predefinedIncome.length > 0 && (
-          <Section title="Ingresos">
-            {predefinedIncome.map((c) => (
-              <CategoryItem
-                key={c.categoryId}
-                name={c.name}
-                type={c.type}
-                isCustom={false}
-              />
-            ))}
-          </Section>
-        )}
-      </div>
+      <Section eyebrow="Del sistema" title="Predefinidas">
+        {predefined.map((c) => (
+          <CategoryItem
+            key={c.categoryId}
+            name={c.name}
+            type={c.type}
+            isCustom={false}
+          />
+        ))}
+      </Section>
     </div>
   );
 };
