@@ -23,9 +23,11 @@ const SettingsPage = () => (
 
 export const AppRouter = () => (
   <Routes>
-    {/* Public routes — unauthenticated auth pages */}
+    {/* Login owns its own full-page split-screen layout. */}
+    <Route path={routes.login} element={<LoginPage />} />
+
+    {/* Forgot-password pages share the centered narrow PublicLayout. */}
     <Route element={<PublicLayout />}>
-      <Route path={routes.login} element={<LoginPage />} />
       <Route path={routes.forgotPassword} element={<ForgotPasswordPage />} />
       <Route
         path="/forgot-password/confirm"
