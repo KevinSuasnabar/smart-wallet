@@ -28,6 +28,7 @@ provider:
       allowedMethods:
         - GET
         - POST
+        - PATCH
         - DELETE
         - OPTIONS
       maxAge: 300
@@ -142,6 +143,33 @@ functions:
       - httpApi:
           path: /wallets/{walletId}/transactions
           method: get
+          authorizer:
+            name: cognitoJwt
+
+  getTransaction:
+    handler: src/handlers/transaction/getTransaction.main
+    events:
+      - httpApi:
+          path: /wallets/{walletId}/transactions/{transactionId}
+          method: get
+          authorizer:
+            name: cognitoJwt
+
+  patchTransaction:
+    handler: src/handlers/transaction/patchTransaction.main
+    events:
+      - httpApi:
+          path: /wallets/{walletId}/transactions/{transactionId}
+          method: patch
+          authorizer:
+            name: cognitoJwt
+
+  deleteTransaction:
+    handler: src/handlers/transaction/deleteTransaction.main
+    events:
+      - httpApi:
+          path: /wallets/{walletId}/transactions/{transactionId}
+          method: delete
           authorizer:
             name: cognitoJwt
 
