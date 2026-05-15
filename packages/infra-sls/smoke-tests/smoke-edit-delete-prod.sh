@@ -122,10 +122,11 @@ echo "✓ JWT obtained"
 
 AUTH_HEADER="Authorization: Bearer $ID_TOKEN"
 JSON_HEADER="Content-Type: application/json"
-NOW_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-PAST_ISO=$(date -u -d "30 days ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
-  || date -u -v -30d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
-  || python3 -c "from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc) - timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%SZ'))")
+# Use Date.toISOString()-compatible format with explicit .000Z milliseconds so
+# we can string-compare the field that the backend returns (the backend always
+# serializes via Date.toISOString() which includes milliseconds).
+NOW_ISO=$(python3 -c "from datetime import datetime, timezone; print(datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.000Z'))")
+PAST_ISO=$(python3 -c "from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc) - timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%S.000Z'))")
 
 # ---------- Setup data: wallet + transaction ----------
 echo ""
