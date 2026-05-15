@@ -4,6 +4,7 @@ import type { Construct } from 'constructs';
 import { SingleTable } from '../constructs/SingleTable.js';
 import { UserPool } from '../constructs/UserPool.js';
 import { SsmParameters } from '../constructs/SsmParameters.js';
+import { GithubOidcRole } from '../constructs/GithubOidcRole.js';
 
 export interface SmartWalletStackProps extends StackProps {
   stage: 'prod';
@@ -34,6 +35,15 @@ export class SmartWalletStack extends Stack {
       issuerUrl: userPool.issuerUrl,
       region: this.region,
       prefix,
+    });
+
+    // OIDC-federated IAM role for GitHub Actions deploys. The trust policy
+    // restricts assume to this exact repo + main branch — the role's broad
+    // AdministratorAccess is acceptable because nothing outside main can
+    // get into it.
+    new GithubOidcRole(this, 'GithubOidc', {
+      repository: 'KevinSuasnabar/smart-wallet',
+      ssmParameterName: `${prefix}/github-actions-role-arn`,
     });
 
     new CfnOutput(this, 'TableName', {

@@ -1,0 +1,73 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+
+# OIDC tokens require id-token: write. contents: read covers the checkout.
+permissions:
+  id-token: write
+  contents: read
+
+# A deploy in flight must NOT be cancelled by a newer push — CloudFormation
+# is mid-update and aborting risks a stack stuck in UPDATE_ROLLBACK_FAILED.
+# Newer pushes queue and run after the current deploy completes.
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: smart-wallet-deploy-${{ github.run_id }}
+
+      - name: Read SSM parameters
+        id: ssm
+        run: |
+          set -euo pipefail
+          P=/smart-wallet/prod
+          get() { aws ssm get-parameter --name "$1" --query Parameter.Value --output text; }
+          {
+            echo "table_name=$(get $P/dynamo/table-name)"
+            echo "table_arn=$(get $P/dynamo/table-arn)"
+            echo "gsi1_name=$(get $P/dynamo/gsi1-name)"
+            echo "issuer_url=$(get $P/cognito/issuer-url)"
+            echo "client_id=$(get $P/cognito/user-pool-client-id)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Deploy serverless
+        working-directory: packages/infra-sls
+        env:
+          TABLE_NAME: ${{ steps.ssm.outputs.table_name }}
+          TABLE_ARN: ${{ steps.ssm.outputs.table_arn }}
+          GSI1_NAME: ${{ steps.ssm.outputs.gsi1_name }}
+          COGNITO_ISSUER_URL: ${{ steps.ssm.outputs.issuer_url }}
+          COGNITO_CLIENT_ID: ${{ steps.ssm.outputs.client_id }}
+        run: npx serverless deploy --stage prod
+
+      - name: Smoke prod
+        run: pnpm smoke:prod
