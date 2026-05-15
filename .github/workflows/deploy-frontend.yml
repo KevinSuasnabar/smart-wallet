@@ -3,6 +3,16 @@ name: Deploy frontend
 on:
   push:
     branches: [main]
+    # Path filter: only run when something the web bundle depends on changed.
+    # Touching only backend / docs / infra-cdk does NOT trigger this.
+    paths:
+      - 'packages/web/**'
+      - 'packages/shared-types/**'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+      - 'turbo.json'
+      - 'tsconfig.base.json'
+      - '.github/workflows/deploy-frontend.yml'
 
 # OIDC tokens require id-token: write. contents: read covers the checkout.
 permissions:
