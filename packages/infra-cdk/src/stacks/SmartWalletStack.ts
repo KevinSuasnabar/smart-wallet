@@ -5,6 +5,7 @@ import { SingleTable } from '../constructs/SingleTable.js';
 import { UserPool } from '../constructs/UserPool.js';
 import { SsmParameters } from '../constructs/SsmParameters.js';
 import { GithubOidcRole } from '../constructs/GithubOidcRole.js';
+import { WebDistribution } from '../constructs/WebDistribution.js';
 
 export interface SmartWalletStackProps extends StackProps {
   stage: 'prod';
@@ -45,6 +46,8 @@ export class SmartWalletStack extends Stack {
       repository: 'KevinSuasnabar/smart-wallet',
       ssmParameterName: `${prefix}/github-actions-role-arn`,
     });
+
+    new WebDistribution(this, 'WebDistribution', { prefix });
 
     new CfnOutput(this, 'TableName', {
       value: singleTable.table.tableName,

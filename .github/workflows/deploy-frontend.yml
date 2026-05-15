@@ -1,0 +1,85 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches: [main]
+
+# OIDC tokens require id-token: write. contents: read covers the checkout.
+permissions:
+  id-token: write
+  contents: read
+
+# A frontend deploy in flight should NOT be cancelled by a newer push:
+# S3 sync mid-flight + invalidation may leave assets in a half-state if
+# aborted. Newer pushes queue until current finishes.
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm version comes from the root package.json `packageManager` field.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: smart-wallet-frontend-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Read SSM parameters
+        id: ssm
+        run: |
+          set -euo pipefail
+          P=/smart-wallet/prod
+          get() { aws ssm get-parameter --name "$1" --query Parameter.Value --output text; }
+          {
+            echo "bucket=$(get $P/web/bucket-name)"
+            echo "distribution_id=$(get $P/web/distribution-id)"
+            echo "api_url=$(get $P/api/url)"
+            echo "user_pool_id=$(get $P/cognito/user-pool-id)"
+            echo "client_id=$(get $P/cognito/user-pool-client-id)"
+            echo "region=$(get $P/region)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build web (with prod env vars baked in)
+        env:
+          VITE_API_BASE_URL: ${{ steps.ssm.outputs.api_url }}
+          VITE_COGNITO_USER_POOL_ID: ${{ steps.ssm.outputs.user_pool_id }}
+          VITE_COGNITO_CLIENT_ID: ${{ steps.ssm.outputs.client_id }}
+          VITE_COGNITO_REGION: ${{ steps.ssm.outputs.region }}
+        run: pnpm --filter @smart-wallet/web build
+
+      - name: Sync assets to S3 (long-cached, hashed files)
+        run: |
+          aws s3 sync packages/web/dist/ "s3://${{ steps.ssm.outputs.bucket }}/" \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*.html"
+
+      - name: Sync HTML to S3 (no-cache)
+        run: |
+          aws s3 sync packages/web/dist/ "s3://${{ steps.ssm.outputs.bucket }}/" \
+            --cache-control "no-cache, must-revalidate, max-age=0" \
+            --exclude "*" \
+            --include "*.html"
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.ssm.outputs.distribution_id }} \
+            --paths "/*"
