@@ -25,25 +25,28 @@ export const PREDEFINED_CATEGORY_IDS = [
 
 export type PredefinedCategoryId = (typeof PREDEFINED_CATEGORY_IDS)[number];
 
+import type { WalletColor } from './wallet-colors.js';
+
 export const PREDEFINED_CATEGORIES: readonly {
   readonly categoryId: PredefinedCategoryId;
   readonly name: string;
   readonly type: 'income' | 'expense';
+  readonly color: WalletColor;
 }[] = [
-  { categoryId: 'income:salary', name: 'Salary', type: 'income' },
-  { categoryId: 'income:freelance', name: 'Freelance', type: 'income' },
-  { categoryId: 'income:investment', name: 'Investment', type: 'income' },
-  { categoryId: 'income:gift', name: 'Gift', type: 'income' },
-  { categoryId: 'income:other', name: 'Other Income', type: 'income' },
-  { categoryId: 'expense:food', name: 'Food', type: 'expense' },
-  { categoryId: 'expense:transport', name: 'Transport', type: 'expense' },
-  { categoryId: 'expense:rent', name: 'Rent', type: 'expense' },
-  { categoryId: 'expense:utilities', name: 'Utilities', type: 'expense' },
-  { categoryId: 'expense:entertainment', name: 'Entertainment', type: 'expense' },
-  { categoryId: 'expense:health', name: 'Health', type: 'expense' },
-  { categoryId: 'expense:education', name: 'Education', type: 'expense' },
-  { categoryId: 'expense:shopping', name: 'Shopping', type: 'expense' },
-  { categoryId: 'expense:other', name: 'Other Expense', type: 'expense' },
+  { categoryId: 'income:salary', name: 'Sueldo', type: 'income', color: 'mint' },
+  { categoryId: 'income:freelance', name: 'Freelance', type: 'income', color: 'mint' },
+  { categoryId: 'income:investment', name: 'Inversión', type: 'income', color: 'lime' },
+  { categoryId: 'income:gift', name: 'Regalo', type: 'income', color: 'pink' },
+  { categoryId: 'income:other', name: 'Otros', type: 'income', color: 'cream' },
+  { categoryId: 'expense:food', name: 'Comida', type: 'expense', color: 'coral' },
+  { categoryId: 'expense:transport', name: 'Transporte', type: 'expense', color: 'lilac' },
+  { categoryId: 'expense:rent', name: 'Alquiler', type: 'expense', color: 'navy' },
+  { categoryId: 'expense:utilities', name: 'Servicios', type: 'expense', color: 'cream' },
+  { categoryId: 'expense:entertainment', name: 'Entretenimiento', type: 'expense', color: 'pink' },
+  { categoryId: 'expense:health', name: 'Salud', type: 'expense', color: 'mint' },
+  { categoryId: 'expense:education', name: 'Educación', type: 'expense', color: 'lilac' },
+  { categoryId: 'expense:shopping', name: 'Compras', type: 'expense', color: 'coral' },
+  { categoryId: 'expense:other', name: 'Otros', type: 'expense', color: 'cream' },
 ];
 
 export const isPredefinedCategoryId = (id: string): id is PredefinedCategoryId =>

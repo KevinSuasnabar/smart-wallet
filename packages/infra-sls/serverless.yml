@@ -218,8 +218,17 @@ functions:
           authorizer:
             name: cognitoJwt
 
-  deleteCustomCategory:
-    handler: src/handlers/category/deleteCustomCategory.main
+  patchCategory:
+    handler: src/handlers/category/patchCategory.main
+    events:
+      - httpApi:
+          path: /categories/{categoryId}
+          method: patch
+          authorizer:
+            name: cognitoJwt
+
+  deleteCategory:
+    handler: src/handlers/category/deleteCategory.main
     events:
       - httpApi:
           path: /categories/{categoryId}

@@ -5,17 +5,23 @@ import { Skeleton } from '../../../components/ui/skeleton.js';
 import { ErrorState } from '../../../components/common/ErrorState.js';
 import { PageHeader } from '../../../components/common/PageHeader.js';
 import { useCategories } from '../queries.js';
-import { CategoryList } from '../components/CategoryList.js';
+import { CategoryList, type CategoryEditTarget } from '../components/CategoryList.js';
 import { CreateCategoryDialog } from '../components/CreateCategoryDialog.js';
 import { DeleteCategoryConfirm } from '../components/DeleteCategoryConfirm.js';
+import { EditCategoryDialog } from '../components/EditCategoryDialog.js';
 import { t } from '../../../lib/i18n.js';
+
+interface DeleteTarget {
+  categoryId: string;
+  name: string;
+  kind: 'custom' | 'predefined';
+}
 
 export const CategoriesPage = () => {
   const { data, isLoading, isError, refetch } = useCategories();
   const [createOpen, setCreateOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<
-    { categoryId: string; name: string } | null
-  >(null);
+  const [editTarget, setEditTarget] = useState<CategoryEditTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
   return (
     <div className="flex flex-col pb-4">
@@ -49,13 +55,20 @@ export const CategoriesPage = () => {
         <CategoryList
           predefined={data.predefined}
           custom={data.custom}
-          onDeleteCustom={(categoryId, name) =>
-            setDeleteTarget({ categoryId, name })
-          }
+          onEdit={setEditTarget}
+          onDelete={setDeleteTarget}
         />
       )}
 
       <CreateCategoryDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+      <EditCategoryDialog
+        open={editTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditTarget(null);
+        }}
+        target={editTarget}
+      />
 
       {deleteTarget && (
         <DeleteCategoryConfirm
@@ -65,6 +78,7 @@ export const CategoriesPage = () => {
           }}
           categoryId={deleteTarget.categoryId}
           categoryName={deleteTarget.name}
+          kind={deleteTarget.kind}
         />
       )}
     </div>

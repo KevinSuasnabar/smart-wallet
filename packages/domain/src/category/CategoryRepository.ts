@@ -1,9 +1,24 @@
 import type { Result } from '../shared/Result.js';
 import type { UserId } from '../user/UserId.js';
 import type { TransactionType } from '../transaction/TransactionType.js';
+import type { Transaction } from '../transaction/Transaction.js';
 import type { Category } from './Category.js';
 import type { CategoryId } from './CategoryId.js';
 import type { CategoryError } from './CategoryError.js';
+
+export interface ForkPredefinedInput {
+  userId: UserId;
+  predefinedCategoryId: string;
+  /** The new custom Category that replaces the predefined for this user. */
+  newCustom: Category;
+  /**
+   * Transactions that currently reference the predefined id and need their
+   * `categoryId` rewritten to the new custom id. The repo computes the
+   * required DynamoDB operations (Update of categoryId attribute + GSI1SK)
+   * from each Transaction's current state.
+   */
+  transactionsToMigrate: Transaction[];
+}
 
 export interface CategoryRepository {
   /**
@@ -54,4 +69,31 @@ export interface CategoryRepository {
     categoryId: CategoryId;
     transactionType: TransactionType;
   }): Promise<Result<void, CategoryError>>;
+
+  /**
+   * Persist edits to an existing custom Category. Implementation MUST use a
+   * ConditionExpression that requires the item to exist; a vanished custom
+   * category surfaces as an error the use case maps to InvalidCategoryId.
+   */
+  update(category: Category): Promise<void>;
+
+  /**
+   * Persist a `HiddenPredefinedCategory` marker. Idempotent at the
+   * implementation level — the impl uses `attribute_not_exists(PK)` and maps
+   * the conditional-check-failed to ok(undefined) so a re-hide is a no-op.
+   */
+  hide(userId: UserId, predefinedCategoryId: string): Promise<Result<void, CategoryError>>;
+
+  /**
+   * Return the list of predefined category ids that this user has hidden.
+   * The order is unspecified.
+   */
+  listHiddenPredefined(userId: UserId): Promise<string[]>;
+
+  /**
+   * Atomically (per chunk) write the new custom Category, the hidden-
+   * predefined marker, and migrate every supplied transaction to point at
+   * the new custom id. See design §4.4 for the chunking algorithm.
+   */
+  forkPredefined(input: ForkPredefinedInput): Promise<void>;
 }

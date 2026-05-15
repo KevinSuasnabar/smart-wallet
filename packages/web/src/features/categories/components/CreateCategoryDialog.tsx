@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -30,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../components/ui/select.js';
+import { ColorPicker } from '../../wallets/components/ColorPicker.js';
 import { useCreateCustomCategory } from '../queries.js';
 import { userMessageFor } from '../../../lib/api/errors.js';
 import { t } from '../../../lib/i18n.js';
@@ -39,6 +41,11 @@ interface CreateCategoryDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const DEFAULT_COLOR_FOR = {
+  income: 'mint',
+  expense: 'coral',
+} as const;
+
 export const CreateCategoryDialog = ({
   open,
   onOpenChange,
@@ -47,21 +54,30 @@ export const CreateCategoryDialog = ({
 
   const form = useForm<CreateCustomCategoryDTO>({
     resolver: zodResolver(CreateCustomCategoryRequestSchema),
-    // 'onChange' keeps formState.isValid in sync with field values; the
-    // submit button gates on isValid and would otherwise stay disabled
-    // forever (default mode is 'onSubmit' which never fires).
     mode: 'onChange',
     defaultValues: {
       name: '',
       type: 'expense',
+      color: 'coral',
     },
   });
+
+  // Sync color default to match the chosen type, but only when the user
+  // hasn't manually touched the color picker. Once they pick a color, leave
+  // their choice alone.
+  const watchedType = form.watch('type');
+  const colorTouchedRef = useRef(false);
+  useEffect(() => {
+    if (colorTouchedRef.current) return;
+    form.setValue('color', DEFAULT_COLOR_FOR[watchedType], { shouldValidate: true });
+  }, [watchedType, form]);
 
   const handleSubmit = (values: CreateCustomCategoryDTO) => {
     mutate(values, {
       onSuccess: () => {
         toast.success('Categoría creada');
         form.reset();
+        colorTouchedRef.current = false;
         onOpenChange(false);
       },
       onError: (err) => {
@@ -128,6 +144,27 @@ export const CreateCategoryDialog = ({
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t.categories.colorLabel}</FormLabel>
+                  <FormControl>
+                    <ColorPicker
+                      value={field.value}
+                      onChange={(c) => {
+                        colorTouchedRef.current = true;
+                        field.onChange(c);
+                      }}
+                      disabled={isPending}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

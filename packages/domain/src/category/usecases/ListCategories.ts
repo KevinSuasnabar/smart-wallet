@@ -54,10 +54,15 @@ export const makeListCategories =
       return err(userIdResult.error);
     }
 
-    const custom = await deps.categoryRepo.listCustomByUser(userIdResult.value);
+    const userId = userIdResult.value;
+    const [custom, hiddenIds] = await Promise.all([
+      deps.categoryRepo.listCustomByUser(userId),
+      deps.categoryRepo.listHiddenPredefined(userId),
+    ]);
+    const hiddenSet = new Set(hiddenIds);
 
     return ok({
-      predefined: [...PREDEFINED_LIST],
+      predefined: PREDEFINED_LIST.filter((p) => !hiddenSet.has(p.id)),
       custom,
     });
   };

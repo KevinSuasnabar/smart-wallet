@@ -1,9 +1,18 @@
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
+import { PREDEFINED_CATEGORIES } from '@smart-wallet/shared-types';
 import { withAuth, withErrorHandler } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
 import { container } from '../../composition/container.js';
 import { ok } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
+
+// Static lookup: predefined id → catalog entry (with neutro name + color).
+// Typed with string keys so callers can look up arbitrary id strings without
+// narrowing first; the get() returns undefined for non-predefined ids.
+const PREDEFINED_BY_ID: ReadonlyMap<
+  string,
+  (typeof PREDEFINED_CATEGORIES)[number]
+> = new Map(PREDEFINED_CATEGORIES.map((c) => [c.categoryId as string, c]));
 
 /**
  * GET /categories — list predefined and custom categories for the authenticated user.
@@ -26,15 +35,23 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   const { predefined, custom } = result.value;
 
   return ok({
-    predefined: predefined.map((cat) => ({
-      categoryId: cat.id,
-      name: cat.slug,
-      type: cat.type,
-    })),
+    predefined: predefined.map((cat) => {
+      const catalog = PREDEFINED_BY_ID.get(cat.id);
+      return {
+        categoryId: cat.id,
+        // Catalog provides Spanish-neutro name + color. The use case only
+        // gives us the id/slug/type — we resolve display fields here so the
+        // domain stays free of i18n concerns.
+        name: catalog?.name ?? cat.slug,
+        type: cat.type,
+        color: catalog?.color ?? (cat.type === 'income' ? 'mint' : 'coral'),
+      };
+    }),
     custom: custom.map((cat) => ({
       categoryId: cat.id.toString(),
       name: cat.name,
       type: cat.type,
+      color: cat.color,
       createdAt: cat.createdAt.toISOString(),
     })),
   });
