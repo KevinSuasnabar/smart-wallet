@@ -13,11 +13,17 @@ import { t } from '../../../lib/i18n.js';
 interface RecentTransactionsListProps {
   walletId: string;
   limit?: number;
+  /**
+   * When provided, each row renders an action group (edit + delete). The
+   * parent owns the dialog state and the mutation.
+   */
+  onDelete?: (transactionId: string) => void;
 }
 
 export const RecentTransactionsList = ({
   walletId,
   limit = 10,
+  onDelete,
 }: RecentTransactionsListProps) => {
   const { data, isLoading, isError, refetch } = useWalletTransactions(walletId, {
     limit,
@@ -59,6 +65,7 @@ export const RecentTransactionsList = ({
         <TransactionListItem
           key={tx.transactionId}
           transaction={tx}
+          {...(onDelete !== undefined ? { onDelete } : {})}
           {...(categoryName(tx.categoryId) !== undefined
             ? { categoryName: categoryName(tx.categoryId) as string }
             : {})}

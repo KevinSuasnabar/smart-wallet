@@ -95,8 +95,8 @@ class ApiClient {
     return this.request<T>({ method: 'PUT', path, body });
   }
 
-  patch<T>(path: string, body: unknown): Promise<T> {
-    return this.request<T>({ method: 'PATCH', path, body });
+  patch<T>(path: string, body: unknown, headers?: Record<string, string>): Promise<T> {
+    return this.request<T>({ method: 'PATCH', path, body, ...(headers ? { headers } : {}) });
   }
 
   del(path: string): Promise<void> {

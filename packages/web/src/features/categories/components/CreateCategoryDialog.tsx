@@ -47,6 +47,10 @@ export const CreateCategoryDialog = ({
 
   const form = useForm<CreateCustomCategoryDTO>({
     resolver: zodResolver(CreateCustomCategoryRequestSchema),
+    // 'onChange' keeps formState.isValid in sync with field values; the
+    // submit button gates on isValid and would otherwise stay disabled
+    // forever (default mode is 'onSubmit' which never fires).
+    mode: 'onChange',
     defaultValues: {
       name: '',
       type: 'expense',

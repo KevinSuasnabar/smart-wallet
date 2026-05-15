@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '../../../components/ui/button.js';
 import { Skeleton } from '../../../components/ui/skeleton.js';
 import { ErrorState } from '../../../components/common/ErrorState.js';
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { WalletBalanceHeader } from '../components/WalletBalanceHeader.js';
 import { RecentTransactionsList } from '../../transactions/components/RecentTransactionsList.js';
+import { DeleteTransactionDialog } from '../../transactions/components/DeleteTransactionDialog.js';
 import { useWallet } from '../queries.js';
+import { useDeleteTransaction } from '../../transactions/queries.js';
+import { userMessageFor } from '../../../lib/api/errors.js';
 import { t } from '../../../lib/i18n.js';
 import { routes } from '../../../app/routes.js';
 
@@ -14,8 +19,27 @@ export const WalletDetailPage = () => {
   const { walletId } = useParams<{ walletId: string }>();
   const navigate = useNavigate();
   const { data: wallet, isLoading, isError, refetch } = useWallet(walletId);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const deleteMutation = useDeleteTransaction(wallet?.walletId ?? '');
 
   const handleBack = () => { void navigate(routes.wallets); };
+
+  const confirmDelete = () => {
+    if (pendingDeleteId === null) return;
+    deleteMutation.mutate(
+      { transactionId: pendingDeleteId },
+      {
+        onSuccess: () => {
+          toast.success(t.transactions.deleteSuccess);
+          setPendingDeleteId(null);
+        },
+        onError: (err) => {
+          toast.error(userMessageFor(err));
+          setPendingDeleteId(null);
+        },
+      },
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6 py-4 pb-4">
@@ -76,10 +100,23 @@ export const WalletDetailPage = () => {
               </Link>
             </div>
 
-            <RecentTransactionsList walletId={wallet.walletId} limit={10} />
+            <RecentTransactionsList
+              walletId={wallet.walletId}
+              limit={10}
+              onDelete={(id) => setPendingDeleteId(id)}
+            />
           </section>
         </>
       )}
+
+      <DeleteTransactionDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+        onConfirm={confirmDelete}
+        pending={deleteMutation.isPending}
+      />
     </div>
   );
 };

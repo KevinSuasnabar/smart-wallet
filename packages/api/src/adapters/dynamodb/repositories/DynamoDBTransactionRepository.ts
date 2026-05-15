@@ -28,6 +28,7 @@ import {
   walletSK,
   transactionSK,
   transactionSKPrefix,
+  transactionGsi1SK,
   idempotencySK,
 } from '../keyBuilders.js';
 import { encodeCursor, decodeCursor } from '../cursor.js';
@@ -421,19 +422,23 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
    *  - SK changed:   3-op TransactWrite (Transaction Delete + Transaction Put + Wallet Update)
    */
   async update(input: UpdateTransactionPersistInput): Promise<void> {
-    const { transaction, walletBalanceDelta, oldOccurredAt, oldCategoryId } = input;
+    const { transaction, walletBalanceDelta, oldOccurredAt, oldCategoryId: _oldCategoryId } = input;
+    void _oldCategoryId; // kept on the interface; categoryId changes do not move the SK (only GSI1SK).
 
     const pk = userPK(transaction.userId.toString());
     const walletIdStr = transaction.walletId.toString();
     const txIdStr = transaction.id.toString();
     const newOccurredAtIso = transaction.occurredAt.toISOString();
     const oldOccurredAtIso = oldOccurredAt.toISOString();
-    const newCategoryId = transaction.categoryId;
 
-    const skMoved =
-      newOccurredAtIso !== oldOccurredAtIso || newCategoryId !== oldCategoryId;
+    // Transaction SK is `TXN#{walletId}#{occurredAt}#{txId}` — depends only on
+    // occurredAt. GSI1SK is `CAT#{categoryId}#{occurredAt}#{txId}` — depends on
+    // categoryId too, but it's a sibling attribute on the SAME item, so a
+    // category change is an attribute Update, not an item move.
+    const skMoved = newOccurredAtIso !== oldOccurredAtIso;
 
     const now = transaction.updatedAt.toISOString();
+    const inPlaceUpdate = buildInPlaceUpdate(transaction, oldOccurredAtIso, now);
 
     if (!skMoved) {
       // 2-op: Update tx in place + Update wallet balance
@@ -447,15 +452,10 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                   PK: pk,
                   SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
                 },
-                UpdateExpression:
-                  'SET amount = :amount, description = :description, updatedAt = :now',
+                UpdateExpression: inPlaceUpdate.updateExpression,
                 ConditionExpression:
                   'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
-                ExpressionAttributeValues: {
-                  ':amount': transaction.amount.amount,
-                  ':description': transaction.description,
-                  ':now': now,
-                },
+                ExpressionAttributeValues: inPlaceUpdate.expressionAttributeValues,
               },
             },
             {
@@ -531,17 +531,22 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
   async updateIdempotent(
     input: UpdateIdempotentInput,
   ): Promise<Result<{ transaction: Transaction; replay: boolean }, TransactionError | WalletError>> {
-    const { transaction, walletId, walletBalanceDelta, idempotencyHash, oldOccurredAt, oldCategoryId } =
-      input;
+    const {
+      transaction,
+      walletId,
+      walletBalanceDelta,
+      idempotencyHash,
+      oldOccurredAt,
+      oldCategoryId: _oldCategoryId,
+    } = input;
+    void _oldCategoryId; // see update() — categoryId never moves the SK.
 
     const pk = userPK(transaction.userId.toString());
     const walletIdStr = walletId.toString();
     const txIdStr = transaction.id.toString();
     const newOccurredAtIso = transaction.occurredAt.toISOString();
     const oldOccurredAtIso = oldOccurredAt.toISOString();
-    const newCategoryId = transaction.categoryId;
-    const skMoved =
-      newOccurredAtIso !== oldOccurredAtIso || newCategoryId !== oldCategoryId;
+    const skMoved = newOccurredAtIso !== oldOccurredAtIso;
 
     const idemSK = idempotencySK(idempotencyHash);
     const now = new Date().toISOString();
@@ -567,6 +572,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
 
     try {
       if (!skMoved) {
+        const inPlaceUpdate = buildInPlaceUpdate(transaction, oldOccurredAtIso, now);
         await ddb.send(
           new TransactWriteCommand({
             TransactItems: [
@@ -577,15 +583,10 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                     PK: pk,
                     SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
                   },
-                  UpdateExpression:
-                    'SET amount = :amount, description = :description, updatedAt = :now',
+                  UpdateExpression: inPlaceUpdate.updateExpression,
                   ConditionExpression:
                     'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
-                  ExpressionAttributeValues: {
-                    ':amount': transaction.amount.amount,
-                    ':description': transaction.description,
-                    ':now': now,
-                  },
+                  ExpressionAttributeValues: inPlaceUpdate.expressionAttributeValues,
                 },
               },
               {
@@ -786,6 +787,57 @@ function mapDeleteCancellation(e: unknown, transactionId: TransactionId): Error 
     return new WalletNotFound();
   }
   return e;
+}
+
+/**
+ * Build the UpdateExpression for an in-place transaction edit (when the SK
+ * doesn't move). Always rewrites every mutable field plus GSI1SK (which
+ * depends on categoryId). Description goes through REMOVE when it transitions
+ * to null, otherwise SET — so a "clear description" edit doesn't leave a
+ * stale value behind.
+ */
+function buildInPlaceUpdate(
+  transaction: Transaction,
+  occurredAtIso: string,
+  nowIso: string,
+): {
+  updateExpression: string;
+  expressionAttributeValues: Record<string, unknown>;
+} {
+  const txIdStr = transaction.id.toString();
+  const gsi1sk = transactionGsi1SK(
+    transaction.categoryId,
+    occurredAtIso,
+    txIdStr,
+  );
+
+  const setParts = [
+    'amount = :amount',
+    'categoryId = :categoryId',
+    'GSI1SK = :gsi1sk',
+    'updatedAt = :now',
+  ];
+  const removeParts: string[] = [];
+  const values: Record<string, unknown> = {
+    ':amount': transaction.amount.amount,
+    ':categoryId': transaction.categoryId,
+    ':gsi1sk': gsi1sk,
+    ':now': nowIso,
+  };
+
+  if (transaction.description !== null) {
+    setParts.push('description = :description');
+    values[':description'] = transaction.description;
+  } else {
+    removeParts.push('description');
+  }
+
+  let updateExpression = `SET ${setParts.join(', ')}`;
+  if (removeParts.length > 0) {
+    updateExpression += ` REMOVE ${removeParts.join(', ')}`;
+  }
+
+  return { updateExpression, expressionAttributeValues: values };
 }
 
 // Re-export error helpers used by this module so callers don't need
