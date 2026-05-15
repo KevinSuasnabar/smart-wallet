@@ -149,4 +149,17 @@ export const t = {
       placeholder: 'Elige tu moneda preferida',
     },
   },
+  dashboard: {
+    title: 'Resumen',
+    eyebrow: 'Este mes',
+    totalBalance: 'Balance total',
+    monthlyIncome: 'Ingresos del mes',
+    monthlyExpenses: 'Gastos del mes',
+    monthlyNet: 'Balance del mes',
+    topExpenses: 'Top categorías',
+    noExpensesYet: 'Aún no hay gastos este mes',
+    noWallets: 'Crea tu primera billetera para ver tu resumen',
+    addTransactionCta: 'Agregar movimiento',
+    sidebarLabel: 'Resumen',
+  },
 } as const;

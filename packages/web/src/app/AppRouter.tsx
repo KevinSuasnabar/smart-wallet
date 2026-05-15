@@ -15,6 +15,7 @@ import { EditTransactionPage } from '../features/transactions/pages/EditTransact
 import { TransactionListPage } from '../features/transactions/pages/TransactionListPage.js';
 import { CategoriesPage } from '../features/categories/pages/CategoriesPage.js';
 import { SettingsPage } from '../features/settings/pages/SettingsPage.js';
+import { DashboardPage } from '../features/dashboard/pages/DashboardPage.js';
 import { routes } from './routes.js';
 
 export const AppRouter = () => (
@@ -36,8 +37,9 @@ export const AppRouter = () => (
       <Route element={<AppLayout />}>
         <Route
           path={routes.home}
-          element={<Navigate to={routes.wallets} replace />}
+          element={<Navigate to={routes.dashboard} replace />}
         />
+        <Route path={routes.dashboard} element={<DashboardPage />} />
         <Route path={routes.wallets} element={<WalletsListPage />} />
         <Route path={routes.walletsNew} element={<CreateWalletPage />} />
         <Route path="/wallets/:walletId" element={<WalletDetailPage />} />

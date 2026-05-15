@@ -4,6 +4,7 @@ export const routes = {
   forgotPassword: '/forgot-password',
   // Protected
   home: '/',
+  dashboard: '/dashboard',
   wallets: '/wallets',
   walletsNew: '/wallets/new',
   walletDetail: (walletId: string) => `/wallets/${walletId}`,
