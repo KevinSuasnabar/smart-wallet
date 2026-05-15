@@ -5,10 +5,19 @@ import type {
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { CategoryItem } from './CategoryItem.js';
 
+export type CategoryEditTarget = {
+  categoryId: string;
+  name: string;
+  type: 'income' | 'expense';
+  color: string;
+  kind: 'custom' | 'predefined';
+};
+
 interface CategoryListProps {
   predefined: PredefinedCategoryResponseDTO[];
   custom: CategoryResponseDTO[];
-  onDeleteCustom: (categoryId: string, name: string) => void;
+  onEdit: (target: CategoryEditTarget) => void;
+  onDelete: (target: { categoryId: string; name: string; kind: 'custom' | 'predefined' }) => void;
 }
 
 const Section = ({
@@ -32,7 +41,8 @@ const Section = ({
 export const CategoryList = ({
   predefined,
   custom,
-  onDeleteCustom,
+  onEdit,
+  onDelete,
 }: CategoryListProps) => {
   const hasCustom = custom.length > 0;
 
@@ -43,10 +53,26 @@ export const CategoryList = ({
           {custom.map((c) => (
             <CategoryItem
               key={c.categoryId}
+              categoryId={c.categoryId}
               name={c.name}
               type={c.type}
-              isCustom
-              onDelete={() => onDeleteCustom(c.categoryId, c.name)}
+              color={c.color}
+              onEdit={() =>
+                onEdit({
+                  categoryId: c.categoryId,
+                  name: c.name,
+                  type: c.type,
+                  color: c.color,
+                  kind: 'custom',
+                })
+              }
+              onDelete={() =>
+                onDelete({
+                  categoryId: c.categoryId,
+                  name: c.name,
+                  kind: 'custom',
+                })
+              }
             />
           ))}
         </Section>
@@ -56,9 +82,26 @@ export const CategoryList = ({
         {predefined.map((c) => (
           <CategoryItem
             key={c.categoryId}
+            categoryId={c.categoryId}
             name={c.name}
             type={c.type}
-            isCustom={false}
+            color={c.color}
+            onEdit={() =>
+              onEdit({
+                categoryId: c.categoryId,
+                name: c.name,
+                type: c.type,
+                color: c.color,
+                kind: 'predefined',
+              })
+            }
+            onDelete={() =>
+              onDelete({
+                categoryId: c.categoryId,
+                name: c.name,
+                kind: 'predefined',
+              })
+            }
           />
         ))}
       </Section>

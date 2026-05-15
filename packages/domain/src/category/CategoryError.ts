@@ -62,6 +62,26 @@ export class CategoryAlreadyDeleted extends DomainError {
   }
 }
 
+/** Invalid color value passed to a category. */
+export class InvalidCategoryColor extends DomainError {
+  readonly tag = 'domain.category.invalid_color' as const;
+  readonly httpStatus = 400 as const;
+
+  constructor(message = 'Category color must be one of the predefined palette values') {
+    super(message);
+  }
+}
+
+/** Attempted to fork-edit a predefined category that the user already hid. */
+export class CategoryAlreadyHidden extends DomainError {
+  readonly tag = 'domain.category.already_hidden' as const;
+  readonly httpStatus = 409 as const;
+
+  constructor(message = 'Predefined category is already hidden for this user') {
+    super(message);
+  }
+}
+
 /**
  * A custom category cannot be deleted while it has at least one active
  * transaction referencing it. Detected via TransactionRepository.listByCategory
@@ -80,7 +100,9 @@ export type CategoryError =
   | InvalidCategoryId
   | InvalidCategoryName
   | InvalidCategoryType
+  | InvalidCategoryColor
   | CannotDeletePredefined
   | CategoryTypeMismatch
   | CategoryAlreadyDeleted
-  | CategoryHasTransactions;
+  | CategoryHasTransactions
+  | CategoryAlreadyHidden;

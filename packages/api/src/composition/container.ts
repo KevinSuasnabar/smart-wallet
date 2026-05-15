@@ -33,6 +33,9 @@ import {
   makeListCategories,
   makeCreateCustomCategory,
   makeDeleteCustomCategory,
+  makeUpdateCustomCategory,
+  makeForkPredefinedCategory,
+  makeHidePredefinedCategory,
 } from '@smart-wallet/domain';
 
 // ── Infrastructure singletons (module scope = cold-start only) ────────────
@@ -80,6 +83,18 @@ export const container = {
   listCategories: makeListCategories({ categoryRepo }),
   createCustomCategory: makeCreateCustomCategory({ categoryRepo, idGen, clock }),
   deleteCustomCategory: makeDeleteCustomCategory({
+    categoryRepo,
+    transactionRepo,
+    clock,
+  }),
+  updateCustomCategory: makeUpdateCustomCategory({ categoryRepo, clock }),
+  forkPredefinedCategory: makeForkPredefinedCategory({
+    categoryRepo,
+    transactionRepo,
+    idGen,
+    clock,
+  }),
+  hidePredefinedCategory: makeHidePredefinedCategory({
     categoryRepo,
     transactionRepo,
     clock,

@@ -26,6 +26,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     userId: event.userId,
     name: input.name,
     type: input.type,
+    color: input.color,
   });
 
   if (!result.ok) return domainErrorToResponse(result.error);
@@ -36,6 +37,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     categoryId: category.id.toString(),
     name: category.name,
     type: category.type,
+    color: category.color,
     createdAt: category.createdAt.toISOString(),
   });
 };

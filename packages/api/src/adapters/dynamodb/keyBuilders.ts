@@ -14,6 +14,9 @@ export const transactionSK = (
 
 export const categorySK = (categoryId: string): string => `CATEGORY#${categoryId}`;
 
+export const hiddenPredefinedSK = (predefinedCategoryId: string): string =>
+  `HIDDENCAT#${predefinedCategoryId}`;
+
 export const idempotencySK = (hashedKey: string): string => `IDEMPOTENCY#${hashedKey}`;
 
 export const transactionGsi1SK = (
@@ -29,3 +32,5 @@ export const walletSKPrefix = (): string => 'WALLET#';
 export const transactionSKPrefix = (walletId: string): string => `TXN#${walletId}#`;
 
 export const categorySKPrefix = (): string => 'CATEGORY#';
+
+export const hiddenPredefinedSKPrefix = (): string => 'HIDDENCAT#';

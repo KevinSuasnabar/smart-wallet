@@ -2,11 +2,13 @@ import { AggregateRoot } from '../shared/AggregateRoot.js';
 import { ok, err } from '../shared/Result.js';
 import type { Result } from '../shared/Result.js';
 import type { Clock } from '../shared/Clock.js';
+import { isWalletColor } from '../shared/WalletColor.js';
+import type { WalletColor } from '../shared/WalletColor.js';
 import type { CategoryId } from './CategoryId.js';
 import type { UserId } from '../user/UserId.js';
 import type { CategoryType } from './CategoryType.js';
 import type { CustomCategoryCreated } from './events/CustomCategoryCreated.js';
-import { InvalidCategoryName } from './CategoryError.js';
+import { InvalidCategoryName, InvalidCategoryColor } from './CategoryError.js';
 import type { CategoryError } from './CategoryError.js';
 
 const MAX_NAME_LENGTH = 32;
@@ -15,6 +17,7 @@ export interface CategoryProps {
   userId: UserId;
   name: string;
   type: CategoryType;
+  color: WalletColor;
   createdAt: Date;
   updatedAt: Date;
   /** null when active; set to a Date on soft-delete. */
@@ -26,6 +29,7 @@ export interface CreateCategoryProps {
   userId: UserId;
   name: string;
   type: CategoryType;
+  color: string;
   clock: Clock;
 }
 
@@ -49,6 +53,10 @@ export class Category extends AggregateRoot<CategoryId> {
 
   get type(): CategoryType {
     return this._props.type;
+  }
+
+  get color(): WalletColor {
+    return this._props.color;
   }
 
   get createdAt(): Date {
@@ -80,12 +88,17 @@ export class Category extends AggregateRoot<CategoryId> {
       return err(new InvalidCategoryName());
     }
 
+    if (!isWalletColor(props.color)) {
+      return err(new InvalidCategoryColor());
+    }
+
     const now = props.clock.now();
 
     const category = new Category(props.id, {
       userId: props.userId,
       name: trimmedName,
       type: props.type,
+      color: props.color,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
@@ -132,6 +145,39 @@ export class Category extends AggregateRoot<CategoryId> {
     const now = clock.now();
     this._props.deletedAt = now;
     this._props.updatedAt = now;
+    return ok(undefined);
+  }
+
+  /**
+   * Apply a partial edit in place. Validates each provided field with the
+   * factory's validators. Rolls back to the pre-call state on any failure.
+   *
+   * The use case is responsible for higher-level checks (e.g., is the
+   * category soft-deleted?).
+   */
+  applyEdits(
+    edits: { name?: string; color?: string },
+    clock: Clock,
+  ): Result<void, CategoryError> {
+    const snapshot: CategoryProps = { ...this._props };
+
+    if (edits.name !== undefined) {
+      const trimmed = edits.name.trim();
+      if (trimmed.length === 0 || trimmed.length > MAX_NAME_LENGTH) {
+        return err(new InvalidCategoryName());
+      }
+      this._props.name = trimmed;
+    }
+
+    if (edits.color !== undefined) {
+      if (!isWalletColor(edits.color)) {
+        this._props = snapshot;
+        return err(new InvalidCategoryColor());
+      }
+      this._props.color = edits.color;
+    }
+
+    this._props.updatedAt = clock.now();
     return ok(undefined);
   }
 }

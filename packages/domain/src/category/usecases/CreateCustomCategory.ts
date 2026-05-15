@@ -15,6 +15,8 @@ export interface CreateCustomCategoryInput {
   userId: string;
   name: string;
   type: CategoryType;
+  /** Raw color string — validated by Category.create against the palette. */
+  color: string;
 }
 
 export interface CreateCustomCategoryDeps {
@@ -40,6 +42,7 @@ export const makeCreateCustomCategory =
       userId: userIdResult.value,
       name: input.name,
       type: input.type,
+      color: input.color,
       clock: deps.clock,
     });
 

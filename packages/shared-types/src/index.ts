@@ -71,6 +71,7 @@ export type {
 // Category schemas + DTOs
 export {
   CreateCustomCategoryRequestSchema,
+  UpdateCategoryRequestSchema,
   CategoryResponseSchema,
   PredefinedCategoryResponseSchema,
   ListCategoriesResponseSchema,
@@ -78,6 +79,7 @@ export {
 } from './schemas/category.js';
 export type {
   CreateCustomCategoryDTO,
+  UpdateCategoryDTO,
   CategoryResponseDTO,
   PredefinedCategoryResponseDTO,
   ListCategoriesResponseDTO,

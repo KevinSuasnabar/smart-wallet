@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '../../../components/ui/dialog.js';
 import { Button } from '../../../components/ui/button.js';
-import { useDeleteCustomCategory } from '../queries.js';
+import { useDeleteCategory } from '../queries.js';
 import { userMessageFor } from '../../../lib/api/errors.js';
 import { t } from '../../../lib/i18n.js';
 
@@ -17,6 +17,9 @@ interface DeleteCategoryConfirmProps {
   onOpenChange: (open: boolean) => void;
   categoryId: string;
   categoryName: string;
+  /** When 'predefined', uses softer copy ("will be hidden"). When 'custom',
+   *  the existing "irreversible" copy. */
+  kind: 'custom' | 'predefined';
 }
 
 export const DeleteCategoryConfirm = ({
@@ -24,8 +27,9 @@ export const DeleteCategoryConfirm = ({
   onOpenChange,
   categoryId,
   categoryName,
+  kind,
 }: DeleteCategoryConfirmProps) => {
-  const { mutate, isPending } = useDeleteCustomCategory();
+  const { mutate, isPending } = useDeleteCategory();
 
   const handleDelete = () => {
     mutate(categoryId, {
@@ -45,7 +49,9 @@ export const DeleteCategoryConfirm = ({
         <DialogHeader>
           <DialogTitle>{t.categories.deleteTitle}</DialogTitle>
           <DialogDescription>
-            {t.categories.deleteConfirm}
+            {kind === 'custom'
+              ? t.categories.deleteConfirm
+              : t.categories.deletePredefinedBody}
             <br />
             <strong className="text-foreground">{categoryName}</strong>
           </DialogDescription>

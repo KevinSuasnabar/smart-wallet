@@ -90,10 +90,17 @@ export const t = {
     createTitle: 'Crear categoría',
     deleteTitle: 'Eliminar categoría',
     deleteConfirm: '¿Eliminar esta categoría? Esta acción no se puede deshacer.',
+    deletePredefinedBody:
+      'Esta categoría predefinida quedará oculta. Para volver a verla, crea una nueva con el mismo nombre.',
     deleteCta: 'Eliminar',
     cancelCta: 'Cancelar',
     deleteHasTransactionsError:
       'Esta categoría tiene movimientos asociados. Elimina los movimientos primero o cámbialos de categoría.',
+    editTitle: 'Editar categoría',
+    editSubmit: 'Guardar cambios',
+    editSuccess: 'Categoría actualizada',
+    editNoChanges: 'No hay cambios',
+    colorLabel: 'Color',
   },
   errors: {
     generic: 'Algo salió mal. Probá de nuevo.',
