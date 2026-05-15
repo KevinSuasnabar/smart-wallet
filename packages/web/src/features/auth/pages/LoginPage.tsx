@@ -7,12 +7,8 @@ import { useAuth } from '../useAuth.js';
 import { mapCognitoError } from '../types.js';
 import { routes } from '../../../app/routes.js';
 import { t } from '../../../lib/i18n.js';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../components/ui/card.js';
+import { ColorBlock } from '../../../components/common/ColorBlock.js';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import {
   Form,
   FormControl,
@@ -59,73 +55,69 @@ export const LoginPage = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl text-center">{t.auth.loginTitle}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }}
-            className="space-y-4"
-          >
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.auth.emailLabel}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      autoComplete="email"
-                      className="min-h-[44px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <ColorBlock tone="lime" className="p-6 md:p-7">
+      <div className="mb-6">
+        <Eyebrow>Acceso</Eyebrow>
+        <h1 className="mt-2 text-2xl font-bold tracking-display">
+          {t.auth.loginTitle}
+        </h1>
+      </div>
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.auth.passwordLabel}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="current-password"
-                      className="min-h-[44px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      <Form {...form}>
+        <form
+          onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }}
+          className="space-y-4"
+        >
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.auth.emailLabel}</FormLabel>
+                <FormControl>
+                  <Input type="email" autoComplete="email" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <div className="flex justify-end">
-              <Link
-                to={routes.forgotPassword}
-                className="text-xs text-muted-foreground hover:text-primary underline underline-offset-2"
-              >
-                {t.auth.forgotPassword}
-              </Link>
-            </div>
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.auth.passwordLabel}</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    autoComplete="current-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <Button
-              type="submit"
-              className="w-full min-h-[44px]"
-              disabled={form.formState.isSubmitting}
+          <div className="flex justify-end">
+            <Link
+              to={routes.forgotPassword}
+              className="font-mono text-[11px] uppercase tracking-caption text-foreground/60 transition-colors hover:text-foreground"
             >
-              {form.formState.isSubmitting ? t.app.loading : t.auth.loginButton}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+              {t.auth.forgotPassword}
+            </Link>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? t.app.loading : t.auth.loginButton}
+          </Button>
+        </form>
+      </Form>
+    </ColorBlock>
   );
 };

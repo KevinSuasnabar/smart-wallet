@@ -7,12 +7,8 @@ import { useAuth } from '../useAuth.js';
 import { mapCognitoError } from '../types.js';
 import { routes } from '../../../app/routes.js';
 import { t } from '../../../lib/i18n.js';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../components/ui/card.js';
+import { ColorBlock } from '../../../components/common/ColorBlock.js';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import {
   Form,
   FormControl,
@@ -71,14 +67,18 @@ export const ConfirmForgotPasswordPage = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl text-center">{t.auth.resetButton}</CardTitle>
-        <p className="text-sm text-muted-foreground text-center mt-1">
-          Ingresá el código que enviamos a tu email y tu nueva contraseña.
-        </p>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-5">
+      <ColorBlock tone="lime" className="p-6 md:p-7">
+        <div className="mb-6">
+          <Eyebrow>Recuperación</Eyebrow>
+          <h1 className="mt-2 text-2xl font-bold tracking-display">
+            {t.auth.resetButton}
+          </h1>
+          <p className="mt-2 text-sm text-foreground/70">
+            Ingresá el código que enviamos a tu email y tu nueva contraseña.
+          </p>
+        </div>
+
         <Form {...form}>
           <form
             onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }}
@@ -96,7 +96,7 @@ export const ConfirmForgotPasswordPage = () => {
                       inputMode="numeric"
                       autoComplete="one-time-code"
                       maxLength={6}
-                      className="min-h-[44px] text-center tracking-widest text-lg"
+                      className="text-center font-mono text-lg tracking-[0.4em]"
                       {...field}
                     />
                   </FormControl>
@@ -115,7 +115,6 @@ export const ConfirmForgotPasswordPage = () => {
                     <Input
                       type="password"
                       autoComplete="new-password"
-                      className="min-h-[44px]"
                       {...field}
                     />
                   </FormControl>
@@ -134,7 +133,6 @@ export const ConfirmForgotPasswordPage = () => {
                     <Input
                       type="password"
                       autoComplete="new-password"
-                      className="min-h-[44px]"
                       {...field}
                     />
                   </FormControl>
@@ -145,23 +143,23 @@ export const ConfirmForgotPasswordPage = () => {
 
             <Button
               type="submit"
-              className="w-full min-h-[44px]"
+              className="w-full"
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting ? t.app.loading : t.auth.resetButton}
             </Button>
           </form>
         </Form>
+      </ColorBlock>
 
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          <Link
-            to={routes.login}
-            className="font-medium text-primary underline underline-offset-2"
-          >
-            Volver al inicio de sesión
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+      <p className="text-center">
+        <Link
+          to={routes.login}
+          className="font-mono text-[11px] uppercase tracking-caption text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Volver al inicio de sesión
+        </Link>
+      </p>
+    </div>
   );
 };

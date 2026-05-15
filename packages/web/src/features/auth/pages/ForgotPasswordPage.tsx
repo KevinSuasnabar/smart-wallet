@@ -7,12 +7,8 @@ import { useAuth } from '../useAuth.js';
 import { mapCognitoError } from '../types.js';
 import { routes } from '../../../app/routes.js';
 import { t } from '../../../lib/i18n.js';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../../../components/ui/card.js';
+import { ColorBlock } from '../../../components/common/ColorBlock.js';
+import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import {
   Form,
   FormControl,
@@ -56,14 +52,19 @@ export const ForgotPasswordPage = () => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl text-center">{t.auth.forgotTitle}</CardTitle>
-        <p className="text-sm text-muted-foreground text-center mt-1">
-          Ingresá tu email y te enviamos un código para recuperar tu contraseña.
-        </p>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-5">
+      <ColorBlock tone="lime" className="p-6 md:p-7">
+        <div className="mb-6">
+          <Eyebrow>Recuperación</Eyebrow>
+          <h1 className="mt-2 text-2xl font-bold tracking-display">
+            {t.auth.forgotTitle}
+          </h1>
+          <p className="mt-2 text-sm text-foreground/70">
+            Ingresá tu email y te enviamos un código para recuperar tu
+            contraseña.
+          </p>
+        </div>
+
         <Form {...form}>
           <form
             onSubmit={(e) => { void form.handleSubmit(onSubmit)(e); }}
@@ -76,12 +77,7 @@ export const ForgotPasswordPage = () => {
                 <FormItem>
                   <FormLabel>{t.auth.emailLabel}</FormLabel>
                   <FormControl>
-                    <Input
-                      type="email"
-                      autoComplete="email"
-                      className="min-h-[44px]"
-                      {...field}
-                    />
+                    <Input type="email" autoComplete="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -90,23 +86,23 @@ export const ForgotPasswordPage = () => {
 
             <Button
               type="submit"
-              className="w-full min-h-[44px]"
+              className="w-full"
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting ? t.app.loading : 'Enviar código'}
             </Button>
           </form>
         </Form>
+      </ColorBlock>
 
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          <Link
-            to={routes.login}
-            className="font-medium text-primary underline underline-offset-2"
-          >
-            Volver al inicio de sesión
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+      <p className="text-center">
+        <Link
+          to={routes.login}
+          className="font-mono text-[11px] uppercase tracking-caption text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Volver al inicio de sesión
+        </Link>
+      </p>
+    </div>
   );
 };
