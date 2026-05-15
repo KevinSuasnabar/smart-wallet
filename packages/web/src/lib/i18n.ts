@@ -45,6 +45,17 @@ export const t = {
     filterByDateFrom: 'Desde',
     filterByDateTo: 'Hasta',
     loadMore: 'Cargar más',
+    editEyebrow: 'Editar',
+    editTitle: 'Editar movimiento',
+    editSubmit: 'Guardar cambios',
+    editSuccess: 'Movimiento actualizado',
+    editNoChanges: 'No hay cambios',
+    editNotFound: 'Este movimiento ya no existe',
+    deleteDialogTitle: 'Eliminar movimiento',
+    deleteDialogBody:
+      'Esta acción no se puede deshacer. El saldo de la billetera se ajustará automáticamente.',
+    deleteDialogConfirm: 'Eliminar',
+    deleteSuccess: 'Movimiento eliminado',
   },
   categories: {
     listTitle: 'Categorías',
