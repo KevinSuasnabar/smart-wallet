@@ -17,6 +17,15 @@ export const categorySK = (categoryId: string): string => `CATEGORY#${categoryId
 export const hiddenPredefinedSK = (predefinedCategoryId: string): string =>
   `HIDDENCAT#${predefinedCategoryId}`;
 
+export const recurringSK = (recurringId: string): string =>
+  `RECURRING#${recurringId}`;
+
+/** GSI1SK for recurring rows: lets us query pending materializations by ISO timestamp. */
+export const recurringGsi1SK = (
+  nextOccurrenceAtIso: string,
+  recurringId: string,
+): string => `RECURNEXT#${nextOccurrenceAtIso}#${recurringId}`;
+
 export const idempotencySK = (hashedKey: string): string => `IDEMPOTENCY#${hashedKey}`;
 
 export const transactionGsi1SK = (
@@ -34,3 +43,7 @@ export const transactionSKPrefix = (walletId: string): string => `TXN#${walletId
 export const categorySKPrefix = (): string => 'CATEGORY#';
 
 export const hiddenPredefinedSKPrefix = (): string => 'HIDDENCAT#';
+
+export const recurringSKPrefix = (): string => 'RECURRING#';
+
+export const recurringGsi1SKPrefix = (): string => 'RECURNEXT#';

@@ -85,3 +85,21 @@ export type {
   ListCategoriesResponseDTO,
   CategoryIdPathDTO,
 } from './schemas/category.js';
+
+// Recurring transaction schemas + DTOs
+export {
+  RecurringIdPathSchema,
+  CreateRecurringRequestSchema,
+  UpdateRecurringRequestSchema,
+  RecurringResponseSchema,
+  ListRecurringResponseSchema,
+  MaterializeRecurringResponseSchema,
+} from './schemas/recurring.js';
+export type {
+  RecurringIdPathDTO,
+  CreateRecurringDTO,
+  UpdateRecurringDTO,
+  RecurringResponseDTO,
+  ListRecurringResponseDTO,
+  MaterializeRecurringResponseDTO,
+} from './schemas/recurring.js';
