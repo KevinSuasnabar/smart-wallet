@@ -1,26 +1,38 @@
 import { webhookCallback } from "grammy";
-import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { withErrorHandler } from "../../middleware/withErrorHandler.js";
+import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from "aws-lambda";
 import { bot } from "../../telegram/bot.js";
 
-const telegramExecute = webhookCallback(bot, "aws-lambda-async");
+// "aws-lambda" + timeout 5s: si ctx.reply() se cuelga, grammy corta
+// con "return" en vez de lanzar excepción. El tercer arg es un callback
+// que el adapter de Lambda requiere (el tradicional (error, result)).
+const telegramExecute = webhookCallback(bot, "aws-lambda", {
+  onTimeout: "return",
+  timeoutMilliseconds: 5000,
+});
 
 /**
  * Lambda handler para webhook de Telegram.
  *
- * Delgado a propósito: toda la lógica (auth, comandos, respuestas)
- * vive en telegram/ vía grammy. Este handler solo:
- *   1. Recibe el evento de API Gateway
- *   2. Se lo pasa a grammy (webhookCallback)
- *   3. Devuelve 200 para que Telegram no reintente
+ * Sin withAuth ni withErrorHandler porque:
+ * - La auth se maneja dentro de grammy (authMiddleware en telegram/bot.ts)
+ * - El error handling es manual con try/catch para poder pasar el context
  *
- * NOTA: Sin withAuth — Telegram webhooks no tienen autenticación de usuario.
- * La autorización se maneja internamente vía authMiddleware en telegram/bot.ts.
- * El endpoint es público (protegido por la URL secreta + token del bot).
+ * context.callbackWaitsForEmptyEventLoop = false evita que Lambda espere
+ * a que el event loop de Node se vacíe antes de responder.
  */
-const _handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-  await telegramExecute(event, {});
-  return { statusCode: 200, body: JSON.stringify({ ok: true }) };
-};
+export const handler = async (
+  event: APIGatewayProxyEventV2,
+  context: Context,
+): Promise<APIGatewayProxyResultV2> => {
+  try {
+    context.callbackWaitsForEmptyEventLoop = false;
 
-export const handler = withErrorHandler(_handler);
+    // callback siempre 200 → Telegram no reintenta
+    await telegramExecute(event, context, async () => {});
+
+    return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+  } catch (error) {
+    console.error("[telegram] Error en handler:", error);
+    return { statusCode: 200, body: JSON.stringify({ ok: false, error: "Internal Server Error" }) };
+  }
+};
