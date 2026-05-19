@@ -59,6 +59,7 @@ jobs:
             echo "client_id=$(get $P/cognito/user-pool-client-id)"
             echo "telegram_token=$(get $P/telegram/token)"
             echo "my_telegram_id=$(get $P/telegram/my-id)"
+            echo "bot_user_id=$(get $P/bot/user-id)"
           } >> "$GITHUB_OUTPUT"
 
       - name: Deploy serverless
@@ -71,6 +72,7 @@ jobs:
           COGNITO_CLIENT_ID: ${{ steps.ssm.outputs.client_id }}
           TELEGRAM_TOKEN: ${{ steps.ssm.outputs.telegram_token }}
           MY_TELEGRAM_ID: ${{ steps.ssm.outputs.my_telegram_id }}
+          BOT_USER_ID: ${{ steps.ssm.outputs.bot_user_id }}
         run: npx serverless deploy --stage prod
 
       - name: Smoke prod

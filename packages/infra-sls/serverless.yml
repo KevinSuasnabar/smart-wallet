@@ -56,6 +56,7 @@ provider:
     DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, ''}
     TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN, ''}
     MY_TELEGRAM_ID: ${env:MY_TELEGRAM_ID, ''}
+    BOT_USER_ID: ${env:BOT_USER_ID, ''}
 
   iam:
     role:
