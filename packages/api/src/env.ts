@@ -11,6 +11,7 @@ export const env = {
   dynamoEndpoint: process.env.DYNAMODB_ENDPOINT ?? 'http://localhost:8000',
   telegramToken: process.env.TELEGRAM_TOKEN ?? '',
   myTelegramId: Number(process.env.MY_TELEGRAM_ID) || 0,
+  botUserId: process.env.BOT_USER_ID ?? '',
   /** Fallback userId when running offline and no `X-Mock-User-Id` header is provided. */
   localUserId: process.env.LOCAL_USER_ID,
 } as const;
