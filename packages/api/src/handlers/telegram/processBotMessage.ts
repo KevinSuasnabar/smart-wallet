@@ -1,26 +1,18 @@
-import { webhookCallback } from "grammy";
+import type { Update } from "grammy/types";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from "aws-lambda";
 import { bot } from "../../telegram/bot.js";
-
-// "aws-lambda" + timeout 5s: si ctx.reply() se cuelga, grammy corta
-// con "return" en vez de lanzar excepción. El tercer arg es un callback
-// que el adapter de Lambda requiere (el tradicional (error, result)).
-const telegramExecute = webhookCallback(
-  bot,
-  "aws-lambda",
-  "return",
-  5000
-);
 
 /**
  * Lambda handler para webhook de Telegram.
  *
+ * NO usa webhookCallback de grammy porque el adapter "aws-lambda" se cuelga
+ * esperando que el callback de Lambda se resuelva de una forma que no
+ * podemos garantizar. En vez de eso, parsea el Update directo del body
+ * y llama a bot.handleUpdate().
+ *
  * Sin withAuth ni withErrorHandler porque:
  * - La auth se maneja dentro de grammy (authMiddleware en telegram/bot.ts)
  * - El error handling es manual con try/catch para poder pasar el context
- *
- * context.callbackWaitsForEmptyEventLoop = false evita que Lambda espere
- * a que el event loop de Node se vacíe antes de responder.
  */
 export const handler = async (
   event: APIGatewayProxyEventV2,
@@ -28,10 +20,17 @@ export const handler = async (
 ): Promise<APIGatewayProxyResultV2> => {
   try {
     context.callbackWaitsForEmptyEventLoop = false;
-    console.log("LLEGA A LAMBDA", event);
 
-    // callback siempre 200 → Telegram no reintenta
-    await telegramExecute(event, context, async () => {});
+    if (!event.body) {
+      console.warn("[telegram] Webhook recibido sin body");
+      return { statusCode: 200, body: JSON.stringify({ ok: false, error: "No body" }) };
+    }
+
+    const update = JSON.parse(event.body) as Update;
+    console.log("[telegram] Update recibido:", update.update_id);
+
+    await bot.handleUpdate(update);
+    console.log("HANDLE UPDATE COMPLETED");
 
     return { statusCode: 200, body: JSON.stringify({ ok: true }) };
   } catch (error) {
