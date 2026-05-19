@@ -41,8 +41,17 @@ export const bot = new Bot<BotContext>(env.telegramToken, {
     has_main_web_app: false,
     can_manage_bots: false,
     has_topics_enabled: false,
-    allows_users_to_create_topics: false
-  }
+    allows_users_to_create_topics: false,
+  },
+  client: {
+    // Usar fetch nativo de Node 20 en vez de node-fetch@2.
+    // node-fetch@2 no es compatible con el AbortSignal moderno que grammy
+    // crea internamente para sus timeouts (tira "Expected signal to be an
+    // instanceof AbortSignal").
+    fetch: globalThis.fetch,
+    // Timeout más agresivo: 10s en vez de los 500s default de grammy.
+    timeoutSeconds: 10,
+  },
 });
 
 // ── Middleware global (se ejecuta en CADA update) ──────────────────────
