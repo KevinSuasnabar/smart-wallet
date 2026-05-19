@@ -57,6 +57,7 @@ jobs:
             echo "gsi1_name=$(get $P/dynamo/gsi1-name)"
             echo "issuer_url=$(get $P/cognito/issuer-url)"
             echo "client_id=$(get $P/cognito/user-pool-client-id)"
+            echo "telegram_token=$(get $P/telegram/token)"
           } >> "$GITHUB_OUTPUT"
 
       - name: Deploy serverless
@@ -67,6 +68,7 @@ jobs:
           GSI1_NAME: ${{ steps.ssm.outputs.gsi1_name }}
           COGNITO_ISSUER_URL: ${{ steps.ssm.outputs.issuer_url }}
           COGNITO_CLIENT_ID: ${{ steps.ssm.outputs.client_id }}
+          TELEGRAM_TOKEN: ${{ steps.ssm.outputs.telegram_token }}
         run: npx serverless deploy --stage prod
 
       - name: Smoke prod
