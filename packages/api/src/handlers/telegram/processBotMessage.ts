@@ -1,8 +1,8 @@
 import { Bot, webhookCallback } from "grammy";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from "aws-lambda";
-import { env } from "../../env.js";
+
 // 1. Inicializar el bot leyendo el Token desde las variables de entorno de Node.js
-const bot = new Bot(env.telegramToken);
+const bot = new Bot(process.env.TELEGRAM_TOKEN || "");
 
 // 2. Definir el comando /gasto y su lógica de parseo
 bot.command("gasto", async (ctx) => {
@@ -21,19 +21,19 @@ bot.command("gasto", async (ctx) => {
   }
 
   const [_, amountStr, category, description] = match;
-  const amount = parseFloat(amountStr ?? "0");
+  const amount = parseFloat(amountStr);
 
   // LOG DE CONTROL: Imprimir en CloudWatch lo extraído con éxito
   console.log("=== DATOS EXTRAÍDOS DEL COMANDO ===");
   console.log(`Monto: ${amount} | Categoría: ${category} | Descripción: ${description}`);
 
-  // Responder al usuario con el formato final simulado
-  return ctx.reply(`✅ *Gasto Registrado (Simulado)*\n💰 *Monto:* S/. ${amount.toFixed(2)}\n🏷️ *Categoría:* ${category.toLowerCase()}\n📝 *Nota:* ${description}`, {
+  // Responder al usuario con el formato final simulado (usando ?. para evitar errores de TypeScript)
+  return ctx.reply(`✅ *Gasto Registrado (Simulado)*\n💰 *Monto:* S/. ${amount.toFixed(2)}\n🏷️ *Categoría:* ${category?.toLowerCase() ?? "general"}\n📝 *Nota:* ${description}`, {
     parse_mode: "Markdown"
   });
 });
 
-// 3. El ejecutor síncronizado de grammY para AWS Lambda usando parámetros sueltos
+// 3. El ejecutor síncronizado de grammY para AWS Lambda usando parámetros sueltos de sobrecarga
 const telegramExecute = webhookCallback(
   bot,
   "aws-lambda",
@@ -61,7 +61,7 @@ export const handler = async (
     const telegramUserId = body?.message?.from?.id;
 
     // Leer tu ID de Telegram desde las variables de entorno de Node.js
-    const MY_TELEGRAM_ID = Number(env.myTelegramId);
+    const MY_TELEGRAM_ID = Number(process.env.MY_TELEGRAM_ID);
 
     // LOGS DE DIAGNÓSTICO: Validación de identidades en CloudWatch
     console.log("=== [DEBUG TELEGRAM] ===");
@@ -78,13 +78,12 @@ export const handler = async (
       };
     }
 
-    // Ceder el control del enrutamiento a grammY.
-    // Como devuelve void, solo esperamos que termine su ciclo de ejecución.
+    // Ceder el control del enrutamiento a grammY pasándole una función asíncrona limpia para tsc
     await telegramExecute(formattedEvent, context, async () => {});
 
     console.log("✅ [OK] Ejecución de grammY finalizada con éxito.");
 
-    // Retornamos un 200 OK clásico. grammY ya se encargó de inyectar la respuesta al cliente
+    // Retornamos un 200 OK clásico. grammY se encarga de inyectar la respuesta al cliente
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
