@@ -55,6 +55,7 @@ provider:
     GSI1_NAME: ${env:GSI1_NAME, 'GSI1'}
     DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, ''}
     TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN, ''}
+    MY_TELEGRAM_ID: ${env:MY_TELEGRAM_ID, ''}
 
   iam:
     role:

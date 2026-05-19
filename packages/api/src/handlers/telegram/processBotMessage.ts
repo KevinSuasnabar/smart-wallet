@@ -4,25 +4,52 @@ import { withErrorHandler } from "../../middleware/withErrorHandler.js";
 import { env } from "../../env.js";
 
 const bot = new Bot(env.telegramToken);
-console.log("Bot initialized token: ", env.telegramToken);
 
-// ... Aquí dejas tus comandos (bot.command("gasto", ...)) ...
+// ==========================================
+// 1. PROCESO DE FINANZAS
+// ==========================================
+bot.command("gasto", async (ctx) => {
+  await ctx.reply("Gasto registrado");
+});
 
+bot.command("balance", async (ctx) => {
+  await ctx.reply("Tu balance actual es...");
+});
+
+// ==========================================
+// 2. PROCESO DE PELÍCULAS
+// ==========================================
+bot.command("buscar_peli", async (ctx) => {
+  const peli = ctx.match;
+  await ctx.reply(`Buscando y descargando: ${peli}`);
+});
+
+// ==========================================
+// 3. RESPUESTA POR DEFECTO
+// ==========================================
+bot.on("message:text", async (ctx) => {
+  await ctx.reply("No entiendo ese comando. Intenta con /gasto o /buscar_peli");
+});
+
+// ==========================================
+// HANDLER
+// ==========================================
 const telegramExecute = webhookCallback(bot, "aws-lambda-async");
 
-const _handler = async (
-  event: APIGatewayProxyEventV2,
-): Promise<APIGatewayProxyResultV2> => {
-  console.log("Webhook recibido de Telegram:", event.body);
+const _handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
+  const body = event.body ? JSON.parse(event.body) : null;
+  const telegramUserId = body?.message?.from?.id ?? null;
 
-  // Telegram envía el update directamente como body JSON.
-  // grammY se encarga de parsearlo y ejecutar los comandos registrados.
-  const result = await telegramExecute(event, {});
-  console.log("Result test: ", JSON.stringify(result, null, 2));
+  if (telegramUserId !== env.myTelegramId) {
+    console.log("Acceso no autorizado de ID:", telegramUserId);
+    return { statusCode: 200, body: JSON.stringify({ ok: false, error: "Unauthorized" }) };
+  }
 
-  return result as unknown as APIGatewayProxyResultV2;
+  // grammy "aws-lambda-async" maneja el webhook internamente y devuelve void
+  await telegramExecute(event, {});
+
+  // Respondemos 200 para que Telegram no reintente
+  return { statusCode: 200, body: JSON.stringify({ ok: true }) };
 };
 
-// NOTA: Sin withAuth — Telegram webhooks no tienen autenticación de usuario.
-// El endpoint es público (protegido por la URL del webhook + token del bot).
 export const handler = withErrorHandler(_handler);
