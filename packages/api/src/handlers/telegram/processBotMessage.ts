@@ -1,8 +1,8 @@
 import { Bot, webhookCallback } from "grammy";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from "aws-lambda";
-
+import { env } from "../../env.js";
 // 1. Inicializar el bot leyendo el Token desde las variables de entorno de Node.js
-const bot = new Bot(process.env.TELEGRAM_TOKEN || "");
+const bot = new Bot(env.telegramToken);
 
 // 2. Definir el comando /gasto y su lógica de parseo
 bot.command("gasto", async (ctx) => {
@@ -28,16 +28,17 @@ bot.command("gasto", async (ctx) => {
   console.log(`Monto: ${amount} | Categoría: ${category} | Descripción: ${description}`);
 
   // Responder al usuario con el formato final simulado
-  await ctx.reply(`✅ *Gasto Registrado (Simulado)*\n💰 *Monto:* S/. ${amount.toFixed(2)}\n🏷️ *Categoría:* ${category?.toLowerCase() ?? ""}\n📝 *Nota:* ${description}`, {
+  return ctx.reply(`✅ *Gasto Registrado (Simulado)*\n💰 *Monto:* S/. ${amount.toFixed(2)}\n🏷️ *Categoría:* ${category.toLowerCase()}\n📝 *Nota:* ${description}`, {
     parse_mode: "Markdown"
   });
 });
 
+// 3. El ejecutor síncronizado de grammY para AWS Lambda usando parámetros sueltos
 const telegramExecute = webhookCallback(
   bot,
   "aws-lambda",
-  "return", // onTimeout: qué hacer si expira (retornar en vez de lanzar error)
-  5000      // timeoutMilliseconds: los 5 segundos de límite
+  "return", // onTimeout: retornar en vez de lanzar excepción
+  5000      // timeoutMilliseconds
 );
 
 // 4. Handler principal que invoca AWS Lambda con tipado estricto para API Gateway v2
@@ -60,7 +61,7 @@ export const handler = async (
     const telegramUserId = body?.message?.from?.id;
 
     // Leer tu ID de Telegram desde las variables de entorno de Node.js
-    const MY_TELEGRAM_ID = Number(process.env.MY_TELEGRAM_ID);
+    const MY_TELEGRAM_ID = Number(env.myTelegramId);
 
     // LOGS DE DIAGNÓSTICO: Validación de identidades en CloudWatch
     console.log("=== [DEBUG TELEGRAM] ===");
@@ -77,22 +78,18 @@ export const handler = async (
       };
     }
 
-    // Ceder el control del enrutamiento de comandos a grammY pasándole una función asíncrona limpia para tsc
-    const result = await telegramExecute(formattedEvent, context, async () => {});
+    // Ceder el control del enrutamiento a grammY.
+    // Como devuelve void, solo esperamos que termine su ciclo de ejecución.
+    await telegramExecute(formattedEvent, context, async () => {});
 
-    console.log("=== [DEBUG] RESPUESTA GENERADA POR GRAMMY ===");
-    console.log(JSON.stringify(result, null, 2));
+    console.log("✅ [OK] Ejecución de grammY finalizada con éxito.");
 
-    // Si grammY devuelve undefined o un formato inesperado, aseguramos un 200 OK estructurado para API Gateway
-    if (!result || !('statusCode' in result)) {
-      return {
-        statusCode: 200,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ok: true })
-      };
-    }
-
-    return result;
+    // Retornamos un 200 OK clásico. grammY ya se encargó de inyectar la respuesta al cliente
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ok: true })
+    };
 
   } catch (error: any) {
     console.error("💥 Error crítico en el handler:", error);
