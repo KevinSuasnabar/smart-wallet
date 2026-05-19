@@ -52,6 +52,7 @@ export const registerGastoCommand = (bot: Bot<BotContext>) => {
     }
 
     const args = parseGastoArgs(ctx.match);
+    console.log("ARGS", args);
     if (!args) {
       await ctx.reply("❌ Formato: /gasto <monto> [descripción]\nEj: /gasto 50.50 almuerzo");
       return;
@@ -71,6 +72,8 @@ export const registerGastoCommand = (bot: Bot<BotContext>) => {
       return;
     }
 
+    console.log("WALLET ID", walletId);
+
     const result = await container.addTransaction({
       userId: env.botUserId,
       walletId,
@@ -81,6 +84,8 @@ export const registerGastoCommand = (bot: Bot<BotContext>) => {
       description: args.description ?? null,
       occurredAt: new Date(),
     });
+
+    console.log("RESULTADO DEL ADD TRANSACTION", result);
 
     if (!result.ok) {
       await ctx.reply("❌ Error al registrar el gasto. Intentalo de nuevo.");
