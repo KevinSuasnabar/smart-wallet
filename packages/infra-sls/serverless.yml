@@ -301,6 +301,7 @@ functions:
 
   processBotMessage:
     handler: src/handlers/telegram/processBotMessage.handler
+    timeout: 30
     events:
       - httpApi:
           path: /telegram/process-bot-message
