@@ -23,6 +23,7 @@
     "@smart-wallet/domain": "workspace:*",
     "@smart-wallet/shared-types": "workspace:*",
     "aws-jwt-verify": "^4.0.1",
+    "grammy": "^1.43.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

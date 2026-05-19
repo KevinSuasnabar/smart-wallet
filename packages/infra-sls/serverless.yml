@@ -54,6 +54,8 @@ provider:
     TABLE_NAME: ${env:TABLE_NAME, 'smart-wallet-local'}
     GSI1_NAME: ${env:GSI1_NAME, 'GSI1'}
     DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, ''}
+    TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN, ''}
+    MY_TELEGRAM_ID: ${env:MY_TELEGRAM_ID, ''}
 
   iam:
     role:
@@ -295,3 +297,10 @@ functions:
           method: delete
           authorizer:
             name: cognitoJwt
+
+  processBotMessage:
+    handler: src/handlers/telegram/processBotMessage.handler
+    events:
+      - httpApi:
+          path: /telegram/process-bot-message
+          method: post
