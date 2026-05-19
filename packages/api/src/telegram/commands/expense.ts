@@ -46,6 +46,7 @@ async function findOrCreateGastosWallet(userId: string): Promise<string | null> 
 
 export const registerGastoCommand = (bot: Bot<BotContext>) => {
   bot.command("gasto", async (ctx) => {
+    console.log("env.botUserId ->>>>>>>>: ", env.botUserId);
     if (!env.botUserId) {
       await ctx.reply("❌ Bot no configurado. Falta BOT_USER_ID.");
       return;
