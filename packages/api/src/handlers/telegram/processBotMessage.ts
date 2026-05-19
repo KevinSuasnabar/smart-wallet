@@ -35,8 +35,8 @@ export const handler = async (
     }
 
     // 4. Ahora sí, pasamos el evento formateado y tipado sin que ESLint llore por un 'any'
-    const result = await telegramExecute(formattedEvent, context, () => {});
-    return result  as unknown as APIGatewayProxyResultV2;
+    const result = await telegramExecute(formattedEvent, context, async () => Promise.resolve({}));
+    return result as unknown as APIGatewayProxyResultV2;
 
   } catch (error: any) {
     console.error("💥 Error crítico en el handler:", error);
