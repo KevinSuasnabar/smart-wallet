@@ -1,18 +1,7 @@
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+
 import type { Update } from "grammy/types";
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from "aws-lambda";
 import { bot } from "../../telegram/bot.js";
-
-// Inicialización lazy: bot.init() se llama UNA vez y se cachea en el
-// contexto reusado de Lambda (los módulos se cargan una sola vez).
-let initPromise: Promise<void> | null = null;
-async function ensureBotInit(): Promise<void> {
-  if (!initPromise) {
-    initPromise = bot.init();
-  }
-  await initPromise;
-}
-
 /**
  * Lambda handler para webhook de Telegram.
  *
@@ -36,9 +25,6 @@ export const handler = async (
 
     const update = JSON.parse(event.body) as Update;
     console.log("[telegram] Update recibido:", update.update_id);
-
-    // Inicializar el bot si es la primera vez (cacheado en contexto Lambda)
-    await ensureBotInit();
 
     await bot.handleUpdate(update);
 
