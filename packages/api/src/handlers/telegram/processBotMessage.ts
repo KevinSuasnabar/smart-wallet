@@ -1,55 +1,48 @@
 import { Bot, webhookCallback } from "grammy";
-import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { withErrorHandler } from "../../middleware/withErrorHandler.js";
-import { env } from "../../env.js";
+import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from "aws-lambda"; // 1. Importar los tipos reales
 
-const bot = new Bot(env.telegramToken);
+const bot = new Bot(process.env.TELEGRAM_TOKEN || "");
 
-// ==========================================
-// 1. PROCESO DE FINANZAS
-// ==========================================
-bot.command("gasto", async (ctx) => {
-  await ctx.reply("Gasto registrado");
-});
+// ... (aquí mantienes tu bot.command sin cambios) ...
 
-bot.command("balance", async (ctx) => {
-  await ctx.reply("Tu balance actual es...");
-});
+const telegramExecute = webhookCallback(bot, "aws-lambda");
 
-// ==========================================
-// 2. PROCESO DE PELÍCULAS
-// ==========================================
-bot.command("buscar_peli", async (ctx) => {
-  const peli = ctx.match;
-  await ctx.reply(`Buscando y descargando: ${peli}`);
-});
+// 2. Aplicar los tipos correctos en la firma del handler
+export const handler = async (
+  event: APIGatewayProxyEventV2,
+  context: Context
+): Promise<APIGatewayProxyResultV2> => {
 
-// ==========================================
-// 3. RESPUESTA POR DEFECTO
-// ==========================================
-bot.on("message:text", async (ctx) => {
-  await ctx.reply("No entiendo ese comando. Intenta con /gasto o /buscar_peli");
-});
+  context.callbackWaitsForEmptyEventLoop = false;
 
-// ==========================================
-// HANDLER
-// ==========================================
-const telegramExecute = webhookCallback(bot, "aws-lambda-async");
+  try {
+    // 3. grammY espera que 'headers' contenga strings puros, así que hacemos un casteo seguro para ESLint
+    const formattedEvent = {
+      ...event,
+      headers: event.headers as Record<string, string>
+    };
 
-const _handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
-  const body = event.body ? JSON.parse(event.body) : null;
-  const telegramUserId = body?.message?.from?.id ?? null;
+    const body = event.body ? JSON.parse(event.body) : null;
+    const telegramUserId = body?.message?.from?.id;
+    const MY_TELEGRAM_ID = Number(process.env.MY_TELEGRAM_ID);
 
-  if (telegramUserId !== env.myTelegramId) {
-    console.log("Acceso no autorizado de ID:", telegramUserId);
-    return { statusCode: 200, body: JSON.stringify({ ok: false, error: "Unauthorized" }) };
+    if (!telegramUserId || telegramUserId !== MY_TELEGRAM_ID) {
+      console.warn(`[WARN] Intento de acceso no autorizado o ID inválido: ${telegramUserId}`);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ ok: false, error: "Unauthorized" })
+      };
+    }
+
+    // 4. Ahora sí, pasamos el evento formateado y tipado sin que ESLint llore por un 'any'
+    const result = await telegramExecute(formattedEvent, context, () => {});
+    return result  as unknown as APIGatewayProxyResultV2;
+
+  } catch (error: any) {
+    console.error("💥 Error crítico en el handler:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Internal Server Error" }),
+    };
   }
-
-  // grammy "aws-lambda-async" maneja el webhook internamente y devuelve void
-  await telegramExecute(event, {});
-
-  // Respondemos 200 para que Telegram no reintente
-  return { statusCode: 200, body: JSON.stringify({ ok: true }) };
 };
-
-export const handler = withErrorHandler(_handler);
