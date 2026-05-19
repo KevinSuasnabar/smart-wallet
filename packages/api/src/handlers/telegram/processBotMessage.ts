@@ -21,8 +21,7 @@ bot.command("gasto", async (ctx) => {
   }
 
   const [_, amountStr, category, description] = match;
-  const amount = parseFloat(amountStr);
-
+  const amount = parseFloat(amountStr ?? "0");
   // LOG DE CONTROL: Imprimir en CloudWatch lo extraído con éxito
   console.log("=== DATOS EXTRAÍDOS DEL COMANDO ===");
   console.log(`Monto: ${amount} | Categoría: ${category} | Descripción: ${description}`);
