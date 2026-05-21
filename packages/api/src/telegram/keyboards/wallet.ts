@@ -1,15 +1,20 @@
 import { InlineKeyboard } from 'grammy';
-import type { Wallet } from '@smart-wallet/domain';
+
+export interface WalletOption {
+  id: string;
+  name: string;
+}
 
 /**
  * Builds an inline keyboard with one button per wallet.
- * callback_data format: `w:<walletId>` (UUID is 36 chars + 2 = 38 bytes, well within 64-byte limit).
+ * Receives plain objects (not Wallet class instances) so the keyboard
+ * survives grammy's JSON serialization during conversation replay.
+ * callback_data format: `w:<walletId>` (UUID 36 chars + 2 = 38 bytes, well within 64-byte limit).
  */
-export function buildWalletKeyboard(wallets: readonly Wallet[]): InlineKeyboard {
+export function buildWalletKeyboard(wallets: readonly WalletOption[]): InlineKeyboard {
   const keyboard = new InlineKeyboard();
   for (const wallet of wallets) {
-    const callbackData = `w:${wallet.id.value}`;
-    // Defensive assertion — UUIDs are 36 chars, prefix is 2 chars = 38 bytes, always < 64
+    const callbackData = `w:${wallet.id}`;
     if (callbackData.length > 64) {
       throw new Error(`callback_data exceeds 64 bytes: "${callbackData}"`);
     }

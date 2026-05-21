@@ -66,16 +66,19 @@ export const recordTransaction =
     const money = moneyResult.value;
 
     // ── Step 2: Wallet Selection ────────────────────────────────────────────
-    const walletsResult = await conversation.external(() =>
-      container.listWallets({ userId: env.botUserId }),
-    );
+    // Map to plain objects inside external() — class getters (wallet.name, wallet.id.value)
+    // are lost when grammy serializes the result to JSON for replay. Plain objects survive.
+    const wallets = await conversation.external(async () => {
+      const result = await container.listWallets({ userId: env.botUserId });
+      if (!result.ok) return null;
+      return result.value.items.map((w) => ({ id: w.id.value, name: w.name }));
+    });
 
-    if (!walletsResult.ok) {
+    if (wallets === null) {
       await ctx.reply('❌ No pude consultar las billeteras. Intentá de nuevo más tarde.');
       return;
     }
 
-    const wallets = walletsResult.value.items;
     if (wallets.length === 0) {
       await ctx.reply('❌ No tenés billeteras creadas. Creá una desde la web primero.');
       return;
@@ -90,7 +93,7 @@ export const recordTransaction =
     const walletId = walletCtx.callbackQuery.data.slice(2);
 
     // Resolve wallet name for summary display
-    const selectedWallet = wallets.find((w) => w.id.value === walletId);
+    const selectedWallet = wallets.find((w) => w.id === walletId);
     const walletName = selectedWallet?.name ?? walletId;
 
     // ── Step 3: Category Selection ──────────────────────────────────────────
