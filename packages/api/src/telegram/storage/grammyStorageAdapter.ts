@@ -1,24 +1,25 @@
-import type { StorageAdapter } from 'grammy';
+import type { ConversationData, VersionedState } from '@grammyjs/conversations';
 import type { TelegramSessionRepository } from '../ports/TelegramSessionRepository.js';
 
 /**
- * Bridges the grammy StorageAdapter<unknown> interface to our
+ * Bridges the grammy/conversations v2 VersionedStateStorage interface to our
  * TelegramSessionRepository port.
  *
- * JSON serialisation lives here — the port stores raw strings, grammy
- * operates on typed objects. This shim is the only place that calls
- * JSON.parse / JSON.stringify for session data.
+ * grammy/conversations v2 stores VersionedState<ConversationData> objects.
+ * The port stores raw strings — JSON serialisation lives here only.
+ *
+ * The returned object satisfies ConversationStorage (type?: never variant),
+ * which makes grammy use ctx.chatId as the storage key automatically.
  */
-export const makeGrammyStorage = (
-  repo: TelegramSessionRepository,
-): StorageAdapter<unknown> => ({
-  async read(key: string): Promise<unknown> {
+export const makeConversationStorage = (repo: TelegramSessionRepository) => ({
+  async read(key: string): Promise<VersionedState<ConversationData> | undefined> {
     const raw = await repo.read(key);
-    return raw === undefined ? undefined : (JSON.parse(raw) as unknown);
+    if (raw === undefined) return undefined;
+    return JSON.parse(raw) as VersionedState<ConversationData>;
   },
 
-  async write(key: string, value: unknown): Promise<void> {
-    await repo.write(key, JSON.stringify(value));
+  async write(key: string, state: VersionedState<ConversationData>): Promise<void> {
+    await repo.write(key, JSON.stringify(state));
   },
 
   async delete(key: string): Promise<void> {
