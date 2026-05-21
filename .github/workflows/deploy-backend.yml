@@ -60,6 +60,8 @@ jobs:
             echo "telegram_token=$(get $P/telegram/token)"
             echo "my_telegram_id=$(get $P/telegram/my-id)"
             echo "bot_user_id=$(get $P/bot/user-id)"
+            echo "telegram_sessions_table_name=$(get $P/dynamo/telegram-sessions-table-name)"
+            echo "telegram_sessions_table_arn=$(get $P/dynamo/telegram-sessions-table-arn)"
           } >> "$GITHUB_OUTPUT"
 
       - name: Deploy serverless
@@ -73,6 +75,8 @@ jobs:
           TELEGRAM_TOKEN: ${{ steps.ssm.outputs.telegram_token }}
           MY_TELEGRAM_ID: ${{ steps.ssm.outputs.my_telegram_id }}
           BOT_USER_ID: ${{ steps.ssm.outputs.bot_user_id }}
+          TELEGRAM_SESSIONS_TABLE: ${{ steps.ssm.outputs.telegram_sessions_table_name }}
+          TELEGRAM_SESSIONS_TABLE_ARN: ${{ steps.ssm.outputs.telegram_sessions_table_arn }}
         run: npx serverless deploy --stage prod
 
       - name: Smoke prod
