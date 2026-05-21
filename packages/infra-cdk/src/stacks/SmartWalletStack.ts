@@ -2,6 +2,7 @@ import { Stack, CfnOutput, Tags } from 'aws-cdk-lib';
 import type { StackProps } from 'aws-cdk-lib';
 import type { Construct } from 'constructs';
 import { SingleTable } from '../constructs/SingleTable.js';
+import { TelegramSessionsTable } from '../constructs/TelegramSessionsTable.js';
 import { UserPool } from '../constructs/UserPool.js';
 import { SsmParameters } from '../constructs/SsmParameters.js';
 import { GithubOidcRole } from '../constructs/GithubOidcRole.js';
@@ -24,6 +25,9 @@ export class SmartWalletStack extends Stack {
     const prefix = `/smart-wallet/${props.stage}`;
 
     const singleTable = new SingleTable(this, 'SingleTable', { tableName });
+    const telegramSessionsTable = new TelegramSessionsTable(this, 'TelegramSessionsTable', {
+      tableName: `smart-wallet-telegram-sessions-${props.stage}`,
+    });
     const userPool = new UserPool(this, 'UserPool', { userPoolName });
 
     // PITR disabled by design — MVP cost constraint (NFR-COST-01).
@@ -31,6 +35,7 @@ export class SmartWalletStack extends Stack {
     // beyond MVP. Manual DynamoDB on-demand backups are the mitigation.
     new SsmParameters(this, 'SsmParameters', {
       table: singleTable.table,
+      telegramSessionsTable,
       userPool: userPool.userPool,
       userPoolClient: userPool.userPoolClient,
       issuerUrl: userPool.issuerUrl,
@@ -52,6 +57,16 @@ export class SmartWalletStack extends Stack {
     new CfnOutput(this, 'TableName', {
       value: singleTable.table.tableName,
       description: 'DynamoDB single-table name',
+    });
+
+    new CfnOutput(this, 'TelegramSessionsTableName', {
+      value: telegramSessionsTable.table.tableName,
+      description: 'DynamoDB Telegram sessions table name',
+    });
+
+    new CfnOutput(this, 'TelegramSessionsTableArn', {
+      value: telegramSessionsTable.table.tableArn,
+      description: 'DynamoDB Telegram sessions table ARN',
     });
 
     new CfnOutput(this, 'UserPoolId', {

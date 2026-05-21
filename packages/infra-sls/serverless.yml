@@ -57,6 +57,7 @@ provider:
     TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN, ''}
     MY_TELEGRAM_ID: ${env:MY_TELEGRAM_ID, ''}
     BOT_USER_ID: ${env:BOT_USER_ID, ''}
+    TELEGRAM_SESSIONS_TABLE: ${env:TELEGRAM_SESSIONS_TABLE, 'smart-wallet-telegram-sessions-local'}
 
   iam:
     role:
@@ -74,6 +75,13 @@ provider:
           Resource:
             - ${env:TABLE_ARN, 'arn:aws:dynamodb:us-east-1:000000000000:table/smart-wallet-local'}
             - ${env:TABLE_ARN, 'arn:aws:dynamodb:us-east-1:000000000000:table/smart-wallet-local'}/index/GSI1
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+          Resource:
+            - ${env:TELEGRAM_SESSIONS_TABLE_ARN, 'arn:aws:dynamodb:us-east-1:000000000000:table/smart-wallet-telegram-sessions-local'}
 
 custom:
   esbuild:
