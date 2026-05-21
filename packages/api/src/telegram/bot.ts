@@ -1,10 +1,10 @@
-import { Bot, session } from 'grammy';
+import { Bot } from 'grammy';
 import { conversations, createConversation } from '@grammyjs/conversations';
 import { env } from '../env.js';
-import type { BotContext, SessionData } from './context.js';
+import type { BotContext } from './context.js';
 import { authMiddleware } from './middleware/auth.js';
 import { registerCommands } from './commands/index.js';
-import { makeGrammyStorage } from './storage/grammyStorageAdapter.js';
+import { makeConversationStorage } from './storage/grammyStorageAdapter.js';
 import { container } from '../composition/container.js';
 import { recordTransaction } from './conversations/recordTransaction.js';
 
@@ -25,15 +25,14 @@ const getBotIdFromToken = (token: string): number => {
  *
  * Middleware chain (orden de ejecución — el orden importa):
  *   1. authMiddleware       — filtra por MY_TELEGRAM_ID
- *   2. session()            — carga/guarda estado de grammy desde DynamoDB
- *   3. conversations()      — habilita el plugin de conversaciones
- *   4. createConversation() — registra recordTransaction:expense
- *   5. createConversation() — registra recordTransaction:income
- *   6. Comandos registrados  — cancel, gasto, ingreso, balance, ...
- *   7. Handler por defecto   — mensaje no reconocido
+ *   2. conversations()      — habilita el plugin con storage en DynamoDB
+ *   3. createConversation() — registra recordTransaction:expense
+ *   4. createConversation() — registra recordTransaction:income
+ *   5. Comandos registrados  — cancel, gasto, ingreso, balance, ...
+ *   6. Handler por defecto   — mensaje no reconocido
  *
- * NOTA: el orden de registro importa. session() y conversations() DEBEN ir
- * antes de createConversation() y antes de los comandos.
+ * NOTA: conversations() v2 gestiona su propio storage (DynamoDB) directamente.
+ * No se usa session() middleware — grammy/conversations v2 no lo necesita.
  */
 export const bot = new Bot<BotContext>(env.telegramToken, {
   botInfo: {
@@ -64,17 +63,10 @@ export const bot = new Bot<BotContext>(env.telegramToken, {
 // ── 1. Auth middleware ─────────────────────────────────────────────────────
 bot.use(authMiddleware);
 
-// ── 2. Session middleware (persists conversation state in DynamoDB) ─────────
-// The storage adapter stores opaque JSON; cast to SessionData for the type parameter.
-bot.use(
-  session<SessionData, BotContext>({
-    initial: (): SessionData => ({}),
-    storage: makeGrammyStorage(container.telegramSessionRepo) as import('grammy').StorageAdapter<SessionData>,
-  }),
-);
-
-// ── 3. Conversations plugin ────────────────────────────────────────────────
-bot.use(conversations());
+// ── 2. Conversations plugin with DynamoDB storage ──────────────────────────
+// grammy/conversations v2 manages its own VersionedStateStorage — no session()
+// middleware needed. The storage adapter bridges to TelegramSessionRepository.
+bot.use(conversations({ storage: makeConversationStorage(container.telegramSessionRepo) }));
 
 // ── 4–5. Register conversation handlers ───────────────────────────────────
 bot.use(createConversation(recordTransaction('expense'), 'recordTransaction:expense'));
