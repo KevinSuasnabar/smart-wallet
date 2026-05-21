@@ -46,3 +46,4 @@ export type {
 } from './repositories/DynamoDBTransactionRepository.js';
 export { DynamoDBCategoryRepository } from './repositories/DynamoDBCategoryRepository.js';
 export { DynamoDBRecurringTransactionRepository } from './repositories/DynamoDBRecurringTransactionRepository.js';
+export { DynamoDBTelegramSessionRepository } from './repositories/DynamoDBTelegramSessionRepository.js';

@@ -14,4 +14,5 @@ export const env = {
   botUserId: process.env.BOT_USER_ID ?? '',
   /** Fallback userId when running offline and no `X-Mock-User-Id` header is provided. */
   localUserId: process.env.LOCAL_USER_ID,
+  telegramSessionsTable: process.env.TELEGRAM_SESSIONS_TABLE ?? 'smart-wallet-telegram-sessions-local',
 } as const;

@@ -47,3 +47,9 @@ export const hiddenPredefinedSKPrefix = (): string => 'HIDDENCAT#';
 export const recurringSKPrefix = (): string => 'RECURRING#';
 
 export const recurringGsi1SKPrefix = (): string => 'RECURNEXT#';
+
+// ── Telegram sessions table key ───────────────────────────────────────────
+// The sessions table is a separate table (not the single-table) with PK=chatId.
+// This helper documents the intended key shape for the sessions adapter.
+
+export const telegramSessionKey = (chatId: string): { chatId: string } => ({ chatId });

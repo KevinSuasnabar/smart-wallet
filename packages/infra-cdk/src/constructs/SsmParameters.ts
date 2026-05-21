@@ -1,10 +1,12 @@
 import { Construct } from 'constructs';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import type { Table } from 'aws-cdk-lib/aws-dynamodb';
+import type { TelegramSessionsTable } from './TelegramSessionsTable.js';
 import type { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 
 export interface SsmParametersProps {
   table: Table;
+  telegramSessionsTable: TelegramSessionsTable;
   userPool: UserPool;
   userPoolClient: UserPoolClient;
   issuerUrl: string;
@@ -55,6 +57,16 @@ export class SsmParameters extends Construct {
     new StringParameter(this, 'Region', {
       parameterName: `${props.prefix}/region`,
       stringValue: props.region,
+    });
+
+    new StringParameter(this, 'TelegramSessionsTableName', {
+      parameterName: `${props.prefix}/dynamo/telegram-sessions-table-name`,
+      stringValue: props.telegramSessionsTable.table.tableName,
+    });
+
+    new StringParameter(this, 'TelegramSessionsTableArn', {
+      parameterName: `${props.prefix}/dynamo/telegram-sessions-table-arn`,
+      stringValue: props.telegramSessionsTable.table.tableArn,
     });
   }
 }

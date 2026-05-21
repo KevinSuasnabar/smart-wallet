@@ -65,6 +65,9 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: ^3.785.0
         version: 3.1045.0(@aws-sdk/client-dynamodb@3.1045.0)
+      '@grammyjs/conversations':
+        specifier: ^2.0.0
+        version: 2.1.1(grammy@1.43.0)
       '@smart-wallet/domain':
         specifier: workspace:*
         version: link:../domain
@@ -1036,6 +1039,12 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@grammyjs/conversations@2.1.1':
+    resolution: {integrity: sha512-hoxqwSkaXDeU7mzXulpk3A4Cmd6UZO3HU4aPoITX5ekSHK7ZcUEmMl7RhKKkqw3z6zVbbAShQreJoVV5/dDSLA==}
+    engines: {node: ^12.20.0 || >=14.13.1}
+    peerDependencies:
+      grammy: ^1.20.1
 
   '@grammyjs/types@3.27.3':
     resolution: {integrity: sha512-yUKMLliGsGbnxu96YUJ7km7B0zy4PzeH/Jvti5705R/LeKDMqkDV4DckMSt+OrliWQpTwQljHE0QLol5zgxBkg==}
@@ -6828,6 +6837,10 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@grammyjs/conversations@2.1.1(grammy@1.43.0)':
+    dependencies:
+      grammy: 1.43.0
 
   '@grammyjs/types@3.27.3': {}
 

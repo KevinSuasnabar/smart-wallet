@@ -12,6 +12,7 @@ const client = new DynamoDBClient({
 });
 
 const TABLE = 'smart-wallet-local';
+const SESSIONS_TABLE = 'smart-wallet-telegram-sessions-local';
 
 const run = async (): Promise<void> => {
   try {
@@ -57,6 +58,30 @@ const run = async (): Promise<void> => {
   );
 
   console.log(`table ${TABLE} created`);
+
+  // ── Telegram sessions table ───────────────────────────────────────────────
+  try {
+    await client.send(new DescribeTableCommand({ TableName: SESSIONS_TABLE }));
+    console.log(`table ${SESSIONS_TABLE} already exists`);
+  } catch {
+    await client.send(
+      new CreateTableCommand({
+        TableName: SESSIONS_TABLE,
+        AttributeDefinitions: [{ AttributeName: 'chatId', AttributeType: 'S' }],
+        KeySchema: [{ AttributeName: 'chatId', KeyType: 'HASH' }],
+        BillingMode: 'PAY_PER_REQUEST',
+      }),
+    );
+
+    await client.send(
+      new UpdateTimeToLiveCommand({
+        TableName: SESSIONS_TABLE,
+        TimeToLiveSpecification: { Enabled: true, AttributeName: 'ttl' },
+      }),
+    );
+
+    console.log(`table ${SESSIONS_TABLE} created`);
+  }
 };
 
 run().catch(console.error);
