@@ -23,7 +23,10 @@ export async function waitForButton(
       await next.answerCallbackQuery();
       return { ctx: next, data };
     }
-    if (next.message?.text) {
+    if (data !== undefined) {
+      // Callback query from a different step — close the spinner with a hint
+      await next.answerCallbackQuery('Ese botón ya no corresponde al paso actual.');
+    } else if (next.message?.text) {
       await next.reply('Usá los botones para continuar, o /cancel para cancelar.');
     }
   }
