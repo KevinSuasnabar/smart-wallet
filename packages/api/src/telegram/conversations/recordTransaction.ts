@@ -20,16 +20,20 @@ type Conv = Conversation<BotContext, InnerCtx>;
 /**
  * Multi-step conversation factory for recording transactions.
  *
- * Returns a grammy conversation function parameterised by type ('expense' | 'income').
+ * When type is provided (expense | income), categories are pre-filtered and type
+ * is used directly. When omitted (generic /nuevo flow), all categories are shown
+ * and the type is inferred from the selected categoryId prefix.
+ *
  * Register as:
  *   createConversation(recordTransaction('expense'), 'recordTransaction:expense')
  *   createConversation(recordTransaction('income'),  'recordTransaction:income')
+ *   createConversation(recordTransaction(),          'recordTransaction:new')
  *
  * CRITICAL: ALL container/IO calls are wrapped in conversation.external() to prevent
  * double-execution on grammy's replay mechanism. Missing wrappers = silent double-write bugs.
  */
 export const recordTransaction =
-  (type: 'expense' | 'income') =>
+  (type?: 'expense' | 'income') =>
   async (conversation: Conv, ctx: InnerCtx): Promise<void> => {
     // ── Step 1: Amount + Description ───────────────────────────────────────
     await ctx.reply(
@@ -50,7 +54,7 @@ export const recordTransaction =
     if (!amountPattern.test(amountStr)) {
       await ctx.reply(
         '❌ Formato de monto inválido. Usá números como 50 o 50.50\n' +
-          'Por favor, volvé a iniciar con /gasto o /ingreso.',
+          'Por favor, volvé a iniciar con /nuevo.',
       );
       return;
     }
@@ -58,7 +62,7 @@ export const recordTransaction =
     const moneyResult = parseAmountForCurrency(amountStr, 'PEN');
     if (!moneyResult.ok) {
       await ctx.reply(
-        '❌ Monto inválido (debe ser mayor a cero). Volvé a iniciar con /gasto o /ingreso.',
+        '❌ Monto inválido (debe ser mayor a cero). Volvé a iniciar con /nuevo.',
       );
       return;
     }
@@ -97,6 +101,7 @@ export const recordTransaction =
     const walletName = selectedWallet?.name ?? walletId;
 
     // ── Step 3: Category Selection ──────────────────────────────────────────
+    // When type is known upfront, filter categories. Otherwise show all.
     await ctx.reply('¿Categoría?', {
       reply_markup: buildCategoryKeyboard(type),
     });
@@ -105,12 +110,13 @@ export const recordTransaction =
     await catCtx.answerCallbackQuery();
     const categoryId = catCtx.callbackQuery.data.slice(2);
 
-    // Resolve category name for summary display
+    // Resolve category name and infer type when not provided upfront
     const selectedCategory = PREDEFINED_CATEGORIES.find((c) => c.categoryId === categoryId);
     const categoryName = selectedCategory?.name ?? categoryId;
+    const resolvedType = type ?? selectedCategory?.type ?? 'expense';
 
     // ── Step 4: Confirmation ────────────────────────────────────────────────
-    const typeLabel = type === 'expense' ? 'Gasto' : 'Ingreso';
+    const typeLabel = resolvedType === 'expense' ? 'Gasto' : 'Ingreso';
     const amountDisplay = (money.amount / 100).toFixed(2);
     const descDisplay = description !== null ? `\n📝 Descripción: ${description}` : '';
 
@@ -138,7 +144,7 @@ export const recordTransaction =
       container.addTransaction({
         userId: env.botUserId,
         walletId,
-        type,
+        type: resolvedType,
         amountCents: money.amount,
         currency: 'PEN',
         categoryId,
@@ -149,7 +155,7 @@ export const recordTransaction =
 
     if (!result.ok) {
       await ctx.reply(
-        '❌ Error al registrar la transacción. Intentá confirmar de nuevo o reiniciá con /gasto o /ingreso.',
+        '❌ Error al registrar la transacción. Intentá confirmar de nuevo o reiniciá con /nuevo.',
       );
       return;
     }

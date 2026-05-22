@@ -1,7 +1,6 @@
 import type { Bot } from 'grammy';
 import type { BotContext } from '../context.js';
-import { registerGastoCommand } from './expense.js';
-import { registerIngresoCommand } from './income.js';
+import { registerNuevoCommand } from './nuevo.js';
 import { registerBalanceCommand } from './balance.js';
 import { registerCancelCommand } from './cancel.js';
 
@@ -11,7 +10,6 @@ import { registerCancelCommand } from './cancel.js';
  */
 export function registerCommands(bot: Bot<BotContext>): void {
   registerCancelCommand(bot);
-  registerGastoCommand(bot);
-  registerIngresoCommand(bot);
+  registerNuevoCommand(bot);
   registerBalanceCommand(bot);
 }

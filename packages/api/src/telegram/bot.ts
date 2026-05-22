@@ -26,10 +26,9 @@ const getBotIdFromToken = (token: string): number => {
  * Middleware chain (orden de ejecución — el orden importa):
  *   1. authMiddleware       — filtra por MY_TELEGRAM_ID
  *   2. conversations()      — habilita el plugin con storage en DynamoDB
- *   3. createConversation() — registra recordTransaction:expense
- *   4. createConversation() — registra recordTransaction:income
- *   5. Comandos registrados  — cancel, gasto, ingreso, balance, ...
- *   6. Handler por defecto   — mensaje no reconocido
+ *   3. createConversation() — registra recordTransaction:new (tipo inferido de categoría)
+ *   4. Comandos registrados  — cancel, nuevo, balance, ...
+ *   7. Handler por defecto   — mensaje no reconocido
  *
  * NOTA: conversations() v2 gestiona su propio storage (DynamoDB) directamente.
  * No se usa session() middleware — grammy/conversations v2 no lo necesita.
@@ -68,9 +67,8 @@ bot.use(authMiddleware);
 // middleware needed. The storage adapter bridges to TelegramSessionRepository.
 bot.use(conversations({ storage: makeConversationStorage(container.telegramSessionRepo) }));
 
-// ── 4–5. Register conversation handlers ───────────────────────────────────
-bot.use(createConversation(recordTransaction('expense'), 'recordTransaction:expense'));
-bot.use(createConversation(recordTransaction('income'), 'recordTransaction:income'));
+// ── 3. Register conversation handler ──────────────────────────────────────
+bot.use(createConversation(recordTransaction(), 'recordTransaction:new'));
 
 // ── 6. Comandos ────────────────────────────────────────────────────────────
 registerCommands(bot);
@@ -78,10 +76,8 @@ registerCommands(bot);
 // ── 7. Respuesta por defecto ───────────────────────────────────────────────
 bot.on('message:text', async (ctx) => {
   await ctx.reply(
-    'No reconozco ese comando\n\n' +
-      'Comandos disponibles:\n' +
-      '  /gasto — registrar un gasto (flujo interactivo)\n' +
-      '  /ingreso — registrar un ingreso (flujo interactivo)\n' +
+    'Comandos disponibles:\n' +
+      '  /nuevo — registrar una transacción\n' +
       '  /balance\n' +
       '  /cancel — cancelar operación en curso',
   );
