@@ -82,3 +82,10 @@ bot.on('message:text', async (ctx) => {
       '  /cancel — cancelar operación en curso',
   );
 });
+
+// ── 8. Fallback para callback queries sin conversación activa ──────────────
+// Botones de mensajes viejos llegan aquí cuando no hay conversación esperándolos.
+// Responder cierra el spinner de "Cargando..." en Telegram con un aviso claro.
+bot.on('callback_query', async (ctx) => {
+  await ctx.answerCallbackQuery('Esta acción ya expiró. Usá /nuevo para empezar.');
+});

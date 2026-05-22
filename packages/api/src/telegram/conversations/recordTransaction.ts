@@ -8,6 +8,7 @@ import { PREDEFINED_CATEGORIES } from '@smart-wallet/shared-types';
 import { buildWalletKeyboard } from '../keyboards/wallet.js';
 import { buildCategoryKeyboard } from '../keyboards/category.js';
 import { buildConfirmKeyboard } from '../keyboards/confirm.js';
+import { waitForButton } from './helpers.js';
 
 /**
  * Inner conversation context: plain Context (no session/conversation flavor).
@@ -25,9 +26,7 @@ type Conv = Conversation<BotContext, InnerCtx>;
  * and the type is inferred from the selected categoryId prefix.
  *
  * Register as:
- *   createConversation(recordTransaction('expense'), 'recordTransaction:expense')
- *   createConversation(recordTransaction('income'),  'recordTransaction:income')
- *   createConversation(recordTransaction(),          'recordTransaction:new')
+ *   createConversation(recordTransaction(), 'recordTransaction:new')
  *
  * CRITICAL: ALL container/IO calls are wrapped in conversation.external() to prevent
  * double-execution on grammy's replay mechanism. Missing wrappers = silent double-write bugs.
@@ -92,9 +91,8 @@ export const recordTransaction =
       reply_markup: buildWalletKeyboard(wallets),
     });
 
-    const walletCtx = await conversation.waitForCallbackQuery(/^w:/);
-    await walletCtx.answerCallbackQuery();
-    const walletId = walletCtx.callbackQuery.data.slice(2);
+    const { data: walletData } = await waitForButton(conversation, /^w:/);
+    const walletId = walletData.slice(2);
 
     // Resolve wallet name for summary display
     const selectedWallet = wallets.find((w) => w.id === walletId);
@@ -106,9 +104,8 @@ export const recordTransaction =
       reply_markup: buildCategoryKeyboard(type),
     });
 
-    const catCtx = await conversation.waitForCallbackQuery(/^c:/);
-    await catCtx.answerCallbackQuery();
-    const categoryId = catCtx.callbackQuery.data.slice(2);
+    const { data: categoryData } = await waitForButton(conversation, /^c:/);
+    const categoryId = categoryData.slice(2);
 
     // Resolve category name and infer type when not provided upfront
     const selectedCategory = PREDEFINED_CATEGORIES.find((c) => c.categoryId === categoryId);
@@ -131,10 +128,9 @@ export const recordTransaction =
       reply_markup: buildConfirmKeyboard(),
     });
 
-    const confirmCtx = await conversation.waitForCallbackQuery(/^cf:/);
-    await confirmCtx.answerCallbackQuery();
+    const { data: confirmData } = await waitForButton(conversation, /^cf:/);
 
-    if (confirmCtx.callbackQuery.data !== 'cf:y') {
+    if (confirmData !== 'cf:y') {
       await ctx.reply('❌ Operación cancelada.');
       return;
     }
