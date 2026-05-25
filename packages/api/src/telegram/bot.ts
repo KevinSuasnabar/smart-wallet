@@ -11,10 +11,8 @@ import { recordTransaction } from './conversations/recordTransaction.js';
 
 // Extraer el ID numérico de forma automática a partir de tu variable env.telegramToken
 const getBotIdFromToken = (token: string): number => {
-  console.log('TOKEN TO GET BOT ID', token);
   const botIdStr = token.split(':');
   const parsedId = Number(botIdStr);
-  console.log('PARSED ID', parsedId);
   return isNaN(parsedId) ? 0 : parsedId;
 };
 

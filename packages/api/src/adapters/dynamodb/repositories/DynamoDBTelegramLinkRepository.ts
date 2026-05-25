@@ -36,16 +36,19 @@ export class DynamoDBTelegramLinkRepository implements TelegramLinkRepository {
   }
 
   async save(telegramId: string | number, userId: string): Promise<void> {
+    const pk = telegramLinkPK(telegramId);
+    console.log(`[TelegramLinkRepo] save PK=${pk} SK=${telegramLinkSK()} table=${TABLE_NAME}`);
     await ddb.send(
       new PutCommand({
         TableName: TABLE_NAME,
         Item: {
-          PK: telegramLinkPK(telegramId),
+          PK: pk,
           SK: telegramLinkSK(),
           userId,
           linkedAt: new Date().toISOString(),
         },
       }),
     );
+    console.log(`[TelegramLinkRepo] save OK`);
   }
 }
