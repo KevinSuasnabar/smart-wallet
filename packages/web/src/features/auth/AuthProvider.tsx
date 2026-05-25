@@ -48,6 +48,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     user: null,
     idToken: null,
     isLoading: true,
+    requiresNewPassword: false,
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -70,7 +71,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       sub: claims.sub ?? '',
     };
     cognitoUserRef.current = buildCognitoUser(persisted.username);
-    setState({ user, idToken: persisted.idToken, isLoading: false });
+    setState({ user, idToken: persisted.idToken, isLoading: false, requiresNewPassword: false });
   }, []);
 
   const signIn = useCallback(
@@ -80,15 +81,27 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         Username: email,
         Password: password,
       });
-      const session = await new Promise<CognitoUserSession>(
-        (resolve, reject) => {
-          cognitoUser.authenticateUser(authDetails, {
-            onSuccess: resolve,
-            onFailure: (err: unknown) =>
-              reject(err instanceof Error ? err : new Error(String(err))),
-          });
-        },
-      );
+
+      type SignInResult =
+        | { kind: 'success'; session: CognitoUserSession }
+        | { kind: 'newPasswordRequired' };
+
+      const result = await new Promise<SignInResult>((resolve, reject) => {
+        cognitoUser.authenticateUser(authDetails, {
+          onSuccess: (session) => resolve({ kind: 'success', session }),
+          onFailure: (err: unknown) =>
+            reject(err instanceof Error ? err : new Error(String(err))),
+          newPasswordRequired: () => resolve({ kind: 'newPasswordRequired' }),
+        });
+      });
+
+      if (result.kind === 'newPasswordRequired') {
+        cognitoUserRef.current = cognitoUser;
+        setState((s) => ({ ...s, requiresNewPassword: true }));
+        return;
+      }
+
+      const { session } = result;
       const idToken = session.getIdToken().getJwtToken();
       const refreshToken = session.getRefreshToken().getToken();
       const claims = decodeJwt(idToken);
@@ -99,10 +112,35 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       };
       writePersisted({ username: email, idToken, refreshToken });
       cognitoUserRef.current = cognitoUser;
-      setState({ user, idToken, isLoading: false });
+      setState({ user, idToken, isLoading: false, requiresNewPassword: false });
     },
     [],
   );
+
+  const completeNewPassword = useCallback(async (newPassword: string) => {
+    const cognitoUser = cognitoUserRef.current;
+    if (!cognitoUser) throw new Error('No pending new-password challenge');
+
+    const session = await new Promise<CognitoUserSession>((resolve, reject) => {
+      cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
+        onSuccess: resolve,
+        onFailure: (err: unknown) =>
+          reject(err instanceof Error ? err : new Error(String(err))),
+      });
+    });
+
+    const idToken = session.getIdToken().getJwtToken();
+    const refreshToken = session.getRefreshToken().getToken();
+    const claims = decodeJwt(idToken);
+    const username = cognitoUser.getUsername();
+    const user: AuthUser = {
+      username,
+      email: claims.email ?? username,
+      sub: claims.sub ?? '',
+    };
+    writePersisted({ username, idToken, refreshToken });
+    setState({ user, idToken, isLoading: false, requiresNewPassword: false });
+  }, []);
 
   const forgotPassword = useCallback(async (email: string) => {
     const cognitoUser = buildCognitoUser(email);
@@ -175,7 +213,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     cognitoUserRef.current = null;
     clearPersisted();
     queryClient.clear();
-    setState({ user: null, idToken: null, isLoading: false });
+    setState({ user: null, idToken: null, isLoading: false, requiresNewPassword: false });
     navigate(routes.login);
   }, [navigate, queryClient]);
 
@@ -221,6 +259,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     () => ({
       ...state,
       signIn,
+      completeNewPassword,
       forgotPassword,
       confirmForgotPassword,
       signOut,
@@ -230,6 +269,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     [
       state,
       signIn,
+      completeNewPassword,
       forgotPassword,
       confirmForgotPassword,
       signOut,

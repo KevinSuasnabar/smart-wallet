@@ -67,7 +67,7 @@ export class DynamoDBWalletRepository implements WalletRepository {
         }),
       );
       for (const item of resp.Items ?? []) {
-        const sk = item.SK;
+        const sk: unknown = item.SK;
         if (typeof sk === 'string') txSKs.push(sk);
       }
       cursor = resp.LastEvaluatedKey as Record<string, unknown> | undefined;
@@ -96,13 +96,13 @@ export class DynamoDBWalletRepository implements WalletRepository {
       const chunk = txSKs.slice(i, i + TX_CHUNK_SIZE);
       const isLastChunk = i + TX_CHUNK_SIZE >= txSKs.length;
 
-      const items: Array<{
+      const items: {
         Delete: {
           TableName: string;
           Key: Record<string, unknown>;
           ConditionExpression?: string;
         };
-      }> = chunk.map((sk) => ({
+      }[] = chunk.map((sk) => ({
         Delete: {
           TableName: TABLE_NAME,
           Key: { PK: pk, SK: sk },

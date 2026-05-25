@@ -56,7 +56,7 @@ export const makeCreateRecurring =
     const walletId = walletIdResult.value;
 
     const wallet = await deps.walletRepo.findById(userId, walletId);
-    if (wallet === null || wallet.deletedAt !== null) {
+    if (wallet?.deletedAt !== null) {
       return err(new RecurringWalletNotFound());
     }
 

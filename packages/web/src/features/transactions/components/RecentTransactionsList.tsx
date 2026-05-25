@@ -67,7 +67,7 @@ export const RecentTransactionsList = ({
           transaction={tx}
           {...(onDelete !== undefined ? { onDelete } : {})}
           {...(categoryName(tx.categoryId) !== undefined
-            ? { categoryName: categoryName(tx.categoryId) as string }
+            ? { categoryName: categoryName(tx.categoryId)! }
             : {})}
         />
       ))}

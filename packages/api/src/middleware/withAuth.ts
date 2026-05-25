@@ -56,7 +56,7 @@ const resolveOfflineUserId = (event: APIGatewayProxyEventV2): string | undefined
     return mockHeader;
   }
 
-  const authHeader = headers['authorization'] ?? headers['Authorization'];
+  const authHeader = headers.authorization ?? headers.Authorization;
   if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
     const payload = decodeJwtPayloadUnsafe(authHeader.slice('Bearer '.length));
     if (payload && typeof payload.sub === 'string' && payload.sub.length > 0) {

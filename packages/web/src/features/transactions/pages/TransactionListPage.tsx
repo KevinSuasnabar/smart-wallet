@@ -131,7 +131,7 @@ export const TransactionListPage = () => {
               transaction={tx}
               onDelete={(id) => setPendingDeleteId(id)}
               {...(categoryName(tx.categoryId) !== undefined
-                ? { categoryName: categoryName(tx.categoryId) as string }
+                ? { categoryName: categoryName(tx.categoryId)! }
                 : {})}
             />
           ))}

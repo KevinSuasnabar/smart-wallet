@@ -208,7 +208,7 @@ export class DynamoDBCategoryRepository implements CategoryRepository {
         }),
       );
       for (const item of resp.Items ?? []) {
-        const id = item.predefinedCategoryId;
+        const id: unknown = item.predefinedCategoryId;
         if (typeof id === 'string') ids.push(id);
       }
       cursor = resp.LastEvaluatedKey as Record<string, unknown> | undefined;
@@ -309,5 +309,5 @@ export class DynamoDBCategoryRepository implements CategoryRepository {
 
 function isConditionalCheckFailedException(e: unknown): boolean {
   if (e === null || typeof e !== 'object' || !('name' in e)) return false;
-  return (e as { name: unknown }).name === 'ConditionalCheckFailedException';
+  return (e).name === 'ConditionalCheckFailedException';
 }
