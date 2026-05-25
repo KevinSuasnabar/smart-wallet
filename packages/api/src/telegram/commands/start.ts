@@ -54,7 +54,7 @@ export const registerStartCommand = (bot: Bot<BotContext>): void => {
     }
 
     // Atomic consume: validates token exists, is not expired, and matches userId
-    const consumed = await container.telegramLinkTokenRepo.consume(userId, token);
+    const consumed = await container.telegramLinkTokenRepo.consume(userId, payload);
 
     if (!consumed) {
       await ctx.reply('Token inválido o expirado. Generá un nuevo enlace desde la web.');
