@@ -25,7 +25,7 @@ export class DynamoDBTelegramSessionRepository implements TelegramSessionReposit
         Key: { chatId },
       }),
     );
-    const value = response.Item?.['value'];
+    const value: unknown = response.Item?.value;
     return typeof value === 'string' ? value : undefined;
   }
 

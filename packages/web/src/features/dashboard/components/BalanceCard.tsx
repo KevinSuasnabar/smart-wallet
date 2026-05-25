@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import type { Currency } from '@smart-wallet/shared-types';
+
 import { ColorBlock } from '../../../components/common/ColorBlock.js';
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { Button } from '../../../components/ui/button.js';
@@ -45,7 +45,7 @@ export const BalanceCard = ({ totals }: BalanceCardProps) => {
               {currency}
             </span>
             <span className="text-3xl font-bold leading-none tracking-display text-white md:text-4xl">
-              {formatCurrency(balance, currency as Currency)}
+              {formatCurrency(balance, currency)}
             </span>
           </div>
         ))}

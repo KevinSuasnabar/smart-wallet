@@ -16,7 +16,7 @@ export const transactionsApi = {
   ): Promise<ListTransactionsResponseDTO> =>
     apiClient.get<ListTransactionsResponseDTO>(
       `/wallets/${walletId}/transactions`,
-      query as Record<string, string | number | undefined> | undefined,
+      query,
     ),
 
   byId: (

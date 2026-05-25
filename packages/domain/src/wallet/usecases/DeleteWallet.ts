@@ -44,7 +44,7 @@ export const makeDeleteWallet =
     const walletId = walletIdResult.value;
 
     const wallet = await deps.walletRepo.findById(userId, walletId);
-    if (wallet === null || wallet.deletedAt !== null) {
+    if (wallet?.deletedAt !== null) {
       return err(new WalletNotFound());
     }
 
@@ -68,10 +68,10 @@ export const makeDeleteWallet =
  */
 function isWalletConcurrentlyRemoved(e: unknown): boolean {
   if (e === null || typeof e !== 'object' || !('name' in e)) return false;
-  if ((e as { name: unknown }).name !== 'TransactionCanceledException') {
+  if ((e).name !== 'TransactionCanceledException') {
     return false;
   }
   const reasons =
-    ((e as { CancellationReasons?: Array<{ Code?: string } | null> }).CancellationReasons) ?? [];
+    ((e as { CancellationReasons?: ({ Code?: string } | null)[] }).CancellationReasons) ?? [];
   return reasons.some((r) => r?.Code === 'ConditionalCheckFailed');
 }

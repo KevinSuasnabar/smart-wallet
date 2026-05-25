@@ -5,13 +5,13 @@ import type {
 import { Eyebrow } from '../../../components/common/Eyebrow.js';
 import { CategoryItem } from './CategoryItem.js';
 
-export type CategoryEditTarget = {
+export interface CategoryEditTarget {
   categoryId: string;
   name: string;
   type: 'income' | 'expense';
   color: string;
   kind: 'custom' | 'predefined';
-};
+}
 
 interface CategoryListProps {
   predefined: PredefinedCategoryResponseDTO[];
