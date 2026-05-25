@@ -1,7 +1,6 @@
-import type { Bot } from "grammy";
-import type { BotContext } from "../context.js";
-import { container } from "../../composition/container.js";
-import { env } from "../../env.js";
+import type { Bot } from 'grammy';
+import type { BotContext } from '../context.js';
+import { container } from '../../composition/container.js';
 
 const CURRENCY_SYMBOL: Record<string, string> = {
   USD: '$',
@@ -23,18 +22,18 @@ function balanceEmoji(cents: number): string {
 }
 
 export const registerBalanceCommand = (bot: Bot<BotContext>) => {
-  bot.command("balance", async (ctx) => {
-    const result = await container.listWallets({ userId: env.botUserId });
+  bot.command('balance', async (ctx) => {
+    const result = await container.listWallets({ userId: ctx.userId });
 
     if (!result.ok) {
-      await ctx.reply("❌ Error al obtener las wallets.");
+      await ctx.reply('❌ Error al obtener las wallets.');
       return;
     }
 
     const { items } = result.value;
 
     if (items.length === 0) {
-      await ctx.reply("No tenés wallets creadas. Creá una desde la web primero.");
+      await ctx.reply('No tenés wallets creadas. Creá una desde la web primero.');
       return;
     }
 

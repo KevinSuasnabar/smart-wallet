@@ -1,8 +1,6 @@
-import type { Context } from 'grammy';
 import type { Conversation } from '@grammyjs/conversations';
 import type { BotContext } from '../context.js';
 import { container } from '../../composition/container.js';
-import { env } from '../../env.js';
 import { parseAmountForCurrency } from '../../shared/boundary/index.js';
 import { PREDEFINED_CATEGORIES } from '@smart-wallet/shared-types';
 import { buildWalletKeyboard } from '../keyboards/wallet.js';
@@ -11,12 +9,17 @@ import { buildConfirmKeyboard } from '../keyboards/confirm.js';
 import { waitForButton } from './helpers.js';
 
 /**
- * Inner conversation context: plain Context (no session/conversation flavor).
- * The outer BotContext (with ConversationFlavor) is for middleware only.
- * Inside conversations, grammy provides the plain ctx.
+ * Inner conversation context: BotContext so that ctx.userId is available on
+ * the trigger message (the /nuevo invocation). grammy/conversations v2 passes
+ * the outer context type through to the conversation handler — userResolverMiddleware
+ * has already populated ctx.userId by the time the conversation is entered.
+ *
+ * IMPORTANT: userId MUST be read before the first conversation.wait*() call.
+ * On replay, grammy re-runs the conversation function with subsequent messages,
+ * so ctx.userId on later replays reflects the current message's resolved user —
+ * capturing it upfront ensures it comes from the trigger ctx.
  */
-type InnerCtx = Context;
-type Conv = Conversation<BotContext, InnerCtx>;
+type Conv = Conversation<BotContext, BotContext>;
 
 /**
  * Multi-step conversation factory for recording transactions.
@@ -33,7 +36,10 @@ type Conv = Conversation<BotContext, InnerCtx>;
  */
 export const recordTransaction =
   (type?: 'expense' | 'income') =>
-  async (conversation: Conv, ctx: InnerCtx): Promise<void> => {
+  async (conversation: Conv, ctx: BotContext): Promise<void> => {
+    // Capture userId BEFORE the first wait — on grammy replay the ctx changes,
+    // but the captured closure value is stable for the entire conversation.
+    const userId = ctx.userId;
     // ── Step 1: Amount + Description ───────────────────────────────────────
     await ctx.reply(
       '¿Cuánto y descripción? Ejemplo: 50.50 almuerzo\n\n' +
@@ -60,9 +66,7 @@ export const recordTransaction =
 
     const moneyResult = parseAmountForCurrency(amountStr, 'PEN');
     if (!moneyResult.ok) {
-      await ctx.reply(
-        '❌ Monto inválido (debe ser mayor a cero). Volvé a iniciar con /nuevo.',
-      );
+      await ctx.reply('❌ Monto inválido (debe ser mayor a cero). Volvé a iniciar con /nuevo.');
       return;
     }
 
@@ -72,7 +76,7 @@ export const recordTransaction =
     // Map to plain objects inside external() — class getters (wallet.name, wallet.id.value)
     // are lost when grammy serializes the result to JSON for replay. Plain objects survive.
     const wallets = await conversation.external(async () => {
-      const result = await container.listWallets({ userId: env.botUserId });
+      const result = await container.listWallets({ userId });
       if (!result.ok) return null;
       return result.value.items.map((w) => ({ id: w.id.value, name: w.name }));
     });
@@ -138,7 +142,7 @@ export const recordTransaction =
     // ── Confirmed: Write Transaction ────────────────────────────────────────
     const result = await conversation.external(() =>
       container.addTransaction({
-        userId: env.botUserId,
+        userId,
         walletId,
         type: resolvedType,
         amountCents: money.amount,
