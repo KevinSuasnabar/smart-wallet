@@ -16,6 +16,9 @@ export {
   recurringSKPrefix,
   recurringGsi1SK,
   recurringGsi1SKPrefix,
+  telegramLinkPK,
+  telegramLinkSK,
+  telegramTokenSK,
 } from './keyBuilders.js';
 
 // ── Cursor codec ──────────────────────────────────────────────────────────
@@ -47,3 +50,5 @@ export type {
 export { DynamoDBCategoryRepository } from './repositories/DynamoDBCategoryRepository.js';
 export { DynamoDBRecurringTransactionRepository } from './repositories/DynamoDBRecurringTransactionRepository.js';
 export { DynamoDBTelegramSessionRepository } from './repositories/DynamoDBTelegramSessionRepository.js';
+export { DynamoDBTelegramLinkRepository } from './repositories/DynamoDBTelegramLinkRepository.js';
+export { DynamoDBTelegramLinkTokenRepository } from './repositories/DynamoDBTelegramLinkTokenRepository.js';
