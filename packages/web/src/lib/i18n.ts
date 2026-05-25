@@ -48,10 +48,8 @@ export const t = {
       coral: 'Coral',
       navy: 'Azul marino',
     },
-    currencyLockedHelper:
-      'No se puede cambiar la moneda porque la billetera tiene movimientos.',
-    currencyLockedError:
-      'No se puede cambiar la moneda porque la billetera tiene movimientos.',
+    currencyLockedHelper: 'No se puede cambiar la moneda porque la billetera tiene movimientos.',
+    currencyLockedError: 'No se puede cambiar la moneda porque la billetera tiene movimientos.',
     deleteDialogTitle: 'Eliminar billetera',
     deleteDialogBody:
       'Esta acción eliminará la billetera y todos sus movimientos. No se puede deshacer.',
@@ -154,6 +152,17 @@ export const t = {
       label: 'Moneda',
       placeholder: 'Elige tu moneda preferida',
     },
+    telegram: {
+      eyebrow: 'Telegram',
+      title: 'Vincular Telegram',
+      description: 'Generá un token y envialo al bot con /start <token>.',
+      generateButton: 'Generar token',
+      tokenLabel: 'Tu token (válido 15 min)',
+      tokenCopied: 'Copiado',
+      tokenCopy: 'Copiar',
+      linkedStatus: 'Cuenta vinculada',
+      unlinkCta: 'Desvincular',
+    },
   },
   dashboard: {
     title: 'Resumen',
@@ -181,8 +190,7 @@ export const t = {
     editSuccess: 'Recurrente actualizado',
     deleteSuccess: 'Recurrente eliminado',
     dayOfMonthLabel: 'Día del mes',
-    dayOfMonthHelper:
-      'Si el mes tiene menos días, se ajusta al último día disponible.',
+    dayOfMonthHelper: 'Si el mes tiene menos días, se ajusta al último día disponible.',
     nextOccurrenceLabel: 'Próximo',
     emptyState: 'Todavía no tienes movimientos recurrentes',
     emptyCta: 'Crear el primero',

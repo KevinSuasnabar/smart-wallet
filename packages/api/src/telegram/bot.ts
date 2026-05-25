@@ -2,8 +2,9 @@ import { Bot } from 'grammy';
 import { conversations, createConversation } from '@grammyjs/conversations';
 import { env } from '../env.js';
 import type { BotContext } from './context.js';
-import { authMiddleware } from './middleware/auth.js';
+import { userResolverMiddleware } from './middleware/userResolver.js';
 import { registerCommands } from './commands/index.js';
+import { registerStartCommand } from './commands/start.js';
 import { makeConversationStorage } from './storage/grammyStorageAdapter.js';
 import { container } from '../composition/container.js';
 import { recordTransaction } from './conversations/recordTransaction.js';
@@ -24,11 +25,13 @@ const getBotIdFromToken = (token: string): number => {
  * en container.ts. Las conexiones se reusan en invocaciones warm.
  *
  * Middleware chain (orden de ejecución — el orden importa):
- *   1. authMiddleware       — filtra por MY_TELEGRAM_ID
- *   2. conversations()      — habilita el plugin con storage en DynamoDB
- *   3. createConversation() — registra recordTransaction:new (tipo inferido de categoría)
- *   4. Comandos registrados  — cancel, nuevo, balance, ...
- *   7. Handler por defecto   — mensaje no reconocido
+ *   1. /start command         — must run BEFORE userResolverMiddleware so that
+ *                               unlinked users can complete the linking flow
+ *   2. userResolverMiddleware — resolves ctx.userId from the link table (or owner whitelist)
+ *   3. conversations()        — habilita el plugin con storage en DynamoDB
+ *   4. createConversation()   — registra recordTransaction:new (tipo inferido de categoría)
+ *   5. Comandos registrados   — cancel, nuevo, balance, ...
+ *   6. Handler por defecto    — mensaje no reconocido
  *
  * NOTA: conversations() v2 gestiona su propio storage (DynamoDB) directamente.
  * No se usa session() middleware — grammy/conversations v2 no lo necesita.
@@ -59,21 +62,28 @@ export const bot = new Bot<BotContext>(env.telegramToken, {
   },
 });
 
-// ── 1. Auth middleware ─────────────────────────────────────────────────────
-bot.use(authMiddleware);
+// ── 1. /start command — registered BEFORE userResolverMiddleware ───────────
+// Users sending /start <token> are not yet linked; the resolver would reject
+// them before they complete linking. Registering here bypasses the middleware.
+registerStartCommand(bot);
 
-// ── 2. Conversations plugin with DynamoDB storage ──────────────────────────
+// ── 2. User resolver middleware ────────────────────────────────────────────
+// Resolves ctx.userId from the TelegramLink table (or owner whitelist fallback).
+// All commands and conversations below this point require ctx.userId to be set.
+bot.use(userResolverMiddleware);
+
+// ── 3. Conversations plugin with DynamoDB storage ──────────────────────────
 // grammy/conversations v2 manages its own VersionedStateStorage — no session()
 // middleware needed. The storage adapter bridges to TelegramSessionRepository.
 bot.use(conversations({ storage: makeConversationStorage(container.telegramSessionRepo) }));
 
-// ── 3. Register conversation handler ──────────────────────────────────────
+// ── 4. Register conversation handler ──────────────────────────────────────
 bot.use(createConversation(recordTransaction(), 'recordTransaction:new'));
 
-// ── 6. Comandos ────────────────────────────────────────────────────────────
+// ── 5. Comandos ────────────────────────────────────────────────────────────
 registerCommands(bot);
 
-// ── 7. Respuesta por defecto ───────────────────────────────────────────────
+// ── 6. Respuesta por defecto ───────────────────────────────────────────────
 bot.on('message:text', async (ctx) => {
   await ctx.reply(
     'Comandos disponibles:\n' +
@@ -83,7 +93,7 @@ bot.on('message:text', async (ctx) => {
   );
 });
 
-// ── 8. Fallback para callback queries sin conversación activa ──────────────
+// ── 7. Fallback para callback queries sin conversación activa ──────────────
 // Botones de mensajes viejos llegan aquí cuando no hay conversación esperándolos.
 // Responder cierra el spinner de "Cargando..." en Telegram con un aviso claro.
 bot.on('callback_query', async (ctx) => {

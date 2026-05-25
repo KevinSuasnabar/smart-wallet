@@ -17,14 +17,11 @@ export const categorySK = (categoryId: string): string => `CATEGORY#${categoryId
 export const hiddenPredefinedSK = (predefinedCategoryId: string): string =>
   `HIDDENCAT#${predefinedCategoryId}`;
 
-export const recurringSK = (recurringId: string): string =>
-  `RECURRING#${recurringId}`;
+export const recurringSK = (recurringId: string): string => `RECURRING#${recurringId}`;
 
 /** GSI1SK for recurring rows: lets us query pending materializations by ISO timestamp. */
-export const recurringGsi1SK = (
-  nextOccurrenceAtIso: string,
-  recurringId: string,
-): string => `RECURNEXT#${nextOccurrenceAtIso}#${recurringId}`;
+export const recurringGsi1SK = (nextOccurrenceAtIso: string, recurringId: string): string =>
+  `RECURNEXT#${nextOccurrenceAtIso}#${recurringId}`;
 
 export const idempotencySK = (hashedKey: string): string => `IDEMPOTENCY#${hashedKey}`;
 
@@ -53,3 +50,13 @@ export const recurringGsi1SKPrefix = (): string => 'RECURNEXT#';
 // This helper documents the intended key shape for the sessions adapter.
 
 export const telegramSessionKey = (chatId: string): { chatId: string } => ({ chatId });
+
+// ── Telegram link keys (single-table) ────────────────────────────────────
+// TELEGRAM#<telegramId> / LINK  → persistent user-telegram association
+// USER#<userId>         / TELEGRAMTOKEN → one-time link token (with TTL)
+
+export const telegramLinkPK = (telegramId: string | number): string => `TELEGRAM#${telegramId}`;
+
+export const telegramLinkSK = (): 'LINK' => 'LINK';
+
+export const telegramTokenSK = (): 'TELEGRAMTOKEN' => 'TELEGRAMTOKEN';

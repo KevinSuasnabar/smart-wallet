@@ -17,6 +17,8 @@ import {
   DynamoDBCategoryRepository,
   DynamoDBRecurringTransactionRepository,
   DynamoDBTelegramSessionRepository,
+  DynamoDBTelegramLinkRepository,
+  DynamoDBTelegramLinkTokenRepository,
 } from '../adapters/dynamodb/index.js';
 import { SystemClock } from '../adapters/system/SystemClock.js';
 import { UuidIdGenerator } from '../adapters/system/UuidIdGenerator.js';
@@ -53,6 +55,8 @@ const transactionRepo = new DynamoDBTransactionRepository();
 const categoryRepo = new DynamoDBCategoryRepository();
 const recurringRepo = new DynamoDBRecurringTransactionRepository();
 const telegramSessionRepo = new DynamoDBTelegramSessionRepository();
+const telegramLinkRepo = new DynamoDBTelegramLinkRepository();
+const telegramLinkTokenRepo = new DynamoDBTelegramLinkTokenRepository();
 const clock = new SystemClock();
 const idGen = new UuidIdGenerator();
 
@@ -130,6 +134,10 @@ export const container = {
 
   // Session repository instance (not a use-case — exposed directly for bot wiring)
   telegramSessionRepo,
+
+  // Telegram link repositories (not use-cases — exposed directly for bot wiring)
+  telegramLinkRepo,
+  telegramLinkTokenRepo,
 } as const;
 
 export type Container = typeof container;
