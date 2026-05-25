@@ -1,6 +1,6 @@
 import type { Bot } from 'grammy';
 import type { BotContext } from '../context.js';
-import { registerNuevoCommand } from './nuevo.js';
+import { registerNuevoCommand } from './new.js';
 import { registerBalanceCommand } from './balance.js';
 import { registerCancelCommand } from './cancel.js';
 
