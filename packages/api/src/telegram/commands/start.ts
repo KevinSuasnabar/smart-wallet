@@ -53,16 +53,23 @@ export const registerStartCommand = (bot: Bot<BotContext>): void => {
       return;
     }
 
+    console.log(`[start] linking attempt telegramId=${telegramId} userId=${userId}`);
+
     // Atomic consume: validates token exists, is not expired, and matches userId
     const consumed = await container.telegramLinkTokenRepo.consume(userId, payload);
 
     if (!consumed) {
+      console.warn(`[start] consume failed — token invalid or expired userId=${userId}`);
       await ctx.reply('Token inválido o expirado. Generá un nuevo enlace desde la web.');
       return;
     }
 
+    console.log(`[start] token consumed — saving link telegramId=${telegramId} userId=${userId}`);
+
     // Persist the Telegram → userId association
     await container.telegramLinkRepo.save(telegramId, userId);
+
+    console.log(`[start] link saved successfully telegramId=${telegramId} userId=${userId}`);
 
     await ctx.reply(
       '✅ Cuenta vinculada correctamente. ' +

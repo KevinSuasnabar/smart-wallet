@@ -32,16 +32,21 @@ export const userResolverMiddleware = async (
   const link = await container.telegramLinkRepo.findByTelegramId(telegramId);
 
   if (link) {
+    console.log(`[userResolver] resolved telegramId=${telegramId} → userId=${link.userId}`);
     ctx.userId = link.userId;
     return next();
   }
 
   // Whitelist fallback for the bot owner (temporal, while multi-user linking rolls out)
   if (String(telegramId) === String(env.myTelegramId)) {
+    console.log(
+      `[userResolver] whitelist fallback telegramId=${telegramId} → botUserId=${env.botUserId}`,
+    );
     ctx.userId = env.botUserId;
     return next();
   }
 
+  console.warn(`[userResolver] unlinked telegramId=${telegramId} — rejecting`);
   await ctx.reply(
     'Tu cuenta de Telegram no está vinculada. ' +
       'Generá un token desde la web y enviá /start <token>.',
