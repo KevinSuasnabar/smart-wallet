@@ -40,6 +40,7 @@ export const recordTransaction =
     // Capture userId BEFORE the first wait — on grammy replay the ctx changes,
     // but the captured closure value is stable for the entire conversation.
     const userId = ctx.userId;
+    console.log('USER ID FROM CONVERSATION', userId);
     // ── Step 1: Amount + Description ───────────────────────────────────────
     await ctx.reply(
       '¿Cuánto y descripción? Ejemplo: 50.50 almuerzo\n\n' +
