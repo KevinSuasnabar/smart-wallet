@@ -1,6 +1,7 @@
 import type { Conversation } from '@grammyjs/conversations';
 import type { BotContext } from '../context.js';
 import { container } from '../../composition/container.js';
+import { env } from '../../env.js';
 import { parseAmountForCurrency } from '../../shared/boundary/index.js';
 import { PREDEFINED_CATEGORIES } from '@smart-wallet/shared-types';
 import { buildWalletKeyboard } from '../keyboards/wallet.js';
@@ -8,17 +9,6 @@ import { buildCategoryKeyboard } from '../keyboards/category.js';
 import { buildConfirmKeyboard } from '../keyboards/confirm.js';
 import { waitForButton } from './helpers.js';
 
-/**
- * Inner conversation context: BotContext so that ctx.userId is available on
- * the trigger message (the /nuevo invocation). grammy/conversations v2 passes
- * the outer context type through to the conversation handler — userResolverMiddleware
- * has already populated ctx.userId by the time the conversation is entered.
- *
- * IMPORTANT: userId MUST be read before the first conversation.wait*() call.
- * On replay, grammy re-runs the conversation function with subsequent messages,
- * so ctx.userId on later replays reflects the current message's resolved user —
- * capturing it upfront ensures it comes from the trigger ctx.
- */
 type Conv = Conversation<BotContext, BotContext>;
 
 /**
@@ -37,10 +27,30 @@ type Conv = Conversation<BotContext, BotContext>;
 export const recordTransaction =
   (type?: 'expense' | 'income') =>
   async (conversation: Conv, ctx: BotContext): Promise<void> => {
-    // Capture userId BEFORE the first wait — on grammy replay the ctx changes,
-    // but the captured closure value is stable for the entire conversation.
-    const userId = ctx.userId;
-    console.log('USER ID FROM CONVERSATION', userId);
+    // Grammy conversations v2 creates a fresh Context object (via hydrateContext) that
+    // does NOT inherit custom properties set by middleware (e.g. ctx.userId from
+    // userResolverMiddleware). We must resolve userId ourselves inside external().
+    // external() is replay-safe: the result is cached on first run and replayed on
+    // subsequent replays — the DB is only hit once per conversation entry.
+    const userId = await conversation.external(async () => {
+      const telegramId = ctx.from?.id;
+      if (!telegramId) return null;
+      const link = await container.telegramLinkRepo.findByTelegramId(telegramId);
+      console.log('LINK FOUND', link);
+      if (link) return link.userId;
+      if (String(telegramId) === String(env.myTelegramId)) return env.botUserId || null;
+      return null;
+    });
+
+    console.log('USER ID', userId);
+
+    if (!userId) {
+      await ctx.reply(
+        'No se pudo resolver tu cuenta. ' +
+          'Asegurate de haber vinculado tu Telegram desde la web con /start <token>.',
+      );
+      return;
+    }
     // ── Step 1: Amount + Description ───────────────────────────────────────
     await ctx.reply(
       '¿Cuánto y descripción? Ejemplo: 50.50 almuerzo\n\n' +
