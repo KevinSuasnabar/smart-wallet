@@ -48,3 +48,6 @@ coverage/
 # Misc
 *.tgz
 .cache/
+
+# Agent tooling
+.atl/

@@ -8,10 +8,12 @@ export interface AuthState {
   user: AuthUser | null;
   idToken: string | null;
   isLoading: boolean; // true during initial sessionStorage hydration
+  requiresNewPassword: boolean; // true when Cognito responds with NEW_PASSWORD_REQUIRED challenge
 }
 
 export interface AuthContextValue extends AuthState {
   signIn: (input: { email: string; password: string }) => Promise<void>;
+  completeNewPassword: (newPassword: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   confirmForgotPassword: (input: {
     email: string;
