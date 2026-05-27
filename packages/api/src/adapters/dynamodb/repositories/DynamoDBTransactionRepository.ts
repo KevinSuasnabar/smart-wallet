@@ -1,8 +1,4 @@
-import {
-  GetCommand,
-  QueryCommand,
-  TransactWriteCommand,
-} from '@aws-sdk/lib-dynamodb';
+import { GetCommand, QueryCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import { ok, err } from '@smart-wallet/domain';
 import type {
   TransactionRepository,
@@ -59,7 +55,7 @@ function isTransactionCanceledException(e: unknown): e is TransactionCanceledErr
 
 interface IdempotencyRecordItem {
   PK: string;
-  SK: string;            // IDEMPOTENCY#{hash}
+  SK: string; // IDEMPOTENCY#{hash}
   entityType: 'IdempotencyRecord';
   transactionId: string;
   /** Full TXN#... SK stored to avoid scan-by-transactionId on replay. */
@@ -102,8 +98,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                 SK: walletSK(transaction.walletId.toString()),
               },
               UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
-              ConditionExpression:
-                'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+              ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
               ExpressionAttributeValues: {
                 ':delta': walletBalanceDelta,
                 ':now': transaction.updatedAt.toISOString(),
@@ -128,7 +123,9 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
    */
   async addIdempotent(
     input: AddIdempotentInput,
-  ): Promise<Result<{ transaction: Transaction; replay: boolean }, TransactionError | WalletError>> {
+  ): Promise<
+    Result<{ transaction: Transaction; replay: boolean }, TransactionError | WalletError>
+  > {
     const { transaction, walletBalanceDelta, walletId, idempotencyHash } = input;
 
     const txItem = transactionToItem(transaction);
@@ -137,7 +134,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
     const pk = userPK(transaction.userId.toString());
     const idemSK = idempotencySK(idempotencyHash);
     const now = new Date().toISOString();
-    const ttlEpoch = (Date.now() / 1000 | 0) + 86400; // 24 h from now
+    const ttlEpoch = ((Date.now() / 1000) | 0) + 86400; // 24 h from now
 
     const idempotencyItem: IdempotencyRecordItem = {
       PK: pk,
@@ -170,8 +167,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                   SK: walletSK(walletId.toString()),
                 },
                 UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
-                ConditionExpression:
-                  'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
                 ExpressionAttributeValues: {
                   ':delta': walletBalanceDelta,
                   ':now': now,
@@ -204,9 +200,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
         const replayed = await this.replayTransaction(pk, idemSK);
         if (replayed === null) {
           // TTL expired between the condition check and the get — treat as new (re-throw to 500)
-          throw new Error(
-            `Idempotency replay failed: record expired for hash ${idempotencyHash}`,
-          );
+          throw new Error(`Idempotency replay failed: record expired for hash ${idempotencyHash}`);
         }
         return ok({ transaction: replayed, replay: true });
       }
@@ -232,10 +226,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
    * Fetch the original transaction using the transactionSK cached in the IdempotencyRecord.
    * Avoids a scan-by-transactionId on the replay path.
    */
-  private async replayTransaction(
-    pk: string,
-    idemSK: string,
-  ): Promise<Transaction | null> {
+  private async replayTransaction(pk: string, idemSK: string): Promise<Transaction | null> {
     // 1. Get IdempotencyRecord to read the cached transactionSK
     const idemResponse = await ddb.send(
       new GetCommand({
@@ -262,10 +253,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
     return result.ok ? result.value : null;
   }
 
-  async findById(
-    userId: UserId,
-    transactionId: TransactionId,
-  ): Promise<Transaction | null> {
+  async findById(userId: UserId, transactionId: TransactionId): Promise<Transaction | null> {
     // The Transaction SK requires walletId + occurredAt which we don't know here.
     // Use a Query by PK + SK begins_with filter on transactionId since we lack the full SK.
     // This is a scan-within-partition — acceptable at MVP scale.
@@ -344,7 +332,9 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
       .map((res) => res.value);
 
     const result: { items: Transaction[]; nextCursor?: string } = { items };
-    const nextCursor = encodeCursor(response.LastEvaluatedKey as Record<string, unknown> | undefined);
+    const nextCursor = encodeCursor(
+      response.LastEvaluatedKey as Record<string, unknown> | undefined,
+    );
     if (nextCursor !== undefined) {
       result.nextCursor = nextCursor;
     }
@@ -391,7 +381,9 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
       .map((res) => res.value);
 
     const result: { items: Transaction[]; nextCursor?: string } = { items };
-    const nextCursor = encodeCursor(response.LastEvaluatedKey as Record<string, unknown> | undefined);
+    const nextCursor = encodeCursor(
+      response.LastEvaluatedKey as Record<string, unknown> | undefined,
+    );
     if (nextCursor !== undefined) {
       result.nextCursor = nextCursor;
     }
@@ -442,20 +434,65 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
 
     if (!skMoved) {
       // 2-op: Update tx in place + Update wallet balance
-      await ddb.send(
+      await ddb
+        .send(
+          new TransactWriteCommand({
+            TransactItems: [
+              {
+                Update: {
+                  TableName: TABLE_NAME,
+                  Key: {
+                    PK: pk,
+                    SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
+                  },
+                  UpdateExpression: inPlaceUpdate.updateExpression,
+                  ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                  ExpressionAttributeValues: inPlaceUpdate.expressionAttributeValues,
+                },
+              },
+              {
+                Update: {
+                  TableName: TABLE_NAME,
+                  Key: { PK: pk, SK: walletSK(walletIdStr) },
+                  UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
+                  ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                  ExpressionAttributeValues: {
+                    ':delta': walletBalanceDelta,
+                    ':now': now,
+                  },
+                },
+              },
+            ],
+          }),
+        )
+        .catch((e: unknown) => {
+          throw mapUpdateCancellation(e, transaction.id);
+        });
+      return;
+    }
+
+    // 3-op: Delete old tx + Put new tx + Update wallet
+    const newTxItem = transactionToItem(transaction);
+
+    await ddb
+      .send(
         new TransactWriteCommand({
           TransactItems: [
             {
-              Update: {
+              Delete: {
                 TableName: TABLE_NAME,
                 Key: {
                   PK: pk,
                   SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
                 },
-                UpdateExpression: inPlaceUpdate.updateExpression,
-                ConditionExpression:
-                  'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
-                ExpressionAttributeValues: inPlaceUpdate.expressionAttributeValues,
+                ConditionExpression: 'attribute_exists(PK) AND attribute_exists(SK)',
+              },
+            },
+            {
+              Put: {
+                TableName: TABLE_NAME,
+                Item: newTxItem,
+                ConditionExpression: 'attribute_not_exists(PK) AND attribute_not_exists(SK)',
               },
             },
             {
@@ -463,8 +500,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                 TableName: TABLE_NAME,
                 Key: { PK: pk, SK: walletSK(walletIdStr) },
                 UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
-                ConditionExpression:
-                  'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
                 ExpressionAttributeValues: {
                   ':delta': walletBalanceDelta,
                   ':now': now,
@@ -473,54 +509,10 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
             },
           ],
         }),
-      ).catch((e: unknown) => {
-        throw mapUpdateCancellation(e, transaction.id);
+      )
+      .catch((e: unknown) => {
+        throw mapMovedUpdateCancellation(e, transaction.id);
       });
-      return;
-    }
-
-    // 3-op: Delete old tx + Put new tx + Update wallet
-    const newTxItem = transactionToItem(transaction);
-
-    await ddb.send(
-      new TransactWriteCommand({
-        TransactItems: [
-          {
-            Delete: {
-              TableName: TABLE_NAME,
-              Key: {
-                PK: pk,
-                SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
-              },
-              ConditionExpression: 'attribute_exists(PK) AND attribute_exists(SK)',
-            },
-          },
-          {
-            Put: {
-              TableName: TABLE_NAME,
-              Item: newTxItem,
-              ConditionExpression:
-                'attribute_not_exists(PK) AND attribute_not_exists(SK)',
-            },
-          },
-          {
-            Update: {
-              TableName: TABLE_NAME,
-              Key: { PK: pk, SK: walletSK(walletIdStr) },
-              UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
-              ConditionExpression:
-                'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
-              ExpressionAttributeValues: {
-                ':delta': walletBalanceDelta,
-                ':now': now,
-              },
-            },
-          },
-        ],
-      }),
-    ).catch((e: unknown) => {
-      throw mapMovedUpdateCancellation(e, transaction.id);
-    });
   }
 
   /**
@@ -530,7 +522,9 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
    */
   async updateIdempotent(
     input: UpdateIdempotentInput,
-  ): Promise<Result<{ transaction: Transaction; replay: boolean }, TransactionError | WalletError>> {
+  ): Promise<
+    Result<{ transaction: Transaction; replay: boolean }, TransactionError | WalletError>
+  > {
     const {
       transaction,
       walletId,
@@ -550,7 +544,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
 
     const idemSK = idempotencySK(idempotencyHash);
     const now = new Date().toISOString();
-    const ttlEpoch = (Date.now() / 1000 | 0) + 86400;
+    const ttlEpoch = ((Date.now() / 1000) | 0) + 86400;
     const idempotencyItem: IdempotencyRecordItem = {
       PK: pk,
       SK: idemSK,
@@ -565,8 +559,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
       Put: {
         TableName: TABLE_NAME,
         Item: idempotencyItem,
-        ConditionExpression:
-          'attribute_not_exists(PK) AND attribute_not_exists(SK)',
+        ConditionExpression: 'attribute_not_exists(PK) AND attribute_not_exists(SK)',
       },
     } as const;
 
@@ -584,8 +577,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                     SK: transactionSK(walletIdStr, oldOccurredAtIso, txIdStr),
                   },
                   UpdateExpression: inPlaceUpdate.updateExpression,
-                  ConditionExpression:
-                    'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                  ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
                   ExpressionAttributeValues: inPlaceUpdate.expressionAttributeValues,
                 },
               },
@@ -594,8 +586,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                   TableName: TABLE_NAME,
                   Key: { PK: pk, SK: walletSK(walletIdStr) },
                   UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
-                  ConditionExpression:
-                    'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                  ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
                   ExpressionAttributeValues: {
                     ':delta': walletBalanceDelta,
                     ':now': now,
@@ -625,8 +616,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                 Put: {
                   TableName: TABLE_NAME,
                   Item: newTxItem,
-                  ConditionExpression:
-                    'attribute_not_exists(PK) AND attribute_not_exists(SK)',
+                  ConditionExpression: 'attribute_not_exists(PK) AND attribute_not_exists(SK)',
                 },
               },
               {
@@ -634,8 +624,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                   TableName: TABLE_NAME,
                   Key: { PK: pk, SK: walletSK(walletIdStr) },
                   UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
-                  ConditionExpression:
-                    'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                  ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
                   ExpressionAttributeValues: {
                     ':delta': walletBalanceDelta,
                     ':now': now,
@@ -659,9 +648,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
       if (idempotencyReason?.Code === 'ConditionalCheckFailed') {
         const replayed = await this.replayTransaction(pk, idemSK);
         if (replayed === null) {
-          throw new Error(
-            `Idempotency replay failed: record expired for hash ${idempotencyHash}`,
-          );
+          throw new Error(`Idempotency replay failed: record expired for hash ${idempotencyHash}`);
         }
         return ok({ transaction: replayed, replay: true });
       }
@@ -682,9 +669,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
 
       // For 3-op path, also check the Put (new SK collision — should not happen).
       if (skMoved && reasons[1]?.Code === 'ConditionalCheckFailed') {
-        throw new Error(
-          `Transaction SK collision on move for ${txIdStr} — this is a bug`,
-        );
+        throw new Error(`Transaction SK collision on move for ${txIdStr} — this is a bug`);
       }
 
       throw e;
@@ -724,8 +709,7 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
                 TableName: TABLE_NAME,
                 Key: { PK: pk, SK: walletSK(walletIdStr) },
                 UpdateExpression: 'SET balance = balance + :delta, updatedAt = :now',
-                ConditionExpression:
-                  'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
+                ConditionExpression: 'attribute_exists(PK) AND attribute_not_exists(deletedAt)',
                 ExpressionAttributeValues: {
                   ':delta': walletBalanceDelta,
                   ':now': now,
@@ -738,6 +722,14 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
     } catch (e: unknown) {
       throw mapDeleteCancellation(e, transactionId);
     }
+  }
+
+  // Implemented in feat/budgets-api — stub satisfies the interface for PR1.
+  sumExpensesByPeriod(
+    _userId: UserId,
+    _filter: { from: Date; to: Date; currency: string; categoryId?: string },
+  ): Promise<number> {
+    return Promise.reject(new Error('sumExpensesByPeriod not yet implemented'));
   }
 }
 
@@ -805,11 +797,7 @@ function buildInPlaceUpdate(
   expressionAttributeValues: Record<string, unknown>;
 } {
   const txIdStr = transaction.id.toString();
-  const gsi1sk = transactionGsi1SK(
-    transaction.categoryId,
-    occurredAtIso,
-    txIdStr,
-  );
+  const gsi1sk = transactionGsi1SK(transaction.categoryId, occurredAtIso, txIdStr);
 
   const setParts = [
     'amount = :amount',
