@@ -307,6 +307,15 @@ functions:
           authorizer:
             name: cognitoJwt
 
+  getLinkStatus:
+    handler: src/handlers/telegram/getLinkStatus.main
+    events:
+      - httpApi:
+          path: /telegram/link-status
+          method: get
+          authorizer:
+            name: cognitoJwt
+
   generateLinkToken:
     handler: src/handlers/telegram/generateLinkToken.main
     events:

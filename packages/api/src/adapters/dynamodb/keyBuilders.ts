@@ -52,11 +52,14 @@ export const recurringGsi1SKPrefix = (): string => 'RECURNEXT#';
 export const telegramSessionKey = (chatId: string): { chatId: string } => ({ chatId });
 
 // ── Telegram link keys (single-table) ────────────────────────────────────
-// TELEGRAM#<telegramId> / LINK  → persistent user-telegram association
+// TELEGRAM#<telegramId> / LINK         → forward lookup: telegramId → userId
+// USER#<userId>         / TELEGRAMLINK → reverse lookup: userId → telegramId
 // USER#<userId>         / TELEGRAMTOKEN → one-time link token (with TTL)
 
 export const telegramLinkPK = (telegramId: string | number): string => `TELEGRAM#${telegramId}`;
 
 export const telegramLinkSK = (): 'LINK' => 'LINK';
+
+export const telegramReverseLinkSK = (): 'TELEGRAMLINK' => 'TELEGRAMLINK';
 
 export const telegramTokenSK = (): 'TELEGRAMTOKEN' => 'TELEGRAMTOKEN';
