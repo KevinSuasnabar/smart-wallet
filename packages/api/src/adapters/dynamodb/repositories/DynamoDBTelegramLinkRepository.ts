@@ -1,19 +1,18 @@
-import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import type {
   TelegramLink,
   TelegramLinkRepository,
+  TelegramUserLink,
 } from '../../../telegram/ports/TelegramLinkRepository.js';
 import { ddb, TABLE_NAME } from '../DynamoDBClient.js';
-import { telegramLinkPK, telegramLinkSK } from '../keyBuilders.js';
+import { userPK, telegramLinkPK, telegramLinkSK, telegramReverseLinkSK } from '../keyBuilders.js';
 
 /**
  * DynamoDB adapter for TelegramLinkRepository.
  *
- * Single-table schema:
- *   PK  TELEGRAM#<telegramId>  (S)
- *   SK  LINK                   (S)
- *   userId                     (S) — Cognito / app user ID
- *   linkedAt                   (S) — ISO 8601 timestamp
+ * Single-table schema (two items written atomically on link):
+ *   PK  TELEGRAM#<telegramId>  SK  LINK         → forward:  telegramId → userId
+ *   PK  USER#<userId>          SK  TELEGRAMLINK  → reverse:  userId → telegramId
  *
  * No TTL — link items are permanent until explicitly removed.
  */
@@ -35,20 +34,60 @@ export class DynamoDBTelegramLinkRepository implements TelegramLinkRepository {
     return { userId, linkedAt };
   }
 
-  async save(telegramId: string | number, userId: string): Promise<void> {
-    const pk = telegramLinkPK(telegramId);
-    console.log(`[TelegramLinkRepo] save PK=${pk} SK=${telegramLinkSK()} table=${TABLE_NAME}`);
-    await ddb.send(
-      new PutCommand({
+  async findByUserId(userId: string): Promise<TelegramUserLink | null> {
+    const response = await ddb.send(
+      new GetCommand({
         TableName: TABLE_NAME,
-        Item: {
-          PK: pk,
-          SK: telegramLinkSK(),
-          userId,
-          linkedAt: new Date().toISOString(),
+        Key: {
+          PK: userPK(userId),
+          SK: telegramReverseLinkSK(),
         },
       }),
     );
+
+    if (!response.Item) return null;
+
+    const { telegramId, linkedAt } = response.Item as { telegramId: string; linkedAt: string };
+    return { telegramId, linkedAt };
+  }
+
+  async save(telegramId: string | number, userId: string): Promise<void> {
+    const linkedAt = new Date().toISOString();
+    const telegramIdStr = String(telegramId);
+
+    console.log(
+      `[TelegramLinkRepo] save telegramId=${telegramIdStr} userId=${userId} table=${TABLE_NAME}`,
+    );
+
+    await ddb.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Put: {
+              TableName: TABLE_NAME,
+              Item: {
+                PK: telegramLinkPK(telegramId),
+                SK: telegramLinkSK(),
+                userId,
+                linkedAt,
+              },
+            },
+          },
+          {
+            Put: {
+              TableName: TABLE_NAME,
+              Item: {
+                PK: userPK(userId),
+                SK: telegramReverseLinkSK(),
+                telegramId: telegramIdStr,
+                linkedAt,
+              },
+            },
+          },
+        ],
+      }),
+    );
+
     console.log(`[TelegramLinkRepo] save OK`);
   }
 }
