@@ -178,6 +178,8 @@ export const t = {
     noWallets: 'Crea tu primera billetera para ver tu resumen',
     addTransactionCta: 'Agregar movimiento',
     sidebarLabel: 'Resumen',
+    budgetsEyebrow: 'Presupuestos del mes',
+    budgetsSeeAll: 'Ver todos',
   },
   budgets: {
     title: 'Presupuestos',
