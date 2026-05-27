@@ -99,8 +99,18 @@ export {
   BudgetPathSchema,
   CreateBudgetBodySchema,
   UpdateBudgetBodySchema,
+  BudgetResponseSchema,
+  BudgetListItemSchema,
+  ListBudgetsResponseSchema,
 } from './schemas/budget.js';
-export type { BudgetPathDTO, CreateBudgetDTO, UpdateBudgetDTO } from './schemas/budget.js';
+export type {
+  BudgetPathDTO,
+  CreateBudgetDTO,
+  UpdateBudgetDTO,
+  BudgetResponseDTO,
+  BudgetListItemDTO,
+  ListBudgetsResponseDTO,
+} from './schemas/budget.js';
 
 // Recurring transaction schemas + DTOs
 export {

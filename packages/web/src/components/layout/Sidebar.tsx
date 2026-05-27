@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Wallet, Repeat, Tag, Settings, Plus, LogOut } from 'lucide-react';
+import { LayoutGrid, Wallet, Repeat, Tag, Settings, Plus, LogOut, PiggyBank } from 'lucide-react';
 import { cn } from '../../lib/utils.js';
 import { routes } from '../../app/routes.js';
 import { useAuth } from '../../features/auth/useAuth.js';
@@ -13,6 +13,7 @@ interface SidebarProps {
 const navItems = [
   { to: routes.dashboard, icon: LayoutGrid, label: 'Resumen' },
   { to: routes.wallets, icon: Wallet, label: 'Billeteras' },
+  { to: routes.budgets, icon: PiggyBank, label: t.budgets.sidebarLabel },
   { to: routes.recurring, icon: Repeat, label: 'Recurrentes' },
   { to: routes.categories, icon: Tag, label: 'Categorías' },
   { to: routes.settings, icon: Settings, label: 'Ajustes' },
@@ -27,15 +28,8 @@ export const Sidebar = ({ className }: SidebarProps) => {
   const { signOut, user } = useAuth();
 
   return (
-    <aside
-      className={cn(
-        'flex flex-col bg-foreground px-5 py-8 text-background',
-        className,
-      )}
-    >
-      <div className="mb-12 text-3xl font-bold leading-none tracking-display">
-        {t.app.name}
-      </div>
+    <aside className={cn('flex flex-col bg-foreground px-5 py-8 text-background', className)}>
+      <div className="mb-12 text-3xl font-bold leading-none tracking-display">{t.app.name}</div>
 
       <span className="mb-3 block px-3 font-mono text-[11px] uppercase tracking-eyebrow text-background/45">
         Menú
@@ -75,7 +69,9 @@ export const Sidebar = ({ className }: SidebarProps) => {
         )}
         <button
           type="button"
-          onClick={() => { void signOut(); }}
+          onClick={() => {
+            void signOut();
+          }}
           className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-background/70 transition-colors hover:bg-background/10 hover:text-background"
         >
           <LogOut className="size-4" />

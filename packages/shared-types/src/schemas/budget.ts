@@ -29,3 +29,26 @@ export const UpdateBudgetBodySchema = z
     message: 'At least one mutable field must be provided',
   });
 export type UpdateBudgetDTO = z.infer<typeof UpdateBudgetBodySchema>;
+
+export const BudgetResponseSchema = z.object({
+  budgetId: z.string(),
+  type: zBudgetType,
+  categoryId: z.string().optional(),
+  currency: zCurrency,
+  limit: z.string(),
+  rollover: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type BudgetResponseDTO = z.infer<typeof BudgetResponseSchema>;
+
+export const BudgetListItemSchema = BudgetResponseSchema.extend({
+  spent: z.string(),
+  effectiveLimit: z.string(),
+});
+export type BudgetListItemDTO = z.infer<typeof BudgetListItemSchema>;
+
+export const ListBudgetsResponseSchema = z.object({
+  items: z.array(BudgetListItemSchema),
+});
+export type ListBudgetsResponseDTO = z.infer<typeof ListBudgetsResponseSchema>;

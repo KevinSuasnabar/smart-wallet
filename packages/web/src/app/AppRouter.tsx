@@ -19,6 +19,9 @@ import { DashboardPage } from '../features/dashboard/pages/DashboardPage.js';
 import { RecurringListPage } from '../features/recurring/pages/RecurringListPage.js';
 import { CreateRecurringPage } from '../features/recurring/pages/CreateRecurringPage.js';
 import { EditRecurringPage } from '../features/recurring/pages/EditRecurringPage.js';
+import { BudgetsPage } from '../features/budgets/pages/BudgetsPage.js';
+import { CreateBudgetPage } from '../features/budgets/pages/CreateBudgetPage.js';
+import { EditBudgetPage } from '../features/budgets/pages/EditBudgetPage.js';
 import { routes } from './routes.js';
 
 export const AppRouter = () => (
@@ -29,32 +32,20 @@ export const AppRouter = () => (
     {/* Forgot-password pages share the centered narrow PublicLayout. */}
     <Route element={<PublicLayout />}>
       <Route path={routes.forgotPassword} element={<ForgotPasswordPage />} />
-      <Route
-        path="/forgot-password/confirm"
-        element={<ConfirmForgotPasswordPage />}
-      />
+      <Route path="/forgot-password/confirm" element={<ConfirmForgotPasswordPage />} />
     </Route>
 
     {/* Protected routes — require authentication */}
     <Route element={<ProtectedRoute />}>
       <Route element={<AppLayout />}>
-        <Route
-          path={routes.home}
-          element={<Navigate to={routes.dashboard} replace />}
-        />
+        <Route path={routes.home} element={<Navigate to={routes.dashboard} replace />} />
         <Route path={routes.dashboard} element={<DashboardPage />} />
         <Route path={routes.wallets} element={<WalletsListPage />} />
         <Route path={routes.walletsNew} element={<CreateWalletPage />} />
         <Route path="/wallets/:walletId" element={<WalletDetailPage />} />
         <Route path="/wallets/:walletId/edit" element={<EditWalletPage />} />
-        <Route
-          path="/wallets/:walletId/transactions"
-          element={<TransactionListPage />}
-        />
-        <Route
-          path="/wallets/:walletId/transactions/new"
-          element={<AddTransactionPage />}
-        />
+        <Route path="/wallets/:walletId/transactions" element={<TransactionListPage />} />
+        <Route path="/wallets/:walletId/transactions/new" element={<AddTransactionPage />} />
         <Route
           path="/wallets/:walletId/transactions/:transactionId/edit"
           element={<EditTransactionPage />}
@@ -63,10 +54,10 @@ export const AppRouter = () => (
         <Route path={routes.categories} element={<CategoriesPage />} />
         <Route path={routes.recurring} element={<RecurringListPage />} />
         <Route path={routes.recurringNew} element={<CreateRecurringPage />} />
-        <Route
-          path="/recurring/:recurringId/edit"
-          element={<EditRecurringPage />}
-        />
+        <Route path="/recurring/:recurringId/edit" element={<EditRecurringPage />} />
+        <Route path={routes.budgets} element={<BudgetsPage />} />
+        <Route path={routes.budgetsNew} element={<CreateBudgetPage />} />
+        <Route path="/budgets/:budgetId/edit" element={<EditBudgetPage />} />
         <Route path={routes.settings} element={<SettingsPage />} />
       </Route>
     </Route>
