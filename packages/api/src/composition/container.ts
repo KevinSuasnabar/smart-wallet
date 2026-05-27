@@ -16,6 +16,7 @@ import {
   DynamoDBTransactionRepository,
   DynamoDBCategoryRepository,
   DynamoDBRecurringTransactionRepository,
+  DynamoDBBudgetRepository,
   DynamoDBTelegramSessionRepository,
   DynamoDBTelegramLinkRepository,
   DynamoDBTelegramLinkTokenRepository,
@@ -46,11 +47,16 @@ import {
   makeUpdateRecurring,
   makeDeleteRecurring,
   makeMaterializeRecurrings,
+  makeCreateBudget,
+  makeListBudgets,
+  makeUpdateBudget,
+  makeDeleteBudget,
 } from '@smart-wallet/domain';
 
 // ── Infrastructure singletons (module scope = cold-start only) ────────────
 
 const walletRepo = new DynamoDBWalletRepository();
+const budgetRepo = new DynamoDBBudgetRepository();
 const transactionRepo = new DynamoDBTransactionRepository();
 const categoryRepo = new DynamoDBCategoryRepository();
 const recurringRepo = new DynamoDBRecurringTransactionRepository();
@@ -131,6 +137,12 @@ export const container = {
     idGen,
     clock,
   }),
+
+  // Budget operations
+  createBudget: makeCreateBudget({ budgetRepo, idGen, clock }),
+  listBudgets: makeListBudgets({ budgetRepo, transactionRepo, clock }),
+  updateBudget: makeUpdateBudget({ budgetRepo, clock }),
+  deleteBudget: makeDeleteBudget({ budgetRepo }),
 
   // Session repository instance (not a use-case — exposed directly for bot wiring)
   telegramSessionRepo,

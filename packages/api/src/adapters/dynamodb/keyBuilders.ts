@@ -43,6 +43,13 @@ export const hiddenPredefinedSKPrefix = (): string => 'HIDDENCAT#';
 
 export const recurringSKPrefix = (): string => 'RECURRING#';
 
+export const budgetSK = (budgetId: string): string => `BUDGET#${budgetId}`;
+
+export const budgetSKPrefix = (): string => 'BUDGET#';
+
+/** Matches all transaction SKs across all wallets. Use only for aggregate queries (e.g. budget global sum). */
+export const allTransactionsSKPrefix = (): string => 'TXN#';
+
 export const recurringGsi1SKPrefix = (): string => 'RECURNEXT#';
 
 // ── Telegram sessions table key ───────────────────────────────────────────
