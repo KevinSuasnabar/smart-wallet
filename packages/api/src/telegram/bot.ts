@@ -86,7 +86,8 @@ bot.on('message:text', async (ctx) => {
   await ctx.reply(
     'Comandos disponibles:\n' +
       '  /nuevo — registrar una transacción\n' +
-      '  /balance\n' +
+      '  /balance — ver saldo de billeteras\n' +
+      '  /presupuestos — ver progreso de presupuestos del mes\n' +
       '  /cancel — cancelar operación en curso',
   );
 });

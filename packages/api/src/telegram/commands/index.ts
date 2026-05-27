@@ -3,6 +3,7 @@ import type { BotContext } from '../context.js';
 import { registerNuevoCommand } from './new.js';
 import { registerBalanceCommand } from './balance.js';
 import { registerCancelCommand } from './cancel.js';
+import { registerPresupuestosCommand } from './presupuestos.js';
 
 // NOTE: registerStartCommand is intentionally NOT included here.
 // /start must be registered BEFORE userResolverMiddleware in bot.ts because
@@ -20,4 +21,5 @@ export function registerCommands(bot: Bot<BotContext>): void {
   registerCancelCommand(bot);
   registerNuevoCommand(bot);
   registerBalanceCommand(bot);
+  registerPresupuestosCommand(bot);
 }
