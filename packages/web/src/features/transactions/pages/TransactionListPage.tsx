@@ -88,11 +88,6 @@ export const TransactionListPage = () => {
         <h1 className="text-3xl font-bold leading-none tracking-display md:text-4xl">
           {t.transactions.listTitle}
         </h1>
-        {!isLoading && !isError && allItems.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {allItems.length} {allItems.length === 1 ? 'movimiento' : 'movimientos'}
-          </p>
-        )}
       </div>
 
       <TransactionFilters value={filters} onChange={setFilters} />
