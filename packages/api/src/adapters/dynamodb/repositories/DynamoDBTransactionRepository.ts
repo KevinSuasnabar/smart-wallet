@@ -269,7 +269,6 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
           ':skp': 'TXN#',
           ':tid': transactionId.toString(),
         },
-        Limit: 1,
       }),
     );
 

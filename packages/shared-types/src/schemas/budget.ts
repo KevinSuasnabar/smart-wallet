@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { zCurrency } from '../currencies.js';
-import { zUuid } from './common.js';
+import { zUuid, zCategoryIdLike } from './common.js';
 
 const zBudgetType = z.enum(['per_category', 'global']);
 const zLimitCents = z.number().int().positive();
@@ -12,7 +12,7 @@ export type BudgetPathDTO = z.infer<typeof BudgetPathSchema>;
 
 export const CreateBudgetBodySchema = z.object({
   type: zBudgetType,
-  categoryId: zUuid.optional(),
+  categoryId: zCategoryIdLike.optional(),
   currency: zCurrency,
   limitCents: zLimitCents,
   rollover: z.boolean().optional(),
