@@ -307,6 +307,42 @@ functions:
           authorizer:
             name: cognitoJwt
 
+  createBudget:
+    handler: src/handlers/budget/createBudget.main
+    events:
+      - httpApi:
+          path: /budgets
+          method: post
+          authorizer:
+            name: cognitoJwt
+
+  listBudgets:
+    handler: src/handlers/budget/listBudgets.main
+    events:
+      - httpApi:
+          path: /budgets
+          method: get
+          authorizer:
+            name: cognitoJwt
+
+  updateBudget:
+    handler: src/handlers/budget/updateBudget.main
+    events:
+      - httpApi:
+          path: /budgets/{budgetId}
+          method: patch
+          authorizer:
+            name: cognitoJwt
+
+  deleteBudget:
+    handler: src/handlers/budget/deleteBudget.main
+    events:
+      - httpApi:
+          path: /budgets/{budgetId}
+          method: delete
+          authorizer:
+            name: cognitoJwt
+
   getLinkStatus:
     handler: src/handlers/telegram/getLinkStatus.main
     events:

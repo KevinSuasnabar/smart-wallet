@@ -27,7 +27,15 @@ export type { PaginatedResponse } from './pagination.js';
 export { zIso8601 } from './date.js';
 
 // Common schemas
-export { zUuid, zUserId, zWalletId, zTransactionId, zCategoryId, zCategoryIdLike, zIdempotencyKey } from './schemas/common.js';
+export {
+  zUuid,
+  zUserId,
+  zWalletId,
+  zTransactionId,
+  zCategoryId,
+  zCategoryIdLike,
+  zIdempotencyKey,
+} from './schemas/common.js';
 
 // Wallet schemas + DTOs
 export {
@@ -85,6 +93,14 @@ export type {
   ListCategoriesResponseDTO,
   CategoryIdPathDTO,
 } from './schemas/category.js';
+
+// Budget schemas + DTOs
+export {
+  BudgetPathSchema,
+  CreateBudgetBodySchema,
+  UpdateBudgetBodySchema,
+} from './schemas/budget.js';
+export type { BudgetPathDTO, CreateBudgetDTO, UpdateBudgetDTO } from './schemas/budget.js';
 
 // Recurring transaction schemas + DTOs
 export {

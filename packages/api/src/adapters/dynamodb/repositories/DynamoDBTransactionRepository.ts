@@ -724,12 +724,93 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
     }
   }
 
-  // Implemented in feat/budgets-api — stub satisfies the interface for PR1.
-  sumExpensesByPeriod(
-    _userId: UserId,
-    _filter: { from: Date; to: Date; currency: string; categoryId?: string },
+  async sumExpensesByPeriod(
+    userId: UserId,
+    filter: { from: Date; to: Date; currency: string; categoryId?: string },
   ): Promise<number> {
-    return Promise.reject(new Error('sumExpensesByPeriod not yet implemented'));
+    if (filter.categoryId !== undefined) {
+      return this.sumExpensesCategory(
+        userId,
+        filter as { from: Date; to: Date; currency: string; categoryId: string },
+      );
+    }
+    return this.sumExpensesGlobal(userId, filter);
+  }
+
+  private async sumExpensesCategory(
+    userId: UserId,
+    filter: { from: Date; to: Date; currency: string; categoryId: string },
+  ): Promise<number> {
+    const pk = userPK(userId.toString());
+    const fromBound = `CAT#${filter.categoryId}#${filter.from.toISOString()}`;
+    const toBound = `CAT#${filter.categoryId}#${filter.to.toISOString()}`;
+
+    let total = 0;
+    let lastKey: Record<string, unknown> | undefined;
+
+    do {
+      const res = await ddb.send(
+        new QueryCommand({
+          TableName: TABLE_NAME,
+          IndexName: GSI1_NAME,
+          KeyConditionExpression: 'GSI1PK = :pk AND GSI1SK BETWEEN :from AND :to',
+          FilterExpression:
+            '#type = :expense AND #currency = :currency AND attribute_not_exists(deletedAt)',
+          ExpressionAttributeNames: { '#type': 'type', '#currency': 'currency' },
+          ExpressionAttributeValues: {
+            ':pk': pk,
+            ':from': fromBound,
+            ':to': toBound,
+            ':expense': 'expense',
+            ':currency': filter.currency,
+          },
+          ...(lastKey !== undefined ? { ExclusiveStartKey: lastKey } : {}),
+        }),
+      );
+      for (const item of res.Items ?? []) {
+        total += (item.amount as number) ?? 0;
+      }
+      lastKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
+    } while (lastKey !== undefined);
+
+    return total;
+  }
+
+  private async sumExpensesGlobal(
+    userId: UserId,
+    filter: { from: Date; to: Date; currency: string },
+  ): Promise<number> {
+    const pk = userPK(userId.toString());
+
+    let total = 0;
+    let lastKey: Record<string, unknown> | undefined;
+
+    do {
+      const res = await ddb.send(
+        new QueryCommand({
+          TableName: TABLE_NAME,
+          KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skp)',
+          FilterExpression:
+            'occurredAt >= :from AND occurredAt < :to AND #type = :expense AND #currency = :currency AND attribute_not_exists(deletedAt)',
+          ExpressionAttributeNames: { '#type': 'type', '#currency': 'currency' },
+          ExpressionAttributeValues: {
+            ':pk': pk,
+            ':skp': 'TXN#',
+            ':from': filter.from.toISOString(),
+            ':to': filter.to.toISOString(),
+            ':expense': 'expense',
+            ':currency': filter.currency,
+          },
+          ...(lastKey !== undefined ? { ExclusiveStartKey: lastKey } : {}),
+        }),
+      );
+      for (const item of res.Items ?? []) {
+        total += (item.amount as number) ?? 0;
+      }
+      lastKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
+    } while (lastKey !== undefined);
+
+    return total;
   }
 }
 
