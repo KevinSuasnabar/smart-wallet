@@ -10,8 +10,7 @@ export const routes = {
   walletDetail: (walletId: string) => `/wallets/${walletId}`,
   walletEdit: (walletId: string) => `/wallets/${walletId}/edit`,
   walletTransactions: (walletId: string) => `/wallets/${walletId}/transactions`,
-  walletTransactionsNew: (walletId: string) =>
-    `/wallets/${walletId}/transactions/new`,
+  walletTransactionsNew: (walletId: string) => `/wallets/${walletId}/transactions/new`,
   walletTransactionEdit: (walletId: string, transactionId: string) =>
     `/wallets/${walletId}/transactions/${transactionId}/edit`,
   transactionsNew: '/transactions/new',
@@ -20,4 +19,7 @@ export const routes = {
   recurring: '/recurring',
   recurringNew: '/recurring/new',
   recurringEdit: (recurringId: string) => `/recurring/${recurringId}/edit`,
+  budgets: '/budgets',
+  budgetsNew: '/budgets/new',
+  budgetEdit: (budgetId: string) => `/budgets/${budgetId}/edit`,
 } as const;
