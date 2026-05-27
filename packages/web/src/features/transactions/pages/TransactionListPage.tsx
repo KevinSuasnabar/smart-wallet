@@ -30,15 +30,8 @@ export const TransactionListPage = () => {
   const { data: wallet } = useWallet(walletId);
   const { data: categoriesData } = useCategories();
   const deleteMutation = useDeleteTransaction(walletId);
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useWalletTransactions(walletId, filters);
+  const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useWalletTransactions(walletId, filters);
 
   const confirmDelete = () => {
     if (pendingDeleteId === null) return;
@@ -65,20 +58,20 @@ export const TransactionListPage = () => {
     return all.find((c) => c.categoryId === categoryId)?.name;
   };
 
-  const handleBack = () => { void navigate(routes.walletDetail(walletId)); };
+  const handleBack = () => {
+    void navigate(routes.walletDetail(walletId));
+  };
 
   const hasActiveFilters =
-    filters.from !== undefined || filters.to !== undefined || filters.type !== undefined;
+    filters.from !== undefined ||
+    filters.to !== undefined ||
+    filters.type !== undefined ||
+    filters.categoryId !== undefined;
 
   return (
     <div className="flex flex-col gap-6 py-4 pb-4">
       <div className="flex items-center justify-between gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="-ml-2 gap-1"
-        >
+        <Button variant="ghost" size="sm" onClick={handleBack} className="-ml-2 gap-1">
           <ChevronLeft className="size-4" />
           {t.common.back}
         </Button>
@@ -95,6 +88,11 @@ export const TransactionListPage = () => {
         <h1 className="text-3xl font-bold leading-none tracking-display md:text-4xl">
           {t.transactions.listTitle}
         </h1>
+        {!isLoading && !isError && allItems.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {allItems.length} {allItems.length === 1 ? 'movimiento' : 'movimientos'}
+          </p>
+        )}
       </div>
 
       <TransactionFilters value={filters} onChange={setFilters} />
@@ -108,7 +106,9 @@ export const TransactionListPage = () => {
       {isError && (
         <ErrorState
           message={t.errors.generic}
-          onRetry={() => { void refetch(); }}
+          onRetry={() => {
+            void refetch();
+          }}
         />
       )}
 
@@ -135,14 +135,16 @@ export const TransactionListPage = () => {
                 : {})}
             />
           ))}
-          {hasNextPage === true && (
+          {isFetchingNextPage && <TransactionsListSkeleton rows={4} />}
+          {hasNextPage === true && !isFetchingNextPage && (
             <Button
               variant="outline"
-              onClick={() => { void fetchNextPage(); }}
-              disabled={isFetchingNextPage}
+              onClick={() => {
+                void fetchNextPage();
+              }}
               className="mt-4 w-full"
             >
-              {isFetchingNextPage ? t.app.loading : t.transactions.loadMore}
+              {t.transactions.loadMore}
             </Button>
           )}
         </Card>
