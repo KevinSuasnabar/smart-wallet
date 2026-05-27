@@ -178,4 +178,15 @@ export interface TransactionRepository {
    *   CancellationReasons[1] → wallet missing/soft-deleted → WalletNotFound.
    */
   hardDelete(input: HardDeleteInput): Promise<void>;
+
+  /**
+   * Sum the amount (in integer cents) of all expense transactions for a user
+   * within the UTC interval [from, to), filtered by currency and optionally
+   * by categoryId. All DynamoDB pages MUST be drained — Limit applies before
+   * FilterExpression and can yield partial pages with zero matching items.
+   */
+  sumExpensesByPeriod(
+    userId: UserId,
+    filter: { from: Date; to: Date; currency: string; categoryId?: string },
+  ): Promise<number>;
 }
