@@ -8,6 +8,7 @@ import { Button } from '../../../components/ui/button.js';
 import { BalanceCard } from '../components/BalanceCard.js';
 import { MonthlyStatsCard } from '../components/MonthlyStatsCard.js';
 import { TopCategoriesCard } from '../components/TopCategoriesCard.js';
+import { BudgetProgressCard } from '../components/BudgetProgressCard.js';
 import { CurrencyToggle } from '../components/CurrencyToggle.js';
 import { DashboardSkeleton } from '../components/DashboardSkeleton.js';
 import { useMonthlyDashboard } from '../hooks/useMonthlyDashboard.js';
@@ -52,8 +53,7 @@ export const DashboardPage = () => {
   // which currency to aggregate by. Both calls hit the same React Query
   // cache entries, so the second call is free.
   const probe = useMonthlyDashboard(null);
-  const displayCurrency =
-    override ?? resolveInitialCurrency(preferred, probe.availableCurrencies);
+  const displayCurrency = override ?? resolveInitialCurrency(preferred, probe.availableCurrencies);
   const dash = useMonthlyDashboard(displayCurrency);
 
   if (dash.isLoading) {
@@ -80,10 +80,7 @@ export const DashboardPage = () => {
   }
 
   const hasWallets = dash.totalsByCurrency.length > 0;
-  const showToggle =
-    hasWallets &&
-    dash.availableCurrencies.length > 1 &&
-    displayCurrency !== null;
+  const showToggle = hasWallets && dash.availableCurrencies.length > 1 && displayCurrency !== null;
 
   return (
     <div className="flex flex-col gap-5 pb-4">
@@ -107,10 +104,8 @@ export const DashboardPage = () => {
             expenses={dash.monthlyExpenses}
             net={dash.monthlyNet}
           />
-          <TopCategoriesCard
-            currency={displayCurrency}
-            items={dash.topCategories}
-          />
+          <BudgetProgressCard currency={displayCurrency} />
+          <TopCategoriesCard currency={displayCurrency} items={dash.topCategories} />
           <Button asChild variant="promo" className="w-full gap-2">
             <Link to={routes.transactionsNew}>
               <Plus className="size-4" />
