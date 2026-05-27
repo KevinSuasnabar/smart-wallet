@@ -10,12 +10,14 @@ import {
 } from '../../../components/ui/select.js';
 import { Label } from '../../../components/ui/label.js';
 import { DatePickerField } from '../../../components/common/DatePickerField.js';
+import { CategorySelect } from '../../categories/components/CategorySelect.js';
 import { t } from '../../../lib/i18n.js';
 
 export interface TransactionFiltersState {
   from?: string;
   to?: string;
   type?: 'income' | 'expense';
+  categoryId?: string;
 }
 
 interface TransactionFiltersProps {
@@ -27,7 +29,10 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
   const [open, setOpen] = useState(false);
 
   const hasFilters =
-    value.from !== undefined || value.to !== undefined || value.type !== undefined;
+    value.from !== undefined ||
+    value.to !== undefined ||
+    value.type !== undefined ||
+    value.categoryId !== undefined;
 
   const reset = () => {
     onChange({});
@@ -51,13 +56,7 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
           )}
         </button>
         {hasFilters && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={reset}
-            className="gap-1"
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={reset} className="gap-1">
             <X className="size-3" />
             Limpiar
           </Button>
@@ -72,10 +71,11 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
               value={value.type ?? '__all__'}
               onValueChange={(v) => {
                 if (v === '__all__') {
-                  const { type: _t, ...rest } = value;
+                  const { type: _t, categoryId: _c, ...rest } = value;
                   onChange(rest);
                 } else {
-                  onChange({ ...value, type: v as 'income' | 'expense' });
+                  const { categoryId: _c, ...rest } = value;
+                  onChange({ ...rest, type: v as 'income' | 'expense' });
                 }
               }}
             >
@@ -89,6 +89,24 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
               </SelectContent>
             </Select>
           </div>
+
+          {value.type !== undefined && (
+            <div className="flex flex-col gap-1.5">
+              <Label>{t.transactions.filterByCategory}</Label>
+              <CategorySelect
+                type={value.type}
+                value={value.categoryId ?? ''}
+                onChange={(id) => {
+                  if (id === '') {
+                    const { categoryId: _c, ...rest } = value;
+                    onChange(rest);
+                  } else {
+                    onChange({ ...value, categoryId: id });
+                  }
+                }}
+              />
+            </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="filter-from">{t.transactions.filterByDateFrom}</Label>
