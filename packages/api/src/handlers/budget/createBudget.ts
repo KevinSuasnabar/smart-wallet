@@ -6,6 +6,7 @@ import type { AuthenticatedEvent } from '../../middleware/index.js';
 import { container } from '../../composition/container.js';
 import { created } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
+import { formatCentsForResponse } from '../../shared/boundary/index.js';
 
 const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResultV2> => {
   const bodyValidation = validateBody(CreateBudgetBodySchema, event.raw);
@@ -29,7 +30,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     type: b.type,
     ...(b.categoryId !== undefined ? { categoryId: b.categoryId } : {}),
     currency: b.currency,
-    limitCents: b.limitCents,
+    limit: formatCentsForResponse(b.limitCents, b.currency),
     rollover: b.rollover,
     createdAt: b.createdAt.toISOString(),
     updatedAt: b.updatedAt.toISOString(),
