@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   CreateRecurringDTO,
   UpdateRecurringDTO,
@@ -11,11 +7,11 @@ import type {
 } from '@smart-wallet/shared-types';
 import { recurringApi } from './recurringApi.js';
 import { walletKeys } from '../wallets/queries.js';
+import { dashboardKeys } from '../dashboard/queries.js';
 
 export const recurringKeys = {
   all: ['recurring'] as const,
-  detail: (recurringId: string) =>
-    ['recurring', 'detail', recurringId] as const,
+  detail: (recurringId: string) => ['recurring', 'detail', recurringId] as const,
 };
 
 export const useRecurringList = () =>
@@ -78,6 +74,7 @@ export const useMaterializeRecurrings = () => {
       if (res.materializedCount > 0) {
         void qc.invalidateQueries({ queryKey: walletKeys.all });
         void qc.invalidateQueries({ queryKey: ['transactions'] });
+        void qc.invalidateQueries({ queryKey: dashboardKeys.all });
         void qc.invalidateQueries({ queryKey: recurringKeys.all });
       }
     },

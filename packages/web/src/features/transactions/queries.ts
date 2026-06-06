@@ -1,9 +1,4 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AddTransactionDTO,
   UpdateTransactionDTO,
@@ -13,22 +8,18 @@ import type {
 import { transactionsApi } from './transactionsApi.js';
 import type { TransactionFilters } from './transactionsApi.js';
 import { walletKeys } from '../wallets/queries.js';
+import { dashboardKeys } from '../dashboard/queries.js';
 
 export const transactionKeys = {
   all: ['transactions'] as const,
   byWallet: (walletId: string) => ['transactions', 'wallet', walletId] as const,
-  byWalletFiltered: (
-    walletId: string,
-    filters?: TransactionFilters,
-  ) => ['transactions', 'wallet', walletId, 'filtered', filters] as const,
+  byWalletFiltered: (walletId: string, filters?: TransactionFilters) =>
+    ['transactions', 'wallet', walletId, 'filtered', filters] as const,
   detail: (walletId: string, transactionId: string) =>
     ['transactions', 'detail', walletId, transactionId] as const,
 };
 
-export const useWalletTransactions = (
-  walletId: string,
-  filters?: TransactionFilters,
-) =>
+export const useWalletTransactions = (walletId: string, filters?: TransactionFilters) =>
   useInfiniteQuery<
     ListTransactionsResponseDTO,
     Error,
@@ -54,12 +45,12 @@ export const useAddTransaction = (walletId: string) => {
     Error,
     { dto: AddTransactionDTO; idempotencyKey: string }
   >({
-    mutationFn: ({ dto, idempotencyKey }) =>
-      transactionsApi.add(walletId, dto, idempotencyKey),
+    mutationFn: ({ dto, idempotencyKey }) => transactionsApi.add(walletId, dto, idempotencyKey),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: transactionKeys.byWallet(walletId) });
       void qc.invalidateQueries({ queryKey: walletKeys.detail(walletId) });
       void qc.invalidateQueries({ queryKey: walletKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 };
@@ -97,6 +88,7 @@ export const useUpdateTransaction = (walletId: string) => {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: transactionKeys.all });
       void qc.invalidateQueries({ queryKey: walletKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 };
@@ -108,11 +100,11 @@ export const useUpdateTransaction = (walletId: string) => {
 export const useDeleteTransaction = (walletId: string) => {
   const qc = useQueryClient();
   return useMutation<void, Error, { transactionId: string }>({
-    mutationFn: ({ transactionId }) =>
-      transactionsApi.remove(walletId, transactionId),
+    mutationFn: ({ transactionId }) => transactionsApi.remove(walletId, transactionId),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: transactionKeys.all });
       void qc.invalidateQueries({ queryKey: walletKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 };

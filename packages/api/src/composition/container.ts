@@ -51,6 +51,7 @@ import {
   makeListBudgets,
   makeUpdateBudget,
   makeDeleteBudget,
+  makeGetMonthlyDashboard,
 } from '@smart-wallet/domain';
 
 // ── Infrastructure singletons (module scope = cold-start only) ────────────
@@ -143,6 +144,8 @@ export const container = {
   listBudgets: makeListBudgets({ budgetRepo, transactionRepo, clock }),
   updateBudget: makeUpdateBudget({ budgetRepo, clock }),
   deleteBudget: makeDeleteBudget({ budgetRepo }),
+
+  getMonthlyDashboard: makeGetMonthlyDashboard({ walletRepo, transactionRepo, clock }),
 
   // Session repository instance (not a use-case — exposed directly for bot wiring)
   telegramSessionRepo,

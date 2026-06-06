@@ -127,6 +127,13 @@ functions:
       - httpApi:
           path: /wallets
           method: get
+
+  getMonthlyDashboard:
+    handler: src/handlers/dashboard/getMonthlyDashboard.main
+    events:
+      - httpApi:
+          path: /dashboard/monthly
+          method: get
           authorizer:
             name: cognitoJwt
 
