@@ -23,6 +23,16 @@ export interface ListByCategoryFilter {
   cursor?: string;
 }
 
+export interface MonthlyTransactionSummary {
+  currency: string;
+  incomeCents: number;
+  expenseCents: number;
+  topExpenseCategories: {
+    categoryId: string;
+    amountCents: number;
+  }[];
+}
+
 export interface IdempotencyRecord {
   pk: string;
   sk: string;
@@ -189,4 +199,9 @@ export interface TransactionRepository {
     userId: UserId,
     filter: { from: Date; to: Date; currency: string; categoryId?: string },
   ): Promise<number>;
+
+  summarizeMonthlyByCurrency(
+    userId: UserId,
+    range: { from: Date; to: Date },
+  ): Promise<MonthlyTransactionSummary[]>;
 }

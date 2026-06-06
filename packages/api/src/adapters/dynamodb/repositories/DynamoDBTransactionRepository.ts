@@ -13,6 +13,7 @@ import type {
   WalletId,
   ListByWalletFilter,
   ListByCategoryFilter,
+  MonthlyTransactionSummary,
   Result,
   TransactionError,
   WalletError,
@@ -734,6 +735,89 @@ export class DynamoDBTransactionRepository implements TransactionRepository {
       );
     }
     return this.sumExpensesGlobal(userId, filter);
+  }
+
+  async summarizeMonthlyByCurrency(
+    userId: UserId,
+    range: { from: Date; to: Date },
+  ): Promise<MonthlyTransactionSummary[]> {
+    const pk = userPK(userId.toString());
+    const fromIso = range.from.toISOString();
+    const toIso = range.to.toISOString();
+    const byCurrency = new Map<
+      string,
+      {
+        incomeCents: number;
+        expenseCents: number;
+        categoryExpenses: Map<string, number>;
+      }
+    >();
+
+    let lastKey: Record<string, unknown> | undefined;
+    do {
+      const res = await ddb.send(
+        new QueryCommand({
+          TableName: TABLE_NAME,
+          KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skp)',
+          FilterExpression:
+            'occurredAt >= :from AND occurredAt <= :to AND attribute_not_exists(deletedAt)',
+          ExpressionAttributeValues: {
+            ':pk': pk,
+            ':skp': 'TXN#',
+            ':from': fromIso,
+            ':to': toIso,
+          },
+          ProjectionExpression: '#type, amount, #currency, categoryId, occurredAt, deletedAt',
+          ExpressionAttributeNames: { '#type': 'type', '#currency': 'currency' },
+          ...(lastKey !== undefined ? { ExclusiveStartKey: lastKey } : {}),
+        }),
+      );
+
+      for (const raw of res.Items ?? []) {
+        const item = raw as Partial<TransactionItem>;
+        if (
+          typeof item.currency !== 'string' ||
+          typeof item.type !== 'string' ||
+          typeof item.amount !== 'number'
+        ) {
+          continue;
+        }
+
+        const bucket = byCurrency.get(item.currency) ?? {
+          incomeCents: 0,
+          expenseCents: 0,
+          categoryExpenses: new Map<string, number>(),
+        };
+
+        if (item.type === 'income') {
+          bucket.incomeCents += item.amount;
+        } else if (item.type === 'expense') {
+          bucket.expenseCents += item.amount;
+          if (typeof item.categoryId === 'string') {
+            bucket.categoryExpenses.set(
+              item.categoryId,
+              (bucket.categoryExpenses.get(item.categoryId) ?? 0) + item.amount,
+            );
+          }
+        }
+
+        byCurrency.set(item.currency, bucket);
+      }
+
+      lastKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
+    } while (lastKey !== undefined);
+
+    return Array.from(byCurrency.entries())
+      .map(([currency, summary]) => ({
+        currency,
+        incomeCents: summary.incomeCents,
+        expenseCents: summary.expenseCents,
+        topExpenseCategories: Array.from(summary.categoryExpenses.entries())
+          .map(([categoryId, amountCents]) => ({ categoryId, amountCents }))
+          .sort((a, b) => b.amountCents - a.amountCents || a.categoryId.localeCompare(b.categoryId))
+          .slice(0, 3),
+      }))
+      .sort((a, b) => a.currency.localeCompare(b.currency));
   }
 
   private async sumExpensesCategory(

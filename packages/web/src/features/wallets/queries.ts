@@ -6,6 +6,7 @@ import type {
   ListWalletsQueryDTO,
 } from '@smart-wallet/shared-types';
 import { walletsApi } from './walletsApi.js';
+import { dashboardKeys } from '../dashboard/queries.js';
 
 export const walletKeys = {
   all: ['wallets'] as const,
@@ -21,9 +22,8 @@ export const useWallets = (query?: ListWalletsQueryDTO) =>
 
 export const useWallet = (walletId: string | undefined) =>
   useQuery({
-    queryKey: walletId !== undefined && walletId !== ''
-      ? walletKeys.detail(walletId)
-      : walletKeys.all,
+    queryKey:
+      walletId !== undefined && walletId !== '' ? walletKeys.detail(walletId) : walletKeys.all,
     queryFn: (): Promise<WalletResponseDTO> => {
       if (walletId === undefined || walletId === '') {
         throw new Error('walletId requerido');
@@ -39,6 +39,7 @@ export const useCreateWallet = () => {
     mutationFn: (dto: CreateWalletDTO) => walletsApi.create(dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: walletKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 };
@@ -48,14 +49,11 @@ export const useCreateWallet = () => {
  */
 export const useUpdateWallet = () => {
   const qc = useQueryClient();
-  return useMutation<
-    WalletResponseDTO,
-    Error,
-    { walletId: string; dto: UpdateWalletDTO }
-  >({
+  return useMutation<WalletResponseDTO, Error, { walletId: string; dto: UpdateWalletDTO }>({
     mutationFn: ({ walletId, dto }) => walletsApi.update(walletId, dto),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: walletKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });
 };
@@ -71,6 +69,7 @@ export const useDeleteWallet = () => {
     mutationFn: ({ walletId }) => walletsApi.remove(walletId),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: walletKeys.all });
+      void qc.invalidateQueries({ queryKey: dashboardKeys.all });
       void qc.invalidateQueries({ queryKey: ['transactions'] });
     },
   });

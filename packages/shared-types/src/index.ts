@@ -129,3 +129,17 @@ export type {
   ListRecurringResponseDTO,
   MaterializeRecurringResponseDTO,
 } from './schemas/recurring.js';
+
+// Dashboard schemas + DTOs
+export {
+  DashboardCurrencyBalanceSchema,
+  DashboardTopCategorySchema,
+  DashboardMonthlySummarySchema,
+  MonthlyDashboardResponseSchema,
+} from './schemas/dashboard.js';
+export type {
+  DashboardCurrencyBalanceDTO,
+  DashboardTopCategoryDTO,
+  DashboardMonthlySummaryDTO,
+  MonthlyDashboardResponseDTO,
+} from './schemas/dashboard.js';
