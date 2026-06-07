@@ -25,6 +25,17 @@ export const recurringGsi1SK = (nextOccurrenceAtIso: string, recurringId: string
 
 export const idempotencySK = (hashedKey: string): string => `IDEMPOTENCY#${hashedKey}`;
 
+export const processedEventSK = (eventId: string): string => `PROCESSED_EVENT#${eventId}`;
+
+export const monthlyAggregateSK = (month: string, currency: string): string =>
+  `MONTHLY_AGG#${month}#${currency}`;
+
+export const monthlyCategoryAggregateSK = (
+  month: string,
+  currency: string,
+  categoryId: string,
+): string => `MONTHLY_CAT_AGG#${month}#${currency}#${categoryId}`;
+
 export const transactionGsi1SK = (
   categoryId: string,
   occurredAtIso: string,
@@ -46,6 +57,11 @@ export const recurringSKPrefix = (): string => 'RECURRING#';
 export const budgetSK = (budgetId: string): string => `BUDGET#${budgetId}`;
 
 export const budgetSKPrefix = (): string => 'BUDGET#';
+
+export const monthlyAggregateSKPrefix = (month: string): string => `MONTHLY_AGG#${month}#`;
+
+export const monthlyCategoryAggregateSKPrefix = (month: string, currency: string): string =>
+  `MONTHLY_CAT_AGG#${month}#${currency}#`;
 
 /** Matches all transaction SKs across all wallets. Use only for aggregate queries (e.g. budget global sum). */
 export const allTransactionsSKPrefix = (): string => 'TXN#';

@@ -59,6 +59,7 @@ provider:
     MY_TELEGRAM_ID: ${env:MY_TELEGRAM_ID, ''}
     BOT_USER_ID: ${env:BOT_USER_ID, ''}
     TELEGRAM_SESSIONS_TABLE: ${env:TELEGRAM_SESSIONS_TABLE, 'smart-wallet-telegram-sessions-local'}
+    TRANSACTION_EVENTS_QUEUE_URL: ${env:TRANSACTION_EVENTS_QUEUE_URL, ''}
 
   iam:
     role:
@@ -83,6 +84,15 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - ${env:TELEGRAM_SESSIONS_TABLE_ARN, 'arn:aws:dynamodb:us-east-1:000000000000:table/smart-wallet-telegram-sessions-local'}
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+            - sqs:ChangeMessageVisibility
+          Resource:
+            - ${env:TRANSACTION_EVENTS_QUEUE_ARN, 'arn:aws:sqs:us-east-1:000000000000:smart-wallet-transaction-events-local'}
 
 custom:
   esbuild:
@@ -370,6 +380,14 @@ functions:
           method: post
           authorizer:
             name: cognitoJwt
+
+  processTransactionEvents:
+    handler: src/handlers/transaction/processTransactionEvents.main
+    events:
+      - sqs:
+          arn: ${env:TRANSACTION_EVENTS_QUEUE_ARN, 'arn:aws:sqs:us-east-1:000000000000:smart-wallet-transaction-events-local'}
+          batchSize: 10
+          functionResponseType: ReportBatchItemFailures
 
   processBotMessage:
     handler: src/handlers/telegram/processBotMessage.handler

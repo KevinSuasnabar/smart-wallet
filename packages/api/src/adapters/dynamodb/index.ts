@@ -58,3 +58,4 @@ export { DynamoDBBudgetRepository } from './repositories/DynamoDBBudgetRepositor
 export { DynamoDBTelegramSessionRepository } from './repositories/DynamoDBTelegramSessionRepository.js';
 export { DynamoDBTelegramLinkRepository } from './repositories/DynamoDBTelegramLinkRepository.js';
 export { DynamoDBTelegramLinkTokenRepository } from './repositories/DynamoDBTelegramLinkTokenRepository.js';
+export { DynamoDBMonthlyAggregateRepository } from './repositories/DynamoDBMonthlyAggregateRepository.js';

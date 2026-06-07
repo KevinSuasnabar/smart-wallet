@@ -19,11 +19,12 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.785.0",
+    "@aws-sdk/client-sqs": "^3.1063.0",
     "@aws-sdk/lib-dynamodb": "^3.785.0",
+    "@grammyjs/conversations": "^2.0.0",
     "@smart-wallet/domain": "workspace:*",
     "@smart-wallet/shared-types": "workspace:*",
     "aws-jwt-verify": "^4.0.1",
-    "@grammyjs/conversations": "^2.0.0",
     "grammy": "^1.43.0",
     "zod": "^3.25.76"
   },

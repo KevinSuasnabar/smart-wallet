@@ -3,13 +3,10 @@ import {
   TransactionIdPathSchema,
   UpdateTransactionRequestSchema,
 } from '@smart-wallet/shared-types';
-import type {
-  TransactionIdPathDTO,
-  UpdateTransactionDTO,
-} from '@smart-wallet/shared-types';
+import type { TransactionIdPathDTO, UpdateTransactionDTO } from '@smart-wallet/shared-types';
 import { withAuth, withErrorHandler, validateBody, validatePath } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
-import { container } from '../../composition/container.js';
+import { updateTransactionWithEvents } from '../../application/transactionMutations.js';
 import { ok as responseOk, badRequest } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
 import { formatMoneyForResponse, parseAmountForCurrency } from '../../shared/boundary/index.js';
@@ -45,9 +42,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   // Idempotency-Key extraction (case-insensitive per HTTP spec).
   const rawHeaders = event.raw.headers ?? {};
   const idempotencyKey =
-    rawHeaders['idempotency-key'] ??
-    rawHeaders['Idempotency-Key'] ??
-    rawHeaders['IDEMPOTENCY-KEY'];
+    rawHeaders['idempotency-key'] ?? rawHeaders['Idempotency-Key'] ?? rawHeaders['IDEMPOTENCY-KEY'];
 
   if (idempotencyKey !== undefined) {
     if (idempotencyKey.length < 1 || idempotencyKey.length > 128) {
@@ -61,12 +56,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   // with POST hashes or with PATCH hashes on other transactions.
   const idempotencyHash =
     idempotencyKey !== undefined
-      ? computeIdempotencyHash(
-          event.userId,
-          path.walletId,
-          idempotencyKey,
-          path.transactionId,
-        )
+      ? computeIdempotencyHash(event.userId, path.walletId, idempotencyKey, path.transactionId)
       : undefined;
 
   // The use case loads the wallet to know the currency. We can't construct
@@ -106,7 +96,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   if (body.categoryId !== undefined) edits.categoryId = body.categoryId;
   if (body.occurredAt !== undefined) edits.occurredAt = new Date(body.occurredAt);
 
-  const result = await container.updateTransaction({
+  const result = await updateTransactionWithEvents({
     userId: event.userId,
     walletId: path.walletId,
     transactionId: path.transactionId,

@@ -1,6 +1,7 @@
 import type { Conversation } from '@grammyjs/conversations';
 import type { BotContext } from '../context.js';
 import { container } from '../../composition/container.js';
+import { addTransactionWithEvents } from '../../application/transactionMutations.js';
 import { env } from '../../env.js';
 import { parseAmountForCurrency } from '../../shared/boundary/index.js';
 import { PREDEFINED_CATEGORIES } from '@smart-wallet/shared-types';
@@ -152,7 +153,7 @@ export const recordTransaction =
 
     // ── Confirmed: Write Transaction ────────────────────────────────────────
     const result = await conversation.external(() =>
-      container.addTransaction({
+      addTransactionWithEvents({
         userId,
         walletId,
         type: resolvedType,

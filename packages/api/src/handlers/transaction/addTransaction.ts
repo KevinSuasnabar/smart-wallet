@@ -3,7 +3,7 @@ import { AddTransactionRequestSchema, WalletIdPathSchema } from '@smart-wallet/s
 import type { AddTransactionDTO, WalletIdPathDTO } from '@smart-wallet/shared-types';
 import { withAuth, withErrorHandler, validateBody, validatePath } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
-import { container } from '../../composition/container.js';
+import { addTransactionWithEvents } from '../../application/transactionMutations.js';
 import { ok as responseOk, created, badRequest } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
 import { parseAmountForCurrency, formatMoneyForResponse } from '../../shared/boundary/index.js';
@@ -50,9 +50,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   // API Gateway preserves original header casing in event.raw.headers.
   const rawHeaders = event.raw.headers ?? {};
   const idempotencyKey =
-    rawHeaders['idempotency-key'] ??
-    rawHeaders['Idempotency-Key'] ??
-    rawHeaders['IDEMPOTENCY-KEY'];
+    rawHeaders['idempotency-key'] ?? rawHeaders['Idempotency-Key'] ?? rawHeaders['IDEMPOTENCY-KEY'];
 
   // Validate idempotency key length when present (1–128 opaque chars per REQ-IDEM-01).
   if (idempotencyKey !== undefined) {
@@ -70,7 +68,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
       ? computeIdempotencyHash(event.userId, path.walletId, idempotencyKey)
       : undefined;
 
-  const result = await container.addTransaction({
+  const result = await addTransactionWithEvents({
     userId: event.userId,
     walletId: path.walletId,
     type: input.type,

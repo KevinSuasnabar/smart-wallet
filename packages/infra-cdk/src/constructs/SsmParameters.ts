@@ -2,11 +2,13 @@ import { Construct } from 'constructs';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import type { Table } from 'aws-cdk-lib/aws-dynamodb';
 import type { TelegramSessionsTable } from './TelegramSessionsTable.js';
+import type { TransactionEventsQueue } from './TransactionEventsQueue.js';
 import type { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 
 export interface SsmParametersProps {
   table: Table;
   telegramSessionsTable: TelegramSessionsTable;
+  transactionEventsQueue: TransactionEventsQueue;
   userPool: UserPool;
   userPoolClient: UserPoolClient;
   issuerUrl: string;
@@ -67,6 +69,21 @@ export class SsmParameters extends Construct {
     new StringParameter(this, 'TelegramSessionsTableArn', {
       parameterName: `${props.prefix}/dynamo/telegram-sessions-table-arn`,
       stringValue: props.telegramSessionsTable.table.tableArn,
+    });
+
+    new StringParameter(this, 'TransactionEventsQueueUrl', {
+      parameterName: `${props.prefix}/sqs/transaction-events-url`,
+      stringValue: props.transactionEventsQueue.queue.queueUrl,
+    });
+
+    new StringParameter(this, 'TransactionEventsQueueArn', {
+      parameterName: `${props.prefix}/sqs/transaction-events-arn`,
+      stringValue: props.transactionEventsQueue.queue.queueArn,
+    });
+
+    new StringParameter(this, 'TransactionEventsDlqArn', {
+      parameterName: `${props.prefix}/sqs/transaction-events-dlq-arn`,
+      stringValue: props.transactionEventsQueue.dlq.queueArn,
     });
   }
 }

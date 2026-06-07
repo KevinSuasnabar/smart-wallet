@@ -3,7 +3,7 @@ import { TransactionIdPathSchema } from '@smart-wallet/shared-types';
 import type { TransactionIdPathDTO } from '@smart-wallet/shared-types';
 import { withAuth, withErrorHandler, validatePath } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
-import { container } from '../../composition/container.js';
+import { deleteTransactionWithEvents } from '../../application/transactionMutations.js';
 import { noContent, badRequest } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
 
@@ -28,9 +28,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   // header is caught at the boundary.
   const rawHeaders = event.raw.headers ?? {};
   const idempotencyKey =
-    rawHeaders['idempotency-key'] ??
-    rawHeaders['Idempotency-Key'] ??
-    rawHeaders['IDEMPOTENCY-KEY'];
+    rawHeaders['idempotency-key'] ?? rawHeaders['Idempotency-Key'] ?? rawHeaders['IDEMPOTENCY-KEY'];
   if (idempotencyKey !== undefined) {
     if (idempotencyKey.length < 1 || idempotencyKey.length > 128) {
       return badRequest('invalid_idempotency_key', {
@@ -39,7 +37,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     }
   }
 
-  const result = await container.deleteTransaction({
+  const result = await deleteTransactionWithEvents({
     userId: event.userId,
     walletId: path.walletId,
     transactionId: path.transactionId,
