@@ -1,5 +1,5 @@
 import { UuidIdGenerator } from '../adapters/system/UuidIdGenerator.js';
-import type { MaterializedRecurringTransaction } from '@smart-wallet/domain';
+import type { MaterializedRecurringTransaction, Transaction } from '@smart-wallet/domain';
 import { makeTransactionEventPublisher } from '../adapters/sqs/TransactionEventPublisher.js';
 import { container } from '../composition/container.js';
 import { env } from '../env.js';
@@ -14,6 +14,7 @@ const publisher = makeTransactionEventPublisher(env.transactionEventsQueueUrl);
 type AddInput = Parameters<typeof container.addTransaction>[0];
 type UpdateInput = Parameters<typeof container.updateTransaction>[0];
 type DeleteInput = Parameters<typeof container.deleteTransaction>[0];
+type DeleteWalletInput = Parameters<typeof container.deleteWallet>[0];
 
 export const addTransactionWithEvents = async (input: AddInput) => {
   const result = await container.addTransaction(input);
@@ -78,6 +79,42 @@ export const deleteTransactionWithEvents = async (input: DeleteInput) => {
       before: transactionSnapshotFromEntity(beforeResult.value),
     });
   }
+  return result;
+};
+
+export const deleteWalletWithEvents = async (input: DeleteWalletInput) => {
+  const transactions: Transaction[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const page = await container.listTransactionsByWallet({
+      userId: input.userId,
+      walletId: input.walletId,
+      limit: 100,
+      ...(cursor !== undefined ? { cursor } : {}),
+    });
+    if (!page.ok) return page;
+
+    transactions.push(...page.value.items);
+    cursor = page.value.nextCursor;
+  } while (cursor !== undefined);
+
+  const result = await container.deleteWallet(input);
+  if (result.ok) {
+    for (const transaction of transactions) {
+      await publishSafely({
+        version: 1,
+        eventId: idGen.uuid(),
+        eventType: 'TransactionDeleted',
+        occurredAt: new Date().toISOString(),
+        userId: input.userId,
+        transactionId: transaction.id.toString(),
+        walletId: input.walletId,
+        before: transactionSnapshotFromEntity(transaction),
+      });
+    }
+  }
+
   return result;
 };
 
