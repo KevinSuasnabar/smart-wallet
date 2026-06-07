@@ -45,9 +45,6 @@ jobs:
           aws-region: us-east-1
           role-session-name: smart-wallet-deploy-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Deploy base infra
-        run: pnpm --filter @smart-wallet/infra-cdk deploy
-
       - name: Read SSM parameters
         id: ssm
         run: |
