@@ -1,12 +1,10 @@
 import type { APIGatewayProxyResultV2 } from 'aws-lambda';
-import {
-  withAuth,
-  withErrorHandler,
-} from '../../middleware/index.js';
+import { withAuth, withErrorHandler } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
 import { container } from '../../composition/container.js';
 import { ok as responseOk } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
+import { publishMaterializedTransactionEvents } from '../../application/transactionMutations.js';
 
 /**
  * POST /recurring/materialize — materializes every recurring transaction
@@ -19,12 +17,16 @@ import { domainErrorToResponse } from '../../shared/errors.js';
  * Returns 200 with `{ materializedCount, materializedTransactionIds }`,
  * even when `materializedCount` is 0.
  */
-const handler = async (
-  event: AuthenticatedEvent,
-): Promise<APIGatewayProxyResultV2> => {
+const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResultV2> => {
   const result = await container.materializeRecurrings(event.userId);
   if (!result.ok) return domainErrorToResponse(result.error);
-  return responseOk(result.value);
+
+  await publishMaterializedTransactionEvents(event.userId, result.value.materializedTransactions);
+
+  return responseOk({
+    materializedCount: result.value.materializedCount,
+    materializedTransactionIds: result.value.materializedTransactionIds,
+  });
 };
 
 export const main = withErrorHandler(withAuth(handler));

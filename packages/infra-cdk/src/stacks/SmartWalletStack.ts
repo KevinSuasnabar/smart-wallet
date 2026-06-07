@@ -7,6 +7,7 @@ import { UserPool } from '../constructs/UserPool.js';
 import { SsmParameters } from '../constructs/SsmParameters.js';
 import { GithubOidcRole } from '../constructs/GithubOidcRole.js';
 import { WebDistribution } from '../constructs/WebDistribution.js';
+import { TransactionEventsQueue } from '../constructs/TransactionEventsQueue.js';
 
 export interface SmartWalletStackProps extends StackProps {
   stage: 'prod';
@@ -28,6 +29,10 @@ export class SmartWalletStack extends Stack {
     const telegramSessionsTable = new TelegramSessionsTable(this, 'TelegramSessionsTable', {
       tableName: `smart-wallet-telegram-sessions-${props.stage}`,
     });
+    const transactionEventsQueue = new TransactionEventsQueue(this, 'TransactionEventsQueue', {
+      queueName: `smart-wallet-transaction-events-${props.stage}`,
+      dlqName: `smart-wallet-transaction-events-dlq-${props.stage}`,
+    });
     const userPool = new UserPool(this, 'UserPool', { userPoolName });
 
     // PITR disabled by design — MVP cost constraint (NFR-COST-01).
@@ -36,6 +41,7 @@ export class SmartWalletStack extends Stack {
     new SsmParameters(this, 'SsmParameters', {
       table: singleTable.table,
       telegramSessionsTable,
+      transactionEventsQueue,
       userPool: userPool.userPool,
       userPoolClient: userPool.userPoolClient,
       issuerUrl: userPool.issuerUrl,
@@ -67,6 +73,21 @@ export class SmartWalletStack extends Stack {
     new CfnOutput(this, 'TelegramSessionsTableArn', {
       value: telegramSessionsTable.table.tableArn,
       description: 'DynamoDB Telegram sessions table ARN',
+    });
+
+    new CfnOutput(this, 'TransactionEventsQueueUrl', {
+      value: transactionEventsQueue.queue.queueUrl,
+      description: 'SQS transaction events queue URL',
+    });
+
+    new CfnOutput(this, 'TransactionEventsQueueArn', {
+      value: transactionEventsQueue.queue.queueArn,
+      description: 'SQS transaction events queue ARN',
+    });
+
+    new CfnOutput(this, 'TransactionEventsDlqArn', {
+      value: transactionEventsQueue.dlq.queueArn,
+      description: 'SQS transaction events DLQ ARN',
     });
 
     new CfnOutput(this, 'UserPoolId', {

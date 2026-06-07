@@ -17,4 +17,5 @@ export const env = {
   localUserId: process.env.LOCAL_USER_ID,
   telegramSessionsTable:
     process.env.TELEGRAM_SESSIONS_TABLE ?? 'smart-wallet-telegram-sessions-local',
+  transactionEventsQueueUrl: process.env.TRANSACTION_EVENTS_QUEUE_URL ?? '',
 } as const;

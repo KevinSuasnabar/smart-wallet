@@ -20,6 +20,7 @@ import {
   DynamoDBTelegramSessionRepository,
   DynamoDBTelegramLinkRepository,
   DynamoDBTelegramLinkTokenRepository,
+  DynamoDBMonthlyAggregateRepository,
 } from '../adapters/dynamodb/index.js';
 import { SystemClock } from '../adapters/system/SystemClock.js';
 import { UuidIdGenerator } from '../adapters/system/UuidIdGenerator.js';
@@ -64,6 +65,7 @@ const recurringRepo = new DynamoDBRecurringTransactionRepository();
 const telegramSessionRepo = new DynamoDBTelegramSessionRepository();
 const telegramLinkRepo = new DynamoDBTelegramLinkRepository();
 const telegramLinkTokenRepo = new DynamoDBTelegramLinkTokenRepository();
+const monthlyAggregateRepo = new DynamoDBMonthlyAggregateRepository();
 const clock = new SystemClock();
 const idGen = new UuidIdGenerator();
 
@@ -145,7 +147,14 @@ export const container = {
   updateBudget: makeUpdateBudget({ budgetRepo, clock }),
   deleteBudget: makeDeleteBudget({ budgetRepo }),
 
-  getMonthlyDashboard: makeGetMonthlyDashboard({ walletRepo, transactionRepo, clock }),
+  getMonthlyDashboard: makeGetMonthlyDashboard({
+    walletRepo,
+    transactionRepo,
+    monthlyAggregateRepo,
+    clock,
+  }),
+
+  monthlyAggregateRepo,
 
   // Session repository instance (not a use-case — exposed directly for bot wiring)
   telegramSessionRepo,

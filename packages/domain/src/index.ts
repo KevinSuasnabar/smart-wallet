@@ -6,3 +6,4 @@ export * from './category/index.js';
 export * from './recurring/index.js';
 export * from './budget/index.js';
 export * from './dashboard/GetMonthlyDashboard.js';
+export * from './dashboard/MonthlyDashboardAggregateRepository.js';

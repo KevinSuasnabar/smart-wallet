@@ -45,6 +45,9 @@ jobs:
           aws-region: us-east-1
           role-session-name: smart-wallet-deploy-${{ github.run_id }}-${{ github.run_attempt }}
 
+      - name: Deploy base infra
+        run: pnpm --filter @smart-wallet/infra-cdk deploy
+
       - name: Read SSM parameters
         id: ssm
         run: |
@@ -63,6 +66,8 @@ jobs:
             echo "bot_user_id=$(get $P/bot/user-id)"
             echo "telegram_sessions_table_name=$(get $P/dynamo/telegram-sessions-table-name)"
             echo "telegram_sessions_table_arn=$(get $P/dynamo/telegram-sessions-table-arn)"
+            echo "transaction_events_queue_url=$(get $P/sqs/transaction-events-url)"
+            echo "transaction_events_queue_arn=$(get $P/sqs/transaction-events-arn)"
           } >> "$GITHUB_OUTPUT"
 
       - name: Deploy serverless
@@ -79,6 +84,8 @@ jobs:
           BOT_USER_ID: ${{ steps.ssm.outputs.bot_user_id }}
           TELEGRAM_SESSIONS_TABLE: ${{ steps.ssm.outputs.telegram_sessions_table_name }}
           TELEGRAM_SESSIONS_TABLE_ARN: ${{ steps.ssm.outputs.telegram_sessions_table_arn }}
+          TRANSACTION_EVENTS_QUEUE_URL: ${{ steps.ssm.outputs.transaction_events_queue_url }}
+          TRANSACTION_EVENTS_QUEUE_ARN: ${{ steps.ssm.outputs.transaction_events_queue_arn }}
         run: npx serverless deploy --stage prod
 
       - name: Smoke prod
