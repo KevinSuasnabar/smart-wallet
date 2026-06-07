@@ -3,7 +3,7 @@ import { WalletIdPathSchema } from '@smart-wallet/shared-types';
 import type { WalletIdPathDTO } from '@smart-wallet/shared-types';
 import { withAuth, withErrorHandler, validatePath } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
-import { container } from '../../composition/container.js';
+import { deleteWalletWithEvents } from '../../application/transactionMutations.js';
 import { noContent, notFound } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
 import { WalletNotFound } from '@smart-wallet/domain';
@@ -20,7 +20,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   if (!pathValidation.ok) return pathValidation.response;
   const path: WalletIdPathDTO = pathValidation.data;
 
-  const result = await container.deleteWallet({
+  const result = await deleteWalletWithEvents({
     userId: event.userId,
     walletId: path.walletId,
   });
