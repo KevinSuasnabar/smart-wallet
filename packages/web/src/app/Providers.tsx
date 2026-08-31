@@ -6,6 +6,7 @@ import { queryClient } from '../lib/queryClient.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import { AuthProvider } from '../features/auth/AuthProvider.js';
 import { ApiClientBridge } from '../features/auth/ApiClientBridge.js';
+import { PwaUpdater } from '../features/pwa/PwaUpdater.js';
 
 // AuthProvider must be INSIDE BrowserRouter (signOut calls useNavigate)
 // and INSIDE QueryClientProvider (signOut calls useQueryClient().clear())
@@ -16,6 +17,7 @@ export const Providers = ({ children }: PropsWithChildren) => (
       <BrowserRouter>
         <AuthProvider>
           <ApiClientBridge />
+          <PwaUpdater />
           {children}
           <Toaster position="top-center" richColors />
         </AuthProvider>

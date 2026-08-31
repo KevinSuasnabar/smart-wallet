@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import {
   AuthenticationDetails,
@@ -15,13 +8,11 @@ import {
 } from 'amazon-cognito-identity-js';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { userPool } from '../../lib/cognito/pool.js';
 import { routes } from '../../app/routes.js';
-import {
-  clearPersisted,
-  readPersisted,
-  writePersisted,
-} from './sessionStorage.js';
+import { t } from '../../lib/i18n.js';
+import { clearPersisted, readPersisted, writePersisted } from './sessionStorage.js';
 import type { AuthContextValue, AuthState, AuthUser } from './types.js';
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -56,8 +47,11 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   // Single-flight: if a token refresh is already in flight, all callers share the same promise
   const refreshPromiseRef = useRef<Promise<string> | null>(null);
   const cognitoUserRef = useRef<CognitoUser | null>(null);
+  // One-shot guard: a failed refresh must show the "session expired" notice and
+  // bounce to /login exactly once, even if several requests reject together.
+  const sessionExpiredRef = useRef(false);
 
-  // Hydrate from sessionStorage on mount — synchronous read, no network request
+  // Hydrate from localStorage on mount — synchronous read, no network request
   useEffect(() => {
     const persisted = readPersisted();
     if (!persisted) {
@@ -74,59 +68,59 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     setState({ user, idToken: persisted.idToken, isLoading: false, requiresNewPassword: false });
   }, []);
 
-  const signIn = useCallback(
-    async ({ email, password }: { email: string; password: string }) => {
-      const cognitoUser = buildCognitoUser(email);
-      const authDetails = new AuthenticationDetails({
-        Username: email,
-        Password: password,
+  const signIn = useCallback(async ({ email, password }: { email: string; password: string }) => {
+    const cognitoUser = buildCognitoUser(email);
+    const authDetails = new AuthenticationDetails({
+      Username: email,
+      Password: password,
+    });
+
+    type SignInResult =
+      | { kind: 'success'; session: CognitoUserSession }
+      | { kind: 'newPasswordRequired' };
+
+    const result = await new Promise<SignInResult>((resolve, reject) => {
+      cognitoUser.authenticateUser(authDetails, {
+        onSuccess: (session) => resolve({ kind: 'success', session }),
+        onFailure: (err: unknown) => reject(err instanceof Error ? err : new Error(String(err))),
+        newPasswordRequired: () => resolve({ kind: 'newPasswordRequired' }),
       });
+    });
 
-      type SignInResult =
-        | { kind: 'success'; session: CognitoUserSession }
-        | { kind: 'newPasswordRequired' };
-
-      const result = await new Promise<SignInResult>((resolve, reject) => {
-        cognitoUser.authenticateUser(authDetails, {
-          onSuccess: (session) => resolve({ kind: 'success', session }),
-          onFailure: (err: unknown) =>
-            reject(err instanceof Error ? err : new Error(String(err))),
-          newPasswordRequired: () => resolve({ kind: 'newPasswordRequired' }),
-        });
-      });
-
-      if (result.kind === 'newPasswordRequired') {
-        cognitoUserRef.current = cognitoUser;
-        setState((s) => ({ ...s, requiresNewPassword: true }));
-        return;
-      }
-
-      const { session } = result;
-      const idToken = session.getIdToken().getJwtToken();
-      const refreshToken = session.getRefreshToken().getToken();
-      const claims = decodeJwt(idToken);
-      const user: AuthUser = {
-        username: email,
-        email: claims.email ?? email,
-        sub: claims.sub ?? '',
-      };
-      writePersisted({ username: email, idToken, refreshToken });
+    if (result.kind === 'newPasswordRequired') {
       cognitoUserRef.current = cognitoUser;
-      setState({ user, idToken, isLoading: false, requiresNewPassword: false });
-    },
-    [],
-  );
+      setState((s) => ({ ...s, requiresNewPassword: true }));
+      return;
+    }
+
+    const { session } = result;
+    const idToken = session.getIdToken().getJwtToken();
+    const refreshToken = session.getRefreshToken().getToken();
+    const claims = decodeJwt(idToken);
+    const user: AuthUser = {
+      username: email,
+      email: claims.email ?? email,
+      sub: claims.sub ?? '',
+    };
+    writePersisted({ username: email, idToken, refreshToken });
+    cognitoUserRef.current = cognitoUser;
+    sessionExpiredRef.current = false;
+    setState({ user, idToken, isLoading: false, requiresNewPassword: false });
+  }, []);
 
   const completeNewPassword = useCallback(async (newPassword: string) => {
     const cognitoUser = cognitoUserRef.current;
     if (!cognitoUser) throw new Error('No pending new-password challenge');
 
     const session = await new Promise<CognitoUserSession>((resolve, reject) => {
-      cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
-        onSuccess: resolve,
-        onFailure: (err: unknown) =>
-          reject(err instanceof Error ? err : new Error(String(err))),
-      });
+      cognitoUser.completeNewPasswordChallenge(
+        newPassword,
+        {},
+        {
+          onSuccess: resolve,
+          onFailure: (err: unknown) => reject(err instanceof Error ? err : new Error(String(err))),
+        },
+      );
     });
 
     const idToken = session.getIdToken().getJwtToken();
@@ -147,28 +141,18 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     await new Promise<void>((resolve, reject) => {
       cognitoUser.forgotPassword({
         onSuccess: () => resolve(),
-        onFailure: (err) =>
-          reject(err instanceof Error ? err : new Error(String(err))),
+        onFailure: (err) => reject(err instanceof Error ? err : new Error(String(err))),
       });
     });
   }, []);
 
   const confirmForgotPassword = useCallback(
-    async ({
-      email,
-      code,
-      newPassword,
-    }: {
-      email: string;
-      code: string;
-      newPassword: string;
-    }) => {
+    async ({ email, code, newPassword }: { email: string; code: string; newPassword: string }) => {
       const cognitoUser = buildCognitoUser(email);
       await new Promise<void>((resolve, reject) => {
         cognitoUser.confirmPassword(code, newPassword, {
           onSuccess: () => resolve(),
-          onFailure: (err) =>
-            reject(err instanceof Error ? err : new Error(String(err))),
+          onFailure: (err) => reject(err instanceof Error ? err : new Error(String(err))),
         });
       });
     },
@@ -223,10 +207,29 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       return refreshPromiseRef.current;
     }
 
+    // The stored refresh token is gone or rejected: explain it once, purge local
+    // state, route to /login, then rethrow so the awaiting request still fails.
+    const handleSessionExpired = (error: Error): never => {
+      if (!sessionExpiredRef.current) {
+        sessionExpiredRef.current = true;
+        toast.error(t.auth.sessionExpired);
+        clearPersisted();
+        queryClient.clear();
+        setState({
+          user: null,
+          idToken: null,
+          isLoading: false,
+          requiresNewPassword: false,
+        });
+        navigate(routes.login);
+      }
+      throw error;
+    };
+
     const cognitoUser = cognitoUserRef.current;
     const persisted = readPersisted();
     if (!cognitoUser || !persisted) {
-      throw new Error('No active session to refresh');
+      return handleSessionExpired(new Error('No active session to refresh'));
     }
 
     const refreshToken = new CognitoRefreshToken({
@@ -236,9 +239,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     const promise = new Promise<string>((resolve, reject) => {
       cognitoUser.refreshSession(refreshToken, (err: unknown, session: unknown) => {
         if (err || !(session instanceof CognitoUserSession)) {
-          return reject(
-            err instanceof Error ? err : new Error('refresh failed'),
-          );
+          return reject(err instanceof Error ? err : new Error('refresh failed'));
         }
         const newIdToken = session.getIdToken().getJwtToken();
         writePersisted({ ...persisted, idToken: newIdToken });
@@ -250,10 +251,12 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     refreshPromiseRef.current = promise;
     try {
       return await promise;
+    } catch (err) {
+      return handleSessionExpired(err instanceof Error ? err : new Error('refresh failed'));
     } finally {
       refreshPromiseRef.current = null;
     }
-  }, []);
+  }, [navigate, queryClient]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

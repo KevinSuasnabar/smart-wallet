@@ -88,6 +88,17 @@ jobs:
             --exclude "*" \
             --include "*.html"
 
+      # Runs AFTER both syncs above so the `--delete` asset sync cannot stamp
+      # these two files `immutable`. Hashed `workbox-*.js` chunks keep immutable.
+      - name: Sync service worker + manifest to S3 (correct headers)
+        run: |
+          aws s3 cp packages/web/dist/sw.js "s3://${{ steps.ssm.outputs.bucket }}/sw.js" \
+            --cache-control "no-cache, must-revalidate, max-age=0" \
+            --content-type "text/javascript"
+          aws s3 cp packages/web/dist/manifest.webmanifest "s3://${{ steps.ssm.outputs.bucket }}/manifest.webmanifest" \
+            --cache-control "public, max-age=3600" \
+            --content-type "application/manifest+json"
+
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \

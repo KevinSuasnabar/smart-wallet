@@ -14,6 +14,9 @@ export default tseslint.config(
       '**/cdk.out/**',
       '**/.serverless/**',
       '**/coverage/**',
+      // Root-level build/tooling config files are not part of any tsconfig
+      // project, so the typed ESLint project service cannot resolve them.
+      '**/*.config.{js,ts,mjs,cjs}',
     ],
   },
   js.configs.recommended,
