@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Smart Wallet monogram">
+  <rect width="512" height="512" fill="#201E3E" />
+  <g fill="none" stroke="#FAF6EB" stroke-width="46" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M232 200 C232 170 200 158 166 158 C122 158 96 182 96 212 C96 244 130 254 168 260 C208 266 236 278 236 308 C236 340 202 350 166 350 C130 350 100 338 96 306" />
+    <path d="M276 158 L306 350 L346 214 L386 350 L416 158" />
+  </g>
+  <rect x="168" y="386" width="176" height="26" rx="13" fill="#DCEEB1" />
+</svg>
