@@ -22,6 +22,7 @@ export const t = {
     firstAccessHint: 'Mínimo 10 caracteres, una mayúscula, una minúscula y un número.',
     firstAccessButton: 'Establecer contraseña',
     passwordsMismatch: 'Las contraseñas no coinciden',
+    sessionExpired: 'Tu sesión expiró',
   },
   wallets: {
     listTitle: 'Tus billeteras',
@@ -238,5 +239,12 @@ export const t = {
     notFound: 'Este recurrente ya no existe',
     descriptionFallback: 'Movimiento recurrente',
     sidebarLabel: 'Recurrentes',
+  },
+  pwa: {
+    offline: 'Sin conexión',
+    updateAvailable: 'Hay una versión nueva',
+    updateAction: 'Recargar',
+    installHint: 'Instalá Smart Wallet: tocá Compartir y luego «Agregar a la pantalla de inicio».',
+    installDismiss: 'Entendido',
   },
 } as const;
