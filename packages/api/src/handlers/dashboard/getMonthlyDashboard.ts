@@ -2,12 +2,16 @@ import type { APIGatewayProxyResultV2 } from 'aws-lambda';
 import { withAuth, withErrorHandler } from '../../middleware/index.js';
 import type { AuthenticatedEvent } from '../../middleware/index.js';
 import { container } from '../../composition/container.js';
+import { env } from '../../env.js';
 import { ok as responseOk } from '../../shared/response.js';
 import { domainErrorToResponse } from '../../shared/errors.js';
 import { formatCentsForResponse } from '../../shared/boundary/index.js';
 
 const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResultV2> => {
-  const result = await container.getMonthlyDashboard({ userId: event.userId });
+  const result = await container.getMonthlyDashboard({
+    userId: event.userId,
+    timezone: env.appTimezone,
+  });
   if (!result.ok) return domainErrorToResponse(result.error);
 
   return responseOk({

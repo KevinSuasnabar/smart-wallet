@@ -5,6 +5,7 @@ import type {
   MonthlyDashboardAggregateSummary,
   UserId,
 } from '@smart-wallet/domain';
+import { monthKeyInTimeZone } from '@smart-wallet/domain';
 import { isTransactionCanceledException } from './DynamoDBTransactionRepository.js';
 import { ddb, TABLE_NAME } from '../DynamoDBClient.js';
 import {
@@ -54,18 +55,20 @@ interface CategoryDelta {
 }
 
 export class DynamoDBMonthlyAggregateRepository implements MonthlyDashboardAggregateRepository {
+  constructor(private readonly timeZone: string) {}
+
   async applyTransactionEvent(event: TransactionEvent): Promise<void> {
     const nowIso = new Date().toISOString();
     const totalDeltas = new Map<string, TotalDelta>();
     const categoryDeltas = new Map<string, CategoryDelta>();
 
     if (event.eventType === 'TransactionCreated') {
-      addSnapshotDeltas(event.after, 1, totalDeltas, categoryDeltas);
+      addSnapshotDeltas(event.after, 1, this.timeZone, totalDeltas, categoryDeltas);
     } else if (event.eventType === 'TransactionDeleted') {
-      addSnapshotDeltas(event.before, -1, totalDeltas, categoryDeltas);
+      addSnapshotDeltas(event.before, -1, this.timeZone, totalDeltas, categoryDeltas);
     } else {
-      addSnapshotDeltas(event.before, -1, totalDeltas, categoryDeltas);
-      addSnapshotDeltas(event.after, 1, totalDeltas, categoryDeltas);
+      addSnapshotDeltas(event.before, -1, this.timeZone, totalDeltas, categoryDeltas);
+      addSnapshotDeltas(event.after, 1, this.timeZone, totalDeltas, categoryDeltas);
     }
 
     const pk = userPK(event.userId);
@@ -195,18 +198,14 @@ export class DynamoDBMonthlyAggregateRepository implements MonthlyDashboardAggre
   }
 }
 
-const monthFromOccurredAt = (occurredAtIso: string): string => {
-  const date = new Date(occurredAtIso);
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-};
-
 const addSnapshotDeltas = (
   snapshot: TransactionSnapshot,
   sign: 1 | -1,
+  timeZone: string,
   totalDeltas: Map<string, TotalDelta>,
   categoryDeltas: Map<string, CategoryDelta>,
 ): void => {
-  const month = monthFromOccurredAt(snapshot.occurredAt);
+  const month = monthKeyInTimeZone(new Date(snapshot.occurredAt), timeZone);
   const totalKey = `${month}#${snapshot.currency}`;
   const total = totalDeltas.get(totalKey) ?? {
     month,

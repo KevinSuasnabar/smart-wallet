@@ -60,6 +60,8 @@ provider:
     BOT_USER_ID: ${env:BOT_USER_ID, ''}
     TELEGRAM_SESSIONS_TABLE: ${env:TELEGRAM_SESSIONS_TABLE, 'smart-wallet-telegram-sessions-local'}
     TRANSACTION_EVENTS_QUEUE_URL: ${env:TRANSACTION_EVENTS_QUEUE_URL, ''}
+    # Single configured IANA accounting timezone for all monthly boundaries.
+    APP_TIMEZONE: ${env:APP_TIMEZONE, 'America/Lima'}
 
   iam:
     role:
