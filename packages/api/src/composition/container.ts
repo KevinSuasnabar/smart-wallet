@@ -24,6 +24,7 @@ import {
 } from '../adapters/dynamodb/index.js';
 import { SystemClock } from '../adapters/system/SystemClock.js';
 import { UuidIdGenerator } from '../adapters/system/UuidIdGenerator.js';
+import { env } from '../env.js';
 import {
   makeCreateWallet,
   makeListWallets,
@@ -65,7 +66,7 @@ const recurringRepo = new DynamoDBRecurringTransactionRepository();
 const telegramSessionRepo = new DynamoDBTelegramSessionRepository();
 const telegramLinkRepo = new DynamoDBTelegramLinkRepository();
 const telegramLinkTokenRepo = new DynamoDBTelegramLinkTokenRepository();
-const monthlyAggregateRepo = new DynamoDBMonthlyAggregateRepository();
+const monthlyAggregateRepo = new DynamoDBMonthlyAggregateRepository(env.appTimezone);
 const clock = new SystemClock();
 const idGen = new UuidIdGenerator();
 
@@ -150,7 +151,6 @@ export const container = {
   getMonthlyDashboard: makeGetMonthlyDashboard({
     walletRepo,
     transactionRepo,
-    monthlyAggregateRepo,
     clock,
   }),
 

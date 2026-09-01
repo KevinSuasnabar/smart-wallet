@@ -20,8 +20,10 @@ interface DatePickerFieldProps {
  * shape (hairline border, rounded.md, 44px) rather than a pill button, so it
  * sits flush in a form column.
  *
- * The time portion is set to noon UTC to avoid off-by-one issues across
- * timezones.
+ * The picked day is stamped at 12:00 in the browser-local calendar (not UTC),
+ * so the resulting instant resolves to the same calendar day the user clicked
+ * for any reader within ±12 h of the browser timezone. Stamping at noon UTC
+ * shifted far-from-UTC entries into the wrong local month.
  */
 export const DatePickerField = ({
   value,
@@ -37,15 +39,13 @@ export const DatePickerField = ({
   const handleSelect = (date: Date | undefined) => {
     if (!date) return;
     const iso = new Date(
-      Date.UTC(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        12,
-        0,
-        0,
-        0,
-      ),
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      12,
+      0,
+      0,
+      0,
     ).toISOString();
     onChange(iso);
     setOpen(false);

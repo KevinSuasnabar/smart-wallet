@@ -17,6 +17,10 @@ export default tseslint.config(
       // Root-level build/tooling config files are not part of any tsconfig
       // project, so the typed ESLint project service cannot resolve them.
       '**/*.config.{js,ts,mjs,cjs}',
+      // Domain Vitest specs are excluded from packages/domain/tsconfig.json
+      // (composite build must not emit tests), so the typed project service
+      // cannot resolve them. A dedicated tsconfig.test.json is a follow-up.
+      'packages/domain/src/**/*.test.ts',
     ],
   },
   js.configs.recommended,

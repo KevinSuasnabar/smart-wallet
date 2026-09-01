@@ -2,11 +2,11 @@ import { ok, err } from '../shared/Result.js';
 import type { Result } from '../shared/Result.js';
 import type { Clock } from '../shared/Clock.js';
 import type { Currency } from '../shared/Currency.js';
+import { monthRangeInTimeZone } from '../shared/accountingMonth.js';
 import { UserId } from '../user/UserId.js';
 import type { UserError } from '../user/UserError.js';
 import type { Wallet } from '../wallet/Wallet.js';
 import type { WalletRepository } from '../wallet/WalletRepository.js';
-import type { MonthlyDashboardAggregateRepository } from './MonthlyDashboardAggregateRepository.js';
 import type {
   MonthlyTransactionSummary,
   TransactionRepository,
@@ -42,20 +42,12 @@ export interface GetMonthlyDashboardDeps {
   walletRepo: WalletRepository;
   transactionRepo: TransactionRepository;
   clock: Clock;
-  monthlyAggregateRepo?: MonthlyDashboardAggregateRepository;
 }
 
 export interface GetMonthlyDashboardInput {
   userId: string;
+  timezone: string;
 }
-
-const monthRange = (now: Date): { from: Date; to: Date } => ({
-  from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
-  to: now,
-});
-
-const monthKey = (date: Date): string =>
-  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
 
 const asCurrency = (currency: string): Currency => currency as Currency;
 
@@ -84,7 +76,7 @@ export const makeGetMonthlyDashboard =
     if (!userIdResult.ok) return err(userIdResult.error);
 
     const userId = userIdResult.value;
-    const range = monthRange(deps.clock.now());
+    const range = monthRangeInTimeZone(deps.clock.now(), input.timezone);
 
     const wallets: Wallet[] = [];
     let cursor: string | undefined;
@@ -102,14 +94,10 @@ export const makeGetMonthlyDashboard =
       totals.set(wallet.currency, (totals.get(wallet.currency) ?? 0) + wallet.balance);
     }
 
-    const aggregateSummaries = await deps.monthlyAggregateRepo?.listMonthlySummaries(
+    const transactionSummaries = await deps.transactionRepo.summarizeMonthlyByCurrency(
       userId,
-      monthKey(range.from),
+      range,
     );
-    const transactionSummaries =
-      aggregateSummaries !== undefined && aggregateSummaries.length > 0
-        ? aggregateSummaries
-        : await deps.transactionRepo.summarizeMonthlyByCurrency(userId, range);
     const summariesByCurrency = transactionSummaries.map(toSummary);
 
     for (const currency of totals.keys()) {
