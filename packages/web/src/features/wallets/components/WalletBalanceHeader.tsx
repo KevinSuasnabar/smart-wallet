@@ -18,9 +18,9 @@ export const WalletBalanceHeader = ({ wallet }: WalletBalanceHeaderProps) => (
     tone="navy"
     className="flex flex-col gap-10 px-6 py-10 md:px-10 md:py-14"
   >
-    <div className="flex items-center justify-between">
-      <Eyebrow className="text-white/55">{wallet.name}</Eyebrow>
-      <Eyebrow className="text-white/55">{wallet.currency}</Eyebrow>
+    <div className="flex items-center justify-between gap-3">
+      <Eyebrow className="min-w-0 truncate text-white/55">{wallet.name}</Eyebrow>
+      <Eyebrow className="shrink-0 text-white/55">{wallet.currency}</Eyebrow>
     </div>
 
     <p className="text-5xl font-bold leading-none tabular-nums tracking-display md:text-7xl">

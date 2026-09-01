@@ -19,7 +19,7 @@ export const ProfileSection = () => {
         <span className="font-mono text-[11px] uppercase tracking-eyebrow text-muted-foreground">
           {t.settings.profile.emailLabel}
         </span>
-        <span className="text-base font-medium">{user.email}</span>
+        <span className="break-all text-base font-medium">{user.email}</span>
       </div>
     </Card>
   );

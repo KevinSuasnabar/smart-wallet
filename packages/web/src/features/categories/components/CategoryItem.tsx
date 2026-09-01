@@ -75,15 +75,15 @@ export const CategoryItem = ({
       <Eyebrow className={resolvedColor === 'navy' ? 'text-background/55' : 'text-ink/55'}>
         {type === 'income' ? t.transactions.income : t.transactions.expense}
       </Eyebrow>
-      <p className="text-base font-bold tracking-tightest">{name}</p>
-      <div className="absolute right-2 top-2 flex items-center gap-1">
+      <p className="line-clamp-2 pr-20 text-base font-bold tracking-tightest">{name}</p>
+      <div className="absolute right-2 top-2 flex items-center gap-2">
         {onEdit && (
           <button
             type="button"
             onClick={onEdit}
             aria-label={`${t.categories.editTitle}: ${name}`}
             className={cn(
-              'flex size-7 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2',
+              'flex size-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2',
               resolvedColor === 'navy'
                 ? 'bg-background/10 text-background/70 hover:bg-background/20 hover:text-background focus-visible:ring-background/40'
                 : 'bg-ink/5 text-ink/55 hover:bg-ink/15 hover:text-ink focus-visible:ring-ink/40',
@@ -98,7 +98,7 @@ export const CategoryItem = ({
             onClick={onDelete}
             aria-label={`${t.common.delete} ${name}`}
             className={cn(
-              'flex size-7 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2',
+              'flex size-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2',
               resolvedColor === 'navy'
                 ? 'bg-background/10 text-background/70 hover:bg-background/20 hover:text-background focus-visible:ring-background/40'
                 : 'bg-ink/5 text-ink/55 hover:bg-ink/15 hover:text-destructive focus-visible:ring-ink/40',

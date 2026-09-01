@@ -44,7 +44,7 @@ export const TransactionFilters = ({ value, onChange }: TransactionFiltersProps)
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-2 text-sm font-medium"
+          className="-my-2 flex min-h-[44px] items-center gap-2 py-2 text-sm font-medium"
           aria-expanded={open}
         >
           <Filter className="size-4" />

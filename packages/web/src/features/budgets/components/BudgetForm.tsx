@@ -14,7 +14,6 @@ import {
   FormMessage,
 } from '../../../components/ui/form.js';
 import { Button } from '../../../components/ui/button.js';
-import { Label } from '../../../components/ui/label.js';
 import {
   Select,
   SelectContent,
@@ -220,7 +219,10 @@ export const BudgetForm = (props: BudgetFormProps) => {
         />
 
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-3">
+          <label
+            htmlFor="budget-rollover"
+            className="-my-2 flex cursor-pointer items-center gap-3 py-2"
+          >
             <input
               id="budget-rollover"
               type="checkbox"
@@ -229,10 +231,10 @@ export const BudgetForm = (props: BudgetFormProps) => {
               disabled={props.submitting}
               className="size-4 cursor-pointer accent-foreground"
             />
-            <Label htmlFor="budget-rollover" className="cursor-pointer">
+            <span className="text-sm font-medium leading-none">
               {t.budgets.rolloverLabel}
-            </Label>
-          </div>
+            </span>
+          </label>
           <p className="font-mono text-[11px] text-foreground/55">{t.budgets.rolloverHelper}</p>
         </div>
 
