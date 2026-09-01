@@ -54,7 +54,7 @@ export const ColorPicker = ({
           disabled={disabled}
           onClick={() => onChange(color)}
           className={cn(
-            'size-10 rounded-full border border-border transition',
+            'size-11 rounded-full border border-border transition',
             SWATCH_BG[color],
             isSelected && 'ring-2 ring-offset-2 ring-foreground',
             disabled

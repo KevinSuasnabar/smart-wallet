@@ -53,7 +53,7 @@ export const InstallHint = () => {
     <div
       role="dialog"
       aria-label={t.pwa.installHint}
-      className="fixed inset-x-3 bottom-24 z-40 flex items-start gap-3 rounded-2xl bg-foreground px-4 py-3 text-background shadow-lg"
+      className="fixed inset-x-3 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-40 flex items-start gap-3 rounded-2xl bg-foreground px-4 py-3 text-background shadow-lg"
     >
       <Share className="mt-0.5 size-5 shrink-0" />
       <p className="flex-1 text-sm leading-snug">{t.pwa.installHint}</p>

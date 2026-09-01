@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Repeat } from 'lucide-react';
 import type { Currency } from '@smart-wallet/shared-types';
 import { PageHeader } from '../../../components/common/PageHeader.js';
 import { ErrorState } from '../../../components/common/ErrorState.js';
@@ -82,9 +82,26 @@ export const DashboardPage = () => {
   const hasWallets = dash.totalsByCurrency.length > 0;
   const showToggle = hasWallets && dash.availableCurrencies.length > 1 && displayCurrency !== null;
 
+  // Recurrentes only lives in the desktop sidebar now — the mobile tab bar
+  // dropped it to make room for a centered FAB. This is its one mobile entry
+  // point, so it stays visible across every dashboard render state.
+  const recurringShortcut = (
+    <Link
+      to={routes.recurring}
+      aria-label="Recurrentes"
+      className="flex size-10 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted md:hidden"
+    >
+      <Repeat className="size-5" />
+    </Link>
+  );
+
   return (
     <div className="flex flex-col gap-5 pb-4">
-      <PageHeader eyebrow={t.dashboard.eyebrow} title={t.dashboard.title} />
+      <PageHeader
+        eyebrow={t.dashboard.eyebrow}
+        title={t.dashboard.title}
+        action={recurringShortcut}
+      />
 
       <BalanceCard totals={dash.totalsByCurrency} />
 

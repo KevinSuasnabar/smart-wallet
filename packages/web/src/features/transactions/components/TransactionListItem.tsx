@@ -61,7 +61,7 @@ export const TransactionListItem = ({
           type === 'income' ? 'bg-block-mint' : 'bg-block-coral',
         )}
       />
-      <div className="flex flex-1 items-center justify-between gap-3 py-4 pl-4">
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-3 py-4 pl-4">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <p className="truncate font-semibold tracking-tightest">
             {categoryName ?? categoryId}
@@ -75,7 +75,7 @@ export const TransactionListItem = ({
             {format(new Date(occurredAt), 'd MMM yyyy', { locale: es })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <p
             className={cn(
               'whitespace-nowrap text-xl font-bold tabular-nums tracking-display md:text-2xl',

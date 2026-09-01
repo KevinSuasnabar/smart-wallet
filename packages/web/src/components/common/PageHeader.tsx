@@ -14,9 +14,9 @@ interface PageHeaderProps {
  */
 export const PageHeader = ({ title, eyebrow, action }: PageHeaderProps) => (
   <header className="flex items-end justify-between gap-4 py-6 md:py-8">
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-      <h1 className="text-3xl font-bold leading-none tracking-display md:text-4xl">
+      <h1 className="truncate text-3xl font-bold leading-tight tracking-display md:text-4xl">
         {title}
       </h1>
     </div>
