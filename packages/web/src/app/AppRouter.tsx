@@ -13,6 +13,7 @@ import { EditWalletPage } from '../features/wallets/pages/EditWalletPage.js';
 import { AddTransactionPage } from '../features/transactions/pages/AddTransactionPage.js';
 import { EditTransactionPage } from '../features/transactions/pages/EditTransactionPage.js';
 import { TransactionListPage } from '../features/transactions/pages/TransactionListPage.js';
+import { TransactionDetailPage } from '../features/transactions/pages/TransactionDetailPage.js';
 import { CategoriesPage } from '../features/categories/pages/CategoriesPage.js';
 import { SettingsPage } from '../features/settings/pages/SettingsPage.js';
 import { DashboardPage } from '../features/dashboard/pages/DashboardPage.js';
@@ -46,6 +47,10 @@ export const AppRouter = () => (
         <Route path="/wallets/:walletId/edit" element={<EditWalletPage />} />
         <Route path="/wallets/:walletId/transactions" element={<TransactionListPage />} />
         <Route path="/wallets/:walletId/transactions/new" element={<AddTransactionPage />} />
+        <Route
+          path="/wallets/:walletId/transactions/:transactionId"
+          element={<TransactionDetailPage />}
+        />
         <Route
           path="/wallets/:walletId/transactions/:transactionId/edit"
           element={<EditTransactionPage />}

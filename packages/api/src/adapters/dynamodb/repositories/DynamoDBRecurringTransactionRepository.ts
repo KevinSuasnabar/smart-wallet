@@ -202,6 +202,9 @@ export class DynamoDBRecurringTransactionRepository
       amount: recurring.amount,
       categoryId: recurring.categoryId,
       description: recurring.description,
+      // Recurring rules carry no attribution yet, so materialized transactions
+      // start unattributed and can be attributed by hand afterwards.
+      participantId: null,
       occurredAt,
       createdAt: materializedAt,
       updatedAt: materializedAt,

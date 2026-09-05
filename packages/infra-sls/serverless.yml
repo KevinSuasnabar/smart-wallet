@@ -269,6 +269,44 @@ functions:
           authorizer:
             name: cognitoJwt
 
+  # ── Participants (transaction attribution) ──────────────────────────────
+
+  listParticipants:
+    handler: src/handlers/participant/listParticipants.main
+    events:
+      - httpApi:
+          path: /participants
+          method: get
+          authorizer:
+            name: cognitoJwt
+
+  createParticipant:
+    handler: src/handlers/participant/createParticipant.main
+    events:
+      - httpApi:
+          path: /participants
+          method: post
+          authorizer:
+            name: cognitoJwt
+
+  patchParticipant:
+    handler: src/handlers/participant/patchParticipant.main
+    events:
+      - httpApi:
+          path: /participants/{participantId}
+          method: patch
+          authorizer:
+            name: cognitoJwt
+
+  deleteParticipant:
+    handler: src/handlers/participant/deleteParticipant.main
+    events:
+      - httpApi:
+          path: /participants/{participantId}
+          method: delete
+          authorizer:
+            name: cognitoJwt
+
   # ── Recurring transactions (monthly) ────────────────────────────────────
   # NOTE: the static `/recurring/materialize` route MUST stay listed before
   # `/recurring/{recurringId}` so APIGW v2 prefers the exact match. As a

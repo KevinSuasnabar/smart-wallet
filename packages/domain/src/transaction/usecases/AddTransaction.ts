@@ -19,6 +19,9 @@ import type { TransactionError } from '../TransactionError.js';
 import { CategoryId } from '../../category/CategoryId.js';
 import type { CategoryRepository } from '../../category/CategoryRepository.js';
 import type { CategoryError } from '../../category/CategoryError.js';
+import { ParticipantId } from '../../participant/ParticipantId.js';
+import type { ParticipantRepository } from '../../participant/ParticipantRepository.js';
+import type { ParticipantError } from '../../participant/ParticipantError.js';
 
 export interface AddTransactionInput {
   /** Raw userId string from JWT — validated here before use. */
@@ -33,6 +36,11 @@ export interface AddTransactionInput {
   /** categoryId string — validated via CategoryId.create() + categoryRepo.validateCategoryForTransaction(). */
   categoryId: string;
   description: string | null;
+  /**
+   * Optional attribution — which participant this movement belongs to.
+   * null/undefined means unattributed, which is always valid.
+   */
+  participantId?: string | null;
   occurredAt: Date;
   /**
    * Pre-computed 32 hex char SHA-256 hash of (userId + ':' + walletId + ':' + idempotencyKey).
@@ -48,6 +56,8 @@ export interface AddTransactionDeps {
   transactionRepo: TransactionRepository;
   /** Wired in T-05-05: validates category existence, ownership, and type-match. */
   categoryRepo: CategoryRepository;
+  /** Validates that an attributed participant exists, is owned, and is not deleted. */
+  participantRepo: ParticipantRepository;
   idGen: IdGenerator;
   clock: Clock;
 }
@@ -59,7 +69,7 @@ export interface AddTransactionDeps {
  */
 export type AddTransactionOutput = Result<
   { transaction: Transaction; replay: boolean },
-  TransactionError | WalletError | UserError | CategoryError
+  TransactionError | WalletError | UserError | CategoryError | ParticipantError
 >;
 
 export const makeAddTransaction =
@@ -101,6 +111,20 @@ export const makeAddTransaction =
     });
     if (!categoryValidation.ok) return err(categoryValidation.error);
 
+    // 4c. Validate the attribution when one was supplied. Absent attribution is
+    //     valid — it is the state of every transaction predating participants.
+    const participantId = input.participantId ?? null;
+    if (participantId !== null) {
+      const participantIdResult = ParticipantId.create(participantId);
+      if (!participantIdResult.ok) return err(participantIdResult.error);
+
+      const participantValidation = await deps.participantRepo.validateParticipantForUser({
+        userId,
+        participantId: participantIdResult.value,
+      });
+      if (!participantValidation.ok) return err(participantValidation.error);
+    }
+
     // 5. Construct Money VO (amount must be strictly positive integer cents)
     const moneyResult = Money.create(input.amountCents, wallet.currency);
     if (!moneyResult.ok) return err(moneyResult.error);
@@ -119,6 +143,7 @@ export const makeAddTransaction =
       amount: money,
       categoryId: input.categoryId,
       description: input.description,
+      participantId,
       occurredAt: input.occurredAt,
       clock: deps.clock,
     });

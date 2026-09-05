@@ -948,8 +948,8 @@ function mapDeleteCancellation(e: unknown, transactionId: TransactionId): Error 
 /**
  * Build the UpdateExpression for an in-place transaction edit (when the SK
  * doesn't move). Always rewrites every mutable field plus GSI1SK (which
- * depends on categoryId). Description goes through REMOVE when it transitions
- * to null, otherwise SET — so a "clear description" edit doesn't leave a
+ * depends on categoryId). Description and participantId go through REMOVE when
+ * they transition to null, otherwise SET — so a "clear it" edit doesn't leave a
  * stale value behind.
  */
 function buildInPlaceUpdate(
@@ -982,6 +982,13 @@ function buildInPlaceUpdate(
     values[':description'] = transaction.description;
   } else {
     removeParts.push('description');
+  }
+
+  if (transaction.participantId !== null) {
+    setParts.push('participantId = :participantId');
+    values[':participantId'] = transaction.participantId;
+  } else {
+    removeParts.push('participantId');
   }
 
   let updateExpression = `SET ${setParts.join(', ')}`;

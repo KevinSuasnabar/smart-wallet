@@ -84,6 +84,9 @@
     @apply bg-background text-foreground font-sans antialiased;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* The custom pull-to-refresh owns the top overscroll; without this the
+       document rubber-bands underneath its indicator on iOS. */
+    overscroll-behavior-y: contain;
   }
   h1,
   h2 {

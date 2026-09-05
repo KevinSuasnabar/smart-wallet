@@ -16,7 +16,7 @@ import { computeIdempotencyHash } from '../../shared/idempotency.js';
  * PATCH /wallets/{walletId}/transactions/{transactionId} — partial update of
  * a transaction.
  *
- * Mutable fields: amount, description, categoryId, occurredAt (all optional;
+ * Mutable fields: amount, description, categoryId, occurredAt, participantId (all optional;
  * at least one required by the schema). Immutable: type, walletId, currency.
  *
  * Idempotency-Key header (optional, 1–128 chars):
@@ -87,6 +87,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     description?: string | null;
     categoryId?: string;
     occurredAt?: Date;
+    participantId?: string | null;
   } = {};
   if (amountCents !== undefined) edits.amountCents = amountCents;
   if (body.description !== undefined) {
@@ -95,6 +96,8 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
   }
   if (body.categoryId !== undefined) edits.categoryId = body.categoryId;
   if (body.occurredAt !== undefined) edits.occurredAt = new Date(body.occurredAt);
+  // `null` clears the attribution; omitted leaves it untouched.
+  if (body.participantId !== undefined) edits.participantId = body.participantId;
 
   const result = await updateTransactionWithEvents({
     userId: event.userId,
@@ -117,6 +120,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     occurredAt: tx.occurredAt.toISOString(),
     createdAt: tx.createdAt.toISOString(),
     ...(tx.description !== null ? { description: tx.description } : {}),
+    ...(tx.participantId !== null ? { participantId: tx.participantId } : {}),
   };
 
   // PATCH always 200 (whether replay or fresh write — the body is the same).

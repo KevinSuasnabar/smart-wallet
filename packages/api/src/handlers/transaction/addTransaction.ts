@@ -76,6 +76,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     currency: input.currency,
     categoryId: input.categoryId,
     description: input.description ?? null,
+    participantId: input.participantId ?? null,
     occurredAt: new Date(input.occurredAt),
     ...(idempotencyHash !== undefined ? { idempotencyHash } : {}),
   });
@@ -94,6 +95,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     occurredAt: transaction.occurredAt.toISOString(),
     createdAt: transaction.createdAt.toISOString(),
     ...(transaction.description !== null ? { description: transaction.description } : {}),
+    ...(transaction.participantId !== null ? { participantId: transaction.participantId } : {}),
   };
 
   // Return 200 on idempotent replay (same transaction), 201 on creation.

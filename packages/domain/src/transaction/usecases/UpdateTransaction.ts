@@ -16,6 +16,9 @@ import type { TransactionError } from '../TransactionError.js';
 import { CategoryId } from '../../category/CategoryId.js';
 import type { CategoryRepository } from '../../category/CategoryRepository.js';
 import type { CategoryError } from '../../category/CategoryError.js';
+import { ParticipantId } from '../../participant/ParticipantId.js';
+import type { ParticipantRepository } from '../../participant/ParticipantRepository.js';
+import type { ParticipantError } from '../../participant/ParticipantError.js';
 
 export interface UpdateTransactionInput {
   userId: string;
@@ -29,6 +32,8 @@ export interface UpdateTransactionInput {
     description?: string | null;
     categoryId?: string;
     occurredAt?: Date;
+    /** null clears the attribution; undefined leaves it unchanged. */
+    participantId?: string | null;
   };
   /** When present, the repo takes the 3-op idempotent path. */
   idempotencyHash?: string;
@@ -38,12 +43,13 @@ export interface UpdateTransactionDeps {
   walletRepo: WalletRepository;
   transactionRepo: TransactionRepository;
   categoryRepo: CategoryRepository;
+  participantRepo: ParticipantRepository;
   clock: Clock;
 }
 
 export type UpdateTransactionOutput = Result<
   { transaction: Transaction; replay: boolean },
-  TransactionError | WalletError | CategoryError | UserError
+  TransactionError | WalletError | CategoryError | ParticipantError | UserError
 >;
 
 /**
@@ -101,6 +107,19 @@ export const makeUpdateTransaction =
       if (!categoryValidation.ok) return err(categoryValidation.error);
     }
 
+    // 4b. Attribution validation (only when it is being set to a participant;
+    //     clearing it to null needs no lookup).
+    if (input.edits.participantId !== undefined && input.edits.participantId !== null) {
+      const participantIdResult = ParticipantId.create(input.edits.participantId);
+      if (!participantIdResult.ok) return err(participantIdResult.error);
+
+      const participantValidation = await deps.participantRepo.validateParticipantForUser({
+        userId,
+        participantId: participantIdResult.value,
+      });
+      if (!participantValidation.ok) return err(participantValidation.error);
+    }
+
     // 5. Build Money VO if amount changing.
     let newMoney: Money | undefined;
     if (input.edits.amountCents !== undefined) {
@@ -120,6 +139,9 @@ export const makeUpdateTransaction =
     if (input.edits.description !== undefined) editsForEntity.description = input.edits.description;
     if (input.edits.categoryId !== undefined) editsForEntity.categoryId = input.edits.categoryId;
     if (input.edits.occurredAt !== undefined) editsForEntity.occurredAt = input.edits.occurredAt;
+    if (input.edits.participantId !== undefined) {
+      editsForEntity.participantId = input.edits.participantId;
+    }
 
     const applyResult = existing.applyEdits(editsForEntity, deps.clock);
     if (!applyResult.ok) return err(applyResult.error);

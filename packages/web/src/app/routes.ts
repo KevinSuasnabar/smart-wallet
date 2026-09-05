@@ -11,6 +11,8 @@ export const routes = {
   walletEdit: (walletId: string) => `/wallets/${walletId}/edit`,
   walletTransactions: (walletId: string) => `/wallets/${walletId}/transactions`,
   walletTransactionsNew: (walletId: string) => `/wallets/${walletId}/transactions/new`,
+  walletTransactionDetail: (walletId: string, transactionId: string) =>
+    `/wallets/${walletId}/transactions/${transactionId}`,
   walletTransactionEdit: (walletId: string, transactionId: string) =>
     `/wallets/${walletId}/transactions/${transactionId}/edit`,
   transactionsNew: '/transactions/new',
