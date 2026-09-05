@@ -101,6 +101,7 @@ export const EditTransactionPage = () => {
     categoryId: tx.categoryId,
     occurredAt: tx.occurredAt,
     description: tx.description ?? '',
+    participantId: tx.participantId,
     currency: tx.currency,
   };
 
@@ -119,6 +120,11 @@ export const EditTransactionPage = () => {
     }
     if (values.occurredAt !== initialValues.occurredAt) {
       dto.occurredAt = values.occurredAt;
+    }
+    // Both sides normalise to null so "was unset, still unset" is not a change,
+    // and clearing an attribution sends an explicit null (the server's clear signal).
+    if ((values.participantId ?? null) !== (initialValues.participantId ?? null)) {
+      dto.participantId = values.participantId ?? null;
     }
 
     if (Object.keys(dto).length === 0) {

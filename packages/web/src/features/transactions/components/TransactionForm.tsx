@@ -43,6 +43,7 @@ import { MoneyInput } from '../../../components/common/MoneyInput.js';
 import { DatePickerField } from '../../../components/common/DatePickerField.js';
 import { WalletSelect } from '../../wallets/components/WalletSelect.js';
 import { CategorySelect } from '../../categories/components/CategorySelect.js';
+import { ParticipantSelect } from '../../participants/components/ParticipantSelect.js';
 import { t } from '../../../lib/i18n.js';
 
 interface TransactionFormProps {
@@ -97,6 +98,9 @@ export const TransactionForm = ({
       categoryId: initialValues?.categoryId ?? '',
       occurredAt: initialValues?.occurredAt ?? new Date().toISOString(),
       description: initialValues?.description ?? '',
+      // Left undefined (not '') when unattributed: the schema accepts an absent
+      // participantId but rejects an empty string.
+      participantId: initialValues?.participantId,
       currency: initialValues?.currency ?? currency,
     },
   });
@@ -228,6 +232,24 @@ export const TransactionForm = ({
                   disabled={submitting}
                   minDate={minDate}
                   maxDate={maxDate}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="participantId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t.participants.fieldLabel}</FormLabel>
+              <FormControl>
+                <ParticipantSelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={submitting}
                 />
               </FormControl>
               <FormMessage />

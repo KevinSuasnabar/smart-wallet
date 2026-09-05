@@ -3,6 +3,7 @@ import { ProfileSection } from '../components/ProfileSection.js';
 import { ChangePasswordSection } from '../components/ChangePasswordSection.js';
 import { PreferredCurrencySection } from '../components/PreferredCurrencySection.js';
 import { TelegramLinkSection } from '../components/TelegramLinkSection.js';
+import { ParticipantsSection } from '../../participants/components/ParticipantsSection.js';
 import { t } from '../../../lib/i18n.js';
 
 export const SettingsPage = () => (
@@ -11,6 +12,7 @@ export const SettingsPage = () => (
     <ProfileSection />
     <ChangePasswordSection />
     <PreferredCurrencySection />
+    <ParticipantsSection />
     <TelegramLinkSection />
   </div>
 );

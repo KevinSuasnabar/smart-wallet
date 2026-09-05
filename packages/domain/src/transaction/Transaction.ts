@@ -31,6 +31,12 @@ export interface TransactionProps {
   categoryId: string;
   /** Trimmed description (1–256 chars), or null when absent. */
   description: string | null;
+  /**
+   * Person this transaction is attributed to (participant UUID), or null when
+   * unattributed. Every transaction created before participants existed is
+   * null, and staying null is always valid.
+   */
+  participantId: string | null;
   occurredAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -49,6 +55,8 @@ export interface CreateTransactionProps {
   categoryId: string;
   /** Optional raw description string; null or empty string normalises to null. */
   description: string | null;
+  /** Attributed participant id, or null. Existence/ownership is checked by the use case. */
+  participantId: string | null;
   /** User-provided timestamp for when the transaction occurred. */
   occurredAt: Date;
   clock: Clock;
@@ -86,6 +94,10 @@ export class Transaction extends AggregateRoot<TransactionId> {
 
   get description(): string | null {
     return this._props.description;
+  }
+
+  get participantId(): string | null {
+    return this._props.participantId;
   }
 
   get occurredAt(): Date {
@@ -135,6 +147,7 @@ export class Transaction extends AggregateRoot<TransactionId> {
       amount: props.amount,
       categoryId: props.categoryId,
       description,
+      participantId: props.participantId,
       occurredAt: props.occurredAt,
       createdAt: now,
       updatedAt: now,
@@ -220,6 +233,8 @@ export class Transaction extends AggregateRoot<TransactionId> {
       description?: string | null;
       categoryId?: string;
       occurredAt?: Date;
+      /** null clears the attribution; undefined leaves it unchanged. */
+      participantId?: string | null;
     },
     clock: Clock,
   ): Result<void, TransactionError> {
@@ -253,6 +268,10 @@ export class Transaction extends AggregateRoot<TransactionId> {
 
     if (edits.categoryId !== undefined) {
       this._props.categoryId = edits.categoryId;
+    }
+
+    if (edits.participantId !== undefined) {
+      this._props.participantId = edits.participantId;
     }
 
     this._props.updatedAt = clock.now();

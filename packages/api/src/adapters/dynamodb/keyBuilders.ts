@@ -14,6 +14,8 @@ export const transactionSK = (
 
 export const categorySK = (categoryId: string): string => `CATEGORY#${categoryId}`;
 
+export const participantSK = (participantId: string): string => `PARTICIPANT#${participantId}`;
+
 export const hiddenPredefinedSK = (predefinedCategoryId: string): string =>
   `HIDDENCAT#${predefinedCategoryId}`;
 
@@ -49,6 +51,8 @@ export const walletSKPrefix = (): string => 'WALLET#';
 export const transactionSKPrefix = (walletId: string): string => `TXN#${walletId}#`;
 
 export const categorySKPrefix = (): string => 'CATEGORY#';
+
+export const participantSKPrefix = (): string => 'PARTICIPANT#';
 
 export const hiddenPredefinedSKPrefix = (): string => 'HIDDENCAT#';
 

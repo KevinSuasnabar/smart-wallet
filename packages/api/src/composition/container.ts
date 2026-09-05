@@ -15,6 +15,7 @@ import {
   DynamoDBWalletRepository,
   DynamoDBTransactionRepository,
   DynamoDBCategoryRepository,
+  DynamoDBParticipantRepository,
   DynamoDBRecurringTransactionRepository,
   DynamoDBBudgetRepository,
   DynamoDBTelegramSessionRepository,
@@ -43,6 +44,10 @@ import {
   makeUpdateCustomCategory,
   makeForkPredefinedCategory,
   makeHidePredefinedCategory,
+  makeCreateParticipant,
+  makeListParticipants,
+  makeUpdateParticipant,
+  makeDeleteParticipant,
   makeCreateRecurring,
   makeListRecurring,
   makeGetRecurring,
@@ -62,6 +67,7 @@ const walletRepo = new DynamoDBWalletRepository();
 const budgetRepo = new DynamoDBBudgetRepository();
 const transactionRepo = new DynamoDBTransactionRepository();
 const categoryRepo = new DynamoDBCategoryRepository();
+const participantRepo = new DynamoDBParticipantRepository();
 const recurringRepo = new DynamoDBRecurringTransactionRepository();
 const telegramSessionRepo = new DynamoDBTelegramSessionRepository();
 const telegramLinkRepo = new DynamoDBTelegramLinkRepository();
@@ -85,6 +91,7 @@ export const container = {
     walletRepo,
     transactionRepo,
     categoryRepo,
+    participantRepo,
     idGen,
     clock,
   }),
@@ -93,6 +100,7 @@ export const container = {
     walletRepo,
     transactionRepo,
     categoryRepo,
+    participantRepo,
     clock,
   }),
   deleteTransaction: makeDeleteTransaction({
@@ -123,6 +131,12 @@ export const container = {
     transactionRepo,
     clock,
   }),
+
+  // Participant operations
+  listParticipants: makeListParticipants({ participantRepo }),
+  createParticipant: makeCreateParticipant({ participantRepo, idGen, clock }),
+  updateParticipant: makeUpdateParticipant({ participantRepo, clock }),
+  deleteParticipant: makeDeleteParticipant({ participantRepo, clock }),
 
   // Recurring transaction operations
   createRecurring: makeCreateRecurring({

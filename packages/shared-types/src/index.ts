@@ -94,6 +94,22 @@ export type {
   CategoryIdPathDTO,
 } from './schemas/category.js';
 
+// Participant schemas + DTOs
+export {
+  CreateParticipantRequestSchema,
+  UpdateParticipantRequestSchema,
+  ParticipantResponseSchema,
+  ListParticipantsResponseSchema,
+  ParticipantIdPathSchema,
+} from './schemas/participant.js';
+export type {
+  CreateParticipantDTO,
+  UpdateParticipantDTO,
+  ParticipantResponseDTO,
+  ListParticipantsResponseDTO,
+  ParticipantIdPathDTO,
+} from './schemas/participant.js';
+
 // Budget schemas + DTOs
 export {
   BudgetPathSchema,

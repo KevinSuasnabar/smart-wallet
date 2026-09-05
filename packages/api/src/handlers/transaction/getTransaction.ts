@@ -44,6 +44,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
     occurredAt: tx.occurredAt.toISOString(),
     createdAt: tx.createdAt.toISOString(),
     ...(tx.description !== null ? { description: tx.description } : {}),
+    ...(tx.participantId !== null ? { participantId: tx.participantId } : {}),
   };
 
   return responseOk(body);

@@ -49,6 +49,7 @@ const handler = async (event: AuthenticatedEvent): Promise<APIGatewayProxyResult
       occurredAt: transaction.occurredAt.toISOString(),
       createdAt: transaction.createdAt.toISOString(),
       ...(transaction.description !== null ? { description: transaction.description } : {}),
+      ...(transaction.participantId !== null ? { participantId: transaction.participantId } : {}),
     })),
     ...(nextCursor !== undefined ? { nextCursor } : {}),
   });

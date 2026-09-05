@@ -12,6 +12,8 @@ export {
   walletSKPrefix,
   transactionSKPrefix,
   categorySKPrefix,
+  participantSK,
+  participantSKPrefix,
   recurringSK,
   recurringSKPrefix,
   recurringGsi1SK,
@@ -36,6 +38,9 @@ export type { TransactionItem } from './mappers/TransactionMapper.js';
 export { categoryToItem, itemToCategory } from './mappers/CategoryMapper.js';
 export type { CategoryItem } from './mappers/CategoryMapper.js';
 
+export { participantToItem, itemToParticipant } from './mappers/ParticipantMapper.js';
+export type { ParticipantItem } from './mappers/ParticipantMapper.js';
+
 export { recurringToItem, itemToRecurring } from './mappers/RecurringMapper.js';
 export type { RecurringItem } from './mappers/RecurringMapper.js';
 
@@ -53,6 +58,7 @@ export type {
   CancellationReason,
 } from './repositories/DynamoDBTransactionRepository.js';
 export { DynamoDBCategoryRepository } from './repositories/DynamoDBCategoryRepository.js';
+export { DynamoDBParticipantRepository } from './repositories/DynamoDBParticipantRepository.js';
 export { DynamoDBRecurringTransactionRepository } from './repositories/DynamoDBRecurringTransactionRepository.js';
 export { DynamoDBBudgetRepository } from './repositories/DynamoDBBudgetRepository.js';
 export { DynamoDBTelegramSessionRepository } from './repositories/DynamoDBTelegramSessionRepository.js';

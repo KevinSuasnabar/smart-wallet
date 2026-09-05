@@ -37,6 +37,8 @@ export interface TransactionItem {
   categoryId: string;
   /** Omitted from item when description is null. */
   description?: string;
+  /** Attributed participant id. Omitted when the transaction is unattributed. */
+  participantId?: string;
   occurredAt: string; // ISO 8601
   createdAt: string;  // ISO 8601
   updatedAt: string;  // ISO 8601
@@ -67,6 +69,7 @@ export const transactionToItem = (transaction: Transaction): TransactionItem => 
     updatedAt: transaction.updatedAt.toISOString(),
     // exactOptionalPropertyTypes: only set optional attributes when non-null
     ...(transaction.description !== null ? { description: transaction.description } : {}),
+    ...(transaction.participantId !== null ? { participantId: transaction.participantId } : {}),
     ...(transaction.deletedAt !== null ? { deletedAt: transaction.deletedAt.toISOString() } : {}),
   };
   return item;
@@ -107,6 +110,7 @@ export const itemToTransaction = (item: TransactionItem): Result<Transaction, Tr
     amount: money.value,
     categoryId: item.categoryId,
     description: item.description ?? null,
+    participantId: item.participantId ?? null,
     occurredAt: new Date(item.occurredAt),
     createdAt: new Date(item.createdAt),
     updatedAt: new Date(item.updatedAt),

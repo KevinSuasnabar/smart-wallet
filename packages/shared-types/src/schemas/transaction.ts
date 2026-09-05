@@ -31,6 +31,12 @@ export const AddTransactionRequestSchema = z.object({
   occurredAt: zOccurredAt,
   description: z.string().max(256).optional(),
   /**
+   * Optional person this transaction is attributed to. Account-scoped
+   * participant id (UUID v4). Absent means "unattributed" — the state every
+   * transaction created before participants existed is in.
+   */
+  participantId: zUuid.optional(),
+  /**
    * Currency of the wallet this transaction belongs to.
    * The handler uses this to convert the decimal amount to cents before calling the use case.
    * The use case cross-checks against wallet.currency and returns CurrencyMismatch if they differ.
@@ -52,6 +58,8 @@ export const TransactionResponseSchema = z.object({
   occurredAt: z.string(),
   createdAt: z.string(),
   description: z.string().optional(),
+  /** Omitted when the transaction is not attributed to anyone. */
+  participantId: z.string().optional(),
 });
 
 export type TransactionResponseDTO = z.infer<typeof TransactionResponseSchema>;
@@ -110,6 +118,8 @@ export const UpdateTransactionRequestSchema = z
     description: z.string().max(256).optional(),
     categoryId: zCategoryIdLike.optional(),
     occurredAt: zOccurredAt.optional(),
+    /** `null` clears the attribution; omitted leaves it unchanged. */
+    participantId: zUuid.nullable().optional(),
   })
   .strict()
   .refine(
@@ -117,7 +127,8 @@ export const UpdateTransactionRequestSchema = z
       data.amount !== undefined ||
       data.description !== undefined ||
       data.categoryId !== undefined ||
-      data.occurredAt !== undefined,
+      data.occurredAt !== undefined ||
+      data.participantId !== undefined,
     { message: 'At least one mutable field must be provided' },
   );
 
